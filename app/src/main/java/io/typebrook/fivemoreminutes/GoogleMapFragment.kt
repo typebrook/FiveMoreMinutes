@@ -1,6 +1,5 @@
 package io.typebrook.fivemoreminutes
 
-import android.app.Fragment
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,9 +14,8 @@ import org.jetbrains.anko.toast
  */
 class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
 
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    init {
         getMapAsync(this)
-        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onMapReady(p0: GoogleMap?) {
