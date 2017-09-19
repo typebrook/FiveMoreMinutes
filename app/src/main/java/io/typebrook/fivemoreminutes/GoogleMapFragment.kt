@@ -4,9 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapFragment
-import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.*
 import org.jetbrains.anko.toast
 
 /**
@@ -18,7 +16,11 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
         getMapAsync(this)
     }
 
-    override fun onMapReady(p0: GoogleMap?) {
-        toast("map ready")
+    override fun onMapReady(map: GoogleMap) {
+        map.moveCamera(CameraUpdateFactory.newCameraPosition(postion))
+
+        map.setOnCameraMoveListener {
+           postion = map.cameraPosition
+        }
     }
 }
