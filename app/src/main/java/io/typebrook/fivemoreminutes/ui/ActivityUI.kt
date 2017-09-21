@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.widget.TextView
 import com.google.android.gms.maps.model.CameraPosition
 import io.typebrook.fivemoreminutes.MainActivity
-import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import org.jetbrains.anko.*
 import tw.geothings.rekotlin.StoreSubscriber
@@ -27,10 +26,6 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraPosition> 
             verticalLayout {
                 id = ID_CONTAINER
             }
-
-            imageView {
-                background = resources.getDrawable(R.drawable.ic_cross_24dp)
-            }.lparams { centerInParent() }
 
             coordinate = textView {
                 padding = 10
