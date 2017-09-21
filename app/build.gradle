@@ -42,6 +42,8 @@ dependencies {
     // Redux
     compile 'tw.geothings.rekotlin:rekotlin:0.1.0-SNAPSHOT'
 
+    // Projection
+    compile group: 'org.osgeo', name: 'proj4j', version: '0.1.0'
 }
 repositories {
     mavenCentral()
