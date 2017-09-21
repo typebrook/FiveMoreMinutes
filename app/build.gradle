@@ -30,14 +30,22 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
 
+    // kotlin
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    compile "org.jetbrains.anko:anko:$anko_version"
+
+    // Google Map
     compile 'com.google.maps.android:android-maps-utils:0.5'
     compile 'com.google.android.gms:play-services-maps:11.0.4'
     compile 'com.google.android.gms:play-services-location:11.0.4'
 
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
-    compile "org.jetbrains.anko:anko:$anko_version"
+    // Redux
+    compile 'tw.geothings.rekotlin:rekotlin:0.1.0-SNAPSHOT'
 
 }
 repositories {
     mavenCentral()
+    maven {
+        url 'https://rekotlin.s3-ap-southeast-1.amazonaws.com/snapshots'
+    }
 }

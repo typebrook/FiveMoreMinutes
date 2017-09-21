@@ -2,20 +2,17 @@ package io.typebrook.fivemoreminutes
 
 import android.app.Activity
 import android.os.Bundle
-import org.jetbrains.anko.*
+import io.typebrook.fivemoreminutes.ui.ActivityUI
+import org.jetbrains.anko.setContentView
 
 class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val ID_CONTAINER = 1
-        verticalLayout {
-            id = ID_CONTAINER
-        }
+        ActivityUI().setContentView(this)
 
         fragmentManager.beginTransaction()
-                .add(ID_CONTAINER, GoogleMapFragment(), "map fragment")
+                .add(ActivityUI.ID_CONTAINER, GoogleMapFragment(), "map fragment")
                 .commit()
     }
 }

@@ -1,15 +1,16 @@
 package io.typebrook.fivemoreminutes
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import com.google.android.gms.maps.*
-import org.jetbrains.anko.toast
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapFragment
+import com.google.android.gms.maps.OnMapReadyCallback
+import io.typebrook.fivemoreminutes.redux.CameraPositionChange
 
 /**
  * Created by pham on 2017/9/19.
+ * this fragment defines Google Map interaction with user
  */
+
 class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
 
     init {
@@ -17,10 +18,16 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
     }
 
     override fun onMapReady(map: GoogleMap) {
-        map.moveCamera(CameraUpdateFactory.newCameraPosition(postion))
+
+        val lastCameraPosition = mainStore.state.lastCameraPosition
+        map.moveCamera(CameraUpdateFactory.newCameraPosition(lastCameraPosition))
 
         map.setOnCameraMoveListener {
-           postion = map.cameraPosition
+            mainStore.dispatch(CameraPositionChange(map.cameraPosition))
+        }
+
+        map.uiSettings.apply{
+            isZoomControlsEnabled = true
         }
     }
 }
