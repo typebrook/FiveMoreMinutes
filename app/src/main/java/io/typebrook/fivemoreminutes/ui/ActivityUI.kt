@@ -6,6 +6,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.mainStore
 import org.jetbrains.anko.*
+import org.osgeo.proj4j.CoordinateTransform
 import tw.geothings.rekotlin.StoreSubscriber
 
 /**
@@ -14,6 +15,7 @@ import tw.geothings.rekotlin.StoreSubscriber
 class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraPosition> {
 
     private var coordinate: TextView? = null
+    private var projTransform: CoordinateTransform? = null
 
     companion object {
         val ID_CONTAINER = 1000
@@ -28,12 +30,12 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraPosition> 
             }
 
             coordinate = textView {
-                padding = 10
+                padding = dip(5)
                 backgroundColor = Color.parseColor("#80FFFFFF")
             }.lparams(wrapContent) {
                 alignParentBottom()
                 centerHorizontally()
-                bottomMargin = 20
+                bottomMargin = dip(10)
             }
         }
     }.apply {

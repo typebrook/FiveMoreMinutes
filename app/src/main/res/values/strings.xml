@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">FiveMoreMinutes</string>
+
+    <string name="token_mapbox">pk.eyJ1Ijoic2xheWVyIiwiYSI6ImNqNzZjNGVoMjE0amkyeG80bmgwM3h5MWYifQ.lEvnkRJwPpS6bH-w5F7tdw</string>
+    <string name="api_key_googlemap">AIzaSyAvZlCHW-YBaYAyYM4tkaOs8iFmXCuEo2o</string>
 </resources>

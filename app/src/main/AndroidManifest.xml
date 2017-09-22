@@ -3,7 +3,7 @@
     package="io.typebrook.fivemoreminutes">
 
     <!--<uses-permission android:name="android.permission.INTERNET " />-->
-    <!--<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />-->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:name=".FMMApplication"
@@ -15,7 +15,7 @@
         android:theme="@style/AppTheme">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAvZlCHW-YBaYAyYM4tkaOs8iFmXCuEo2o"/>
+            android:value="@string/api_key_googlemap"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

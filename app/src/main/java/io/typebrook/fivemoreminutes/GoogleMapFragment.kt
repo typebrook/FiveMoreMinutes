@@ -4,15 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewManager
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
 import io.typebrook.fivemoreminutes.redux.CameraPositionChange
-import org.jetbrains.anko.UI
-import org.jetbrains.anko.centerInParent
-import org.jetbrains.anko.imageView
-import org.jetbrains.anko.relativeLayout
+import org.jetbrains.anko.*
 
 /**
  * Created by pham on 2017/9/19.
@@ -29,6 +27,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
         return UI {
             relativeLayout {
                 addView(super.onCreateView(p0, p1, p2))
+
                 imageView {
                     background = resources.getDrawable(R.drawable.ic_cross_24dp)
                 }.lparams { centerInParent() }
@@ -44,6 +43,8 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
         map.setOnCameraMoveListener {
             mainStore.dispatch(CameraPositionChange(map.cameraPosition))
         }
+
+        activity.toast("mapReady")
 
         map.uiSettings.apply {
             isZoomControlsEnabled = true
