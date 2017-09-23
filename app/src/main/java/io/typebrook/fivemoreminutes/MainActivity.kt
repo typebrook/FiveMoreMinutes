@@ -2,7 +2,7 @@ package io.typebrook.fivemoreminutes
 
 import android.app.Activity
 import android.os.Bundle
-import com.mapbox.mapboxsdk.maps.MapFragment
+import io.typebrook.fivemoreminutes.mapfragment.MapBoxMapFragment
 import io.typebrook.fivemoreminutes.ui.ActivityUI
 import org.jetbrains.anko.setContentView
 

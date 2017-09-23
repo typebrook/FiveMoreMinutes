@@ -1,14 +1,15 @@
-package io.typebrook.fivemoreminutes
+package io.typebrook.fivemoreminutes.mapfragment
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewManager
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
+import io.typebrook.fivemoreminutes.R
+import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraPositionChange
 import org.jetbrains.anko.*
 
