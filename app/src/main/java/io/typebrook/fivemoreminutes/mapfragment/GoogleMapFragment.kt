@@ -8,6 +8,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.LatLng
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraPositionChange
@@ -38,14 +39,14 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
 
     override fun onMapReady(map: GoogleMap) {
 
-        val lastCameraPosition = mainStore.state.lastCameraPosition
-        map.moveCamera(CameraUpdateFactory.newCameraPosition(lastCameraPosition))
+        val (lat, lon, zoom) = mainStore.state.cameraState
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom))
 
         map.setOnCameraMoveListener {
-            mainStore.dispatch(CameraPositionChange(map.cameraPosition))
+            val position = map.cameraPosition
+            mainStore.dispatch(CameraPositionChange(
+                    position.target.latitude, position.target.longitude, position.zoom))
         }
-
-        activity.toast("mapReady")
 
         map.uiSettings.apply {
             isZoomControlsEnabled = true

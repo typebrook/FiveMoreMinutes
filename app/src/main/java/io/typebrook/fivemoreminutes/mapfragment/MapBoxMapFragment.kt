@@ -6,9 +6,10 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.camera.CameraPosition
+import com.mapbox.mapboxsdk.camera.CameraUpdate
+import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
@@ -88,16 +89,16 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onMapReady(map: MapboxMap) {
 
-//        val lastCameraPosition = mainStore.state.lastCameraPosition
-//        map.animateCamera(CameraUpdateFactory.newCameraPosition(lastCameraPosition))
-//
+        val (lat, lon, zoom) = mainStore.state.cameraState
+        map.moveCamera { CameraPosition.Builder()
+                .target(LatLng(lat, lon))
+                .zoom(zoom.toDouble())
+                .build() }
+
         map.setOnCameraMoveListener {
             val position = map.cameraPosition
-            mainStore.dispatch(CameraPositionChange(CameraPosition(
-                    LatLng(position.target.latitude, position.target.longitude), position.zoom.toFloat(), 0f, 0f)))
-            Log.d("dispatch", "position")
+            mainStore.dispatch(CameraPositionChange(
+                    position.target.latitude, position.target.longitude, position.zoom.toFloat()))
         }
-
-        activity.toast("mapReady")
     }
 }
