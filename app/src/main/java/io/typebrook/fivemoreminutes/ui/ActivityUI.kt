@@ -5,6 +5,7 @@ import android.widget.TextView
 import com.google.android.gms.maps.model.CameraPosition
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.mainStore
+import io.typebrook.fivemoreminutes.redux.CameraState
 import org.jetbrains.anko.*
 import org.osgeo.proj4j.CoordinateTransform
 import tw.geothings.rekotlin.StoreSubscriber
@@ -12,7 +13,7 @@ import tw.geothings.rekotlin.StoreSubscriber
 /**
  * Created by pham on 2017/9/21.
  */
-class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraPosition> {
+class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
     private var coordinate: TextView? = null
     private var projTransform: CoordinateTransform? = null
@@ -40,13 +41,13 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraPosition> 
         }
     }.apply {
         mainStore.subscribe(this@ActivityUI) { subscription ->
-            subscription.select { it.lastCameraPosition }.skipRepeats()
+            subscription.select { it.cameraState }.skipRepeats()
         }
     }
 
-    override fun newState(state: CameraPosition) {
-        val lat = state.target.latitude.let { "%.6f".format(it) }
-        val lon = state.target.longitude.let { "%.6f".format(it) }
+    override fun newState(state: CameraState) {
+        val lat = state.lat.let { "%.6f".format(it) }
+        val lon = state.lon.let { "%.6f".format(it) }
         coordinate?.text = "北緯 ${lat} 度\n東經 ${lon} 度"
     }
 }

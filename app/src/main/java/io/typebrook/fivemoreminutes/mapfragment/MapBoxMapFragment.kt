@@ -2,13 +2,12 @@ package io.typebrook.fivemoreminutes.mapfragment
 
 import android.app.Fragment
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.camera.CameraPosition
+import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
@@ -16,7 +15,10 @@ import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraPositionChange
-import org.jetbrains.anko.*
+import org.jetbrains.anko.UI
+import org.jetbrains.anko.centerInParent
+import org.jetbrains.anko.imageView
+import org.jetbrains.anko.relativeLayout
 
 /**
  * Created by pham on 2017/9/19.
@@ -88,16 +90,18 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onMapReady(map: MapboxMap) {
 
-//        val lastCameraPosition = mainStore.state.lastCameraPosition
-//        map.animateCamera(CameraUpdateFactory.newCameraPosition(lastCameraPosition))
-//
-        map.setOnCameraMoveListener {
-            val position = map.cameraPosition
-            mainStore.dispatch(CameraPositionChange(CameraPosition(
-                    LatLng(position.target.latitude, position.target.longitude), position.zoom.toFloat(), 0f, 0f)))
-            Log.d("dispatch", "position")
+        val (lat, lon, zoom) = mainStore.state.cameraState
+        map.moveCamera {
+            CameraPosition.Builder()
+                    .target(LatLng(lat, lon))
+                    .zoom(zoom.toDouble())
+                    .build()
         }
 
-        activity.toast("mapReady")
+        map.setOnCameraMoveListener {
+            val position = map.cameraPosition
+            mainStore.dispatch(CameraPositionChange(
+                    position.target.latitude, position.target.longitude, position.zoom.toFloat()))
+        }
     }
 }
