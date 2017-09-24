@@ -10,7 +10,7 @@ data class State(
 ) : StateType
 
 data class CameraState(
-        val lat: Double = 24.782347,
-        val lon: Double = 121.035044,
-        val zoom: Float = 15f
+        val lat: Double = 23.76,
+        val lon: Double = 120.96,
+        val zoom: Float = 7.5f
 ) : StateType
