@@ -2,7 +2,6 @@ package io.typebrook.fivemoreminutes.ui
 
 import android.graphics.Color
 import android.widget.TextView
-import com.google.android.gms.maps.model.CameraPosition
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraState
@@ -46,8 +45,18 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     }
 
     override fun newState(state: CameraState) {
-        val lat = state.lat.let { "%.6f".format(it) }
-        val lon = state.lon.let { "%.6f".format(it) }
-        coordinate?.text = "北緯 ${lat} 度\n東經 ${lon} 度"
+        val latPrefix = if (state.lat >= 0) "北緯" else "南緯"
+        val lonPrefix = if (state.lon >= 0) "東經" else "西經"
+
+        val lat = state.lat
+                .let { Math.abs(it) }
+                .let { "%.6f".format(it) }
+                .run { dropLast(3) + "-" + takeLast(3) }
+        val lon = state.lon
+                .let { Math.abs(it) }
+                .let { "%.6f".format(it) }
+                .run { dropLast(3) + "-" + takeLast(3) }
+
+        coordinate?.text = "$latPrefix $lat 度\n$lonPrefix $lon 度"
     }
 }
