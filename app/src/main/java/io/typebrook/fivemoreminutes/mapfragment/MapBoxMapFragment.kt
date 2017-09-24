@@ -98,7 +98,7 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback {
                     .build()
         }
 
-        map.setOnCameraMoveListener {
+        map.setOnCameraChangeListener {
             val position = map.cameraPosition
             mainStore.dispatch(CameraPositionChange(
                     position.target.latitude,
