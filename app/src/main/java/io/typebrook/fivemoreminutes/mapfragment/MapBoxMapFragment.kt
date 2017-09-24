@@ -91,7 +91,7 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(map: MapboxMap) {
 
         val (lat, lon, zoom) = mainStore.state.cameraState
-        map.moveCamera {
+        map.animateCamera {
             CameraPosition.Builder()
                     .target(LatLng(lat, lon))
                     .zoom(zoom.toDouble())
@@ -101,7 +101,9 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback {
         map.setOnCameraMoveListener {
             val position = map.cameraPosition
             mainStore.dispatch(CameraPositionChange(
-                    position.target.latitude, position.target.longitude, position.zoom.toFloat()))
+                    position.target.latitude,
+                    position.target.longitude,
+                    position.zoom.toFloat()))
         }
     }
 }

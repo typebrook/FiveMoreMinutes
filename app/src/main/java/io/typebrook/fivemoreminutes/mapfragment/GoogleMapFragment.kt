@@ -48,7 +48,9 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
         map.setOnCameraMoveListener {
             val position = map.cameraPosition
             mainStore.dispatch(CameraPositionChange(
-                    position.target.latitude, position.target.longitude, position.zoom))
+                    position.target.latitude,
+                    position.target.longitude,
+                    position.zoom))
         }
 
         map.uiSettings.apply {
