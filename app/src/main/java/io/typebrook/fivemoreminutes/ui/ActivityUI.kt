@@ -1,11 +1,17 @@
 package io.typebrook.fivemoreminutes.ui
 
 import android.graphics.Color
+import android.support.design.widget.Snackbar
+import android.support.v4.view.GravityCompat
+import android.view.Gravity
 import android.widget.TextView
 import io.typebrook.fivemoreminutes.MainActivity
+import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraState
 import org.jetbrains.anko.*
+import org.jetbrains.anko.design.floatingActionButton
+import org.jetbrains.anko.sdk25.coroutines.onClick
 import org.osgeo.proj4j.CoordinateTransform
 import tw.geothings.rekotlin.StoreSubscriber
 
@@ -36,6 +42,15 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 alignParentBottom()
                 centerHorizontally()
                 bottomMargin = dip(10)
+            }
+
+            floatingActionButton{
+                imageResource = android.R.drawable.ic_lock_idle_lock
+                onClick { Snackbar.make(this@floatingActionButton, "wow", 3000).show() }
+            }.lparams {
+                margin = dip(5)
+                alignParentBottom()
+                alignParentRight()
             }
         }
     }.apply {
