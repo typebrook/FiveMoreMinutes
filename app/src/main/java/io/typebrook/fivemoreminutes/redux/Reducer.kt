@@ -13,7 +13,7 @@ fun reducer(action: Action, oldState: State?): State {
 
     return when (action) {
         is CameraPositionChange -> {
-            state.copy(cameraState = CameraState(lat = action.lat, lon = action.lon, zoom = action.zoom))
+            state.copy(cameraState = CameraState(lat = action.lat, lon = action.lon, zoom = action.zoom, moveMap = false))
         }
         else -> state
     }

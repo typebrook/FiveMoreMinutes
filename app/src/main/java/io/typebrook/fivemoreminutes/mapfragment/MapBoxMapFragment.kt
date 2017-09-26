@@ -2,6 +2,7 @@ package io.typebrook.fivemoreminutes.mapfragment
 
 import android.app.Fragment
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,19 +16,22 @@ import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraPositionChange
+import io.typebrook.fivemoreminutes.redux.CameraState
 import org.jetbrains.anko.UI
 import org.jetbrains.anko.centerInParent
 import org.jetbrains.anko.imageView
 import org.jetbrains.anko.relativeLayout
+import tw.geothings.rekotlin.StoreSubscriber
 
 /**
  * Created by pham on 2017/9/19.
  * this fragment defines Google Map interaction with user
  */
 
-class MapBoxMapFragment : Fragment(), OnMapReadyCallback {
+class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<CameraState> {
 
     private val mapView by lazy { MapView(activity, MapFragmentUtils.resolveArgs(activity, arguments)) }
+    private lateinit var map: MapboxMap
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,13 +93,9 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback {
     // endregion
 
     override fun onMapReady(map: MapboxMap) {
-
-        val (lat, lon, zoom) = mainStore.state.cameraState
-        map.animateCamera {
-            CameraPosition.Builder()
-                    .target(LatLng(lat, lon))
-                    .zoom(zoom.toDouble())
-                    .build()
+        this.map = map
+        mainStore.subscribe(this) { subscription ->
+            subscription.select { it.cameraState }.only { _, newState -> newState.moveMap }
         }
 
         map.setOnCameraChangeListener {
@@ -104,6 +104,16 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback {
                     position.target.latitude,
                     position.target.longitude,
                     position.zoom.toFloat()))
+        }
+    }
+
+    override fun newState(state: CameraState) {
+        val (lat, lon, zoom) = state
+        map.animateCamera {
+            CameraPosition.Builder()
+                    .target(LatLng(lat, lon))
+                    .zoom(zoom.toDouble())
+                    .build()
         }
     }
 }
