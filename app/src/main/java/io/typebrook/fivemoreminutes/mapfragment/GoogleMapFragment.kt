@@ -12,6 +12,7 @@ import com.google.android.gms.maps.model.LatLng
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraPositionChange
+import io.typebrook.fivemoreminutes.redux.CameraState
 import org.jetbrains.anko.UI
 import org.jetbrains.anko.centerInParent
 import org.jetbrains.anko.imageView
@@ -47,10 +48,11 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
 
         map.setOnCameraMoveListener {
             val position = map.cameraPosition
-            mainStore.dispatch(CameraPositionChange(
+            mainStore.dispatch(CameraPositionChange(CameraState(
                     position.target.latitude,
                     position.target.longitude,
-                    position.zoom))
+                    position.zoom,
+                    false)))
         }
 
         map.uiSettings.apply {

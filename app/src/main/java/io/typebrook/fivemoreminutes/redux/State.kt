@@ -7,8 +7,9 @@ import tw.geothings.rekotlin.StateType
  */
 data class State(
         val cameraState: CameraState = CameraState(),
-        val previousCameraState: List<CameraState> = mutableListOf(),
-        val cameraStatePos: Int = 1
+        val previousCameraStates: List<CameraState> = mutableListOf(CameraState()),
+        val cameraStatePos: Int = 0,
+        val saveState: Boolean = true
 ) : StateType
 
 data class CameraState(

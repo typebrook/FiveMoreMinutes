@@ -7,6 +7,6 @@ import tw.geothings.rekotlin.Action
  * Created by pham on 2017/9/20.
  */
 
-data class CameraPositionChange(val lat: Double, val lon: Double, val zoom: Float) : Action
-data class CameraPositionSave(val lat: Double, val lon: Double, val zoom: Float) : Action
+data class CameraPositionChange(val cameraState: CameraState) : Action
+data class CameraPositionSave(val cameraState: CameraState) : Action
 class CameraPositionReturn : Action

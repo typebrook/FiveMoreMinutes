@@ -91,6 +91,12 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Camera
         super.onDestroyView()
         mapView.onDestroy()
     }
+
+    override fun onDetach() {
+        super.onDetach()
+        mainStore.unsubscribe(this)
+    }
+
     // endregion
 
     override fun onMapReady(map: MapboxMap) {
@@ -101,19 +107,19 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Camera
 
         map.setOnCameraMoveListener {
             val position = map.cameraPosition
-            mainStore.dispatch(CameraPositionChange(
+            mainStore.dispatch(CameraPositionChange(CameraState(
                     position.target.latitude,
                     position.target.longitude,
-                    position.zoom.toFloat()))
+                    position.zoom.toFloat(),
+                    false)))
         }
 
         map.setOnCameraIdleListener {
             val position = map.cameraPosition
-            Log.d("state", "camera idle")
-            mainStore.dispatch(CameraPositionSave(
+            mainStore.dispatch(CameraPositionSave(CameraState(
                     position.target.latitude,
                     position.target.longitude,
-                    position.zoom.toFloat()))
+                    position.zoom.toFloat())))
         }
     }
 
