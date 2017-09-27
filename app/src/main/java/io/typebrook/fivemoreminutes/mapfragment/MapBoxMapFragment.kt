@@ -16,6 +16,7 @@ import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraPositionChange
+import io.typebrook.fivemoreminutes.redux.CameraPositionSave
 import io.typebrook.fivemoreminutes.redux.CameraState
 import org.jetbrains.anko.UI
 import org.jetbrains.anko.centerInParent
@@ -98,9 +99,18 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Camera
             subscription.select { it.cameraState }.only { _, newState -> newState.moveMap }
         }
 
-        map.setOnCameraChangeListener {
+        map.setOnCameraMoveListener {
             val position = map.cameraPosition
             mainStore.dispatch(CameraPositionChange(
+                    position.target.latitude,
+                    position.target.longitude,
+                    position.zoom.toFloat()))
+        }
+
+        map.setOnCameraIdleListener {
+            val position = map.cameraPosition
+            Log.d("state", "camera idle")
+            mainStore.dispatch(CameraPositionSave(
                     position.target.latitude,
                     position.target.longitude,
                     position.zoom.toFloat()))

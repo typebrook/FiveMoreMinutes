@@ -8,3 +8,5 @@ import tw.geothings.rekotlin.Action
  */
 
 data class CameraPositionChange(val lat: Double, val lon: Double, val zoom: Float) : Action
+data class CameraPositionSave(val lat: Double, val lon: Double, val zoom: Float) : Action
+class CameraPositionReturn : Action
