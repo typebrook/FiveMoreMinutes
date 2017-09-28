@@ -29,7 +29,7 @@ import tw.geothings.rekotlin.StoreSubscriber
  * this fragment defines Google Map interaction with user
  */
 
-class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<CameraState> {
+class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
 
     private val mapView by lazy { MapView(activity, MapFragmentUtils.resolveArgs(activity, arguments)) }
     private lateinit var map: MapboxMap
@@ -102,7 +102,7 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Camera
     override fun onMapReady(map: MapboxMap) {
         this.map = map
         mainStore.subscribe(this) { subscription ->
-            subscription.select { it.destinationTarget }.skipRepeats()
+            subscription.select { it.cameraStatePos }.only { oldState, newState -> newState < oldState }
         }
 
         map.setOnCameraMoveListener {
@@ -123,13 +123,13 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Camera
         }
     }
 
-    override fun newState(state: CameraState) {
-        val (lat, lon, zoom) = state
+    override fun newState(state: Int) {
+        val (lat, lon, zoom) = mainStore.state.previousCameraStates[state]
         map.animateCamera({
             CameraPosition.Builder()
                     .target(LatLng(lat, lon))
                     .zoom(zoom.toDouble())
                     .build()
-        }, 400)
+        }, 600)
     }
 }

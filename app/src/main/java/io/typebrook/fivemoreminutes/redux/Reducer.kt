@@ -17,8 +17,8 @@ fun reducer(action: Action, oldState: State?): State {
         }
 
         is CameraPositionSave -> {
-            if (action.cameraState == state.previousCameraStates[state.cameraStatePos]) return state
             val cameraStateStack = state.previousCameraStates.subList(0, state.cameraStatePos + 1)
+            if (!state.cameraSave || cameraStateStack.last() == action.cameraState) return state
             Log.d("states", "---------->saved ${state.cameraStatePos + 1}")
             state.copy(previousCameraStates = cameraStateStack + action.cameraState,
                     cameraStatePos = state.cameraStatePos + 1)
@@ -27,10 +27,11 @@ fun reducer(action: Action, oldState: State?): State {
         is CameraPositionBackward -> {
             if (state.cameraStatePos == 0) return state
             Log.d("states", "back to ${state.cameraStatePos - 1}")
-            state.copy(
-                    cameraStatePos = state.cameraStatePos - 1,
-                    destinationTarget = state.previousCameraStates[state.cameraStatePos - 1]
-            )
+            state.copy(cameraStatePos = state.cameraStatePos - 1, cameraSave = false)
+        }
+
+        is GrantCameraSave -> {
+            state.copy(cameraSave = true)
         }
 
         else -> state

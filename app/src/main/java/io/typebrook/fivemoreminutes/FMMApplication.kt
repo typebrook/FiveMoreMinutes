@@ -1,8 +1,10 @@
 package io.typebrook.fivemoreminutes
 
 import android.app.Application
+import io.typebrook.fivemoreminutes.redux.MyMiddleware
 import io.typebrook.fivemoreminutes.redux.State
 import io.typebrook.fivemoreminutes.redux.reducer
+import tw.geothings.rekotlin.Middleware
 import tw.geothings.rekotlin.Store
 
 /**
@@ -11,11 +13,8 @@ import tw.geothings.rekotlin.Store
 
 val mainStore = Store(
         reducer = ::reducer,
-        state = State()
+        state = State(),
+        middleware = listOf(MyMiddleware()::handle)
 )
 
-class FMMApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-    }
-}
+class FMMApplication : Application()

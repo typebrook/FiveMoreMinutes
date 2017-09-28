@@ -9,7 +9,7 @@ data class State(
         val currentTarget: CameraState = CameraState(),
         val previousCameraStates: List<CameraState> = mutableListOf(CameraState()),
         val cameraStatePos: Int = 0,
-        val destinationTarget: CameraState = CameraState()
+        val cameraSave:Boolean = true
 ) : StateType
 
 data class CameraState(
