@@ -9,4 +9,4 @@ import tw.geothings.rekotlin.Action
 
 data class CameraPositionChange(val cameraState: CameraState) : Action
 data class CameraPositionSave(val cameraState: CameraState) : Action
-class CameraPositionReturn : Action
+class CameraPositionBackward : Action

@@ -1,5 +1,6 @@
 package io.typebrook.fivemoreminutes.redux
 
+import android.util.Log
 import tw.geothings.rekotlin.Action
 
 /**
@@ -9,6 +10,7 @@ import tw.geothings.rekotlin.Action
 fun reducer(action: Action, oldState: State?): State {
 
     val state = oldState ?: State()
+    Log.d("states", "action ${action.javaClass.simpleName}")
 
     return when (action) {
         is CameraPositionChange -> {
@@ -17,12 +19,12 @@ fun reducer(action: Action, oldState: State?): State {
 
         is CameraPositionSave -> {
             if (!state.saveState) return state.copy(saveState = true)
-            val CameraStateStack = state.previousCameraStates.subList(0, state.cameraStatePos + 1)
-            state.copy(previousCameraStates = CameraStateStack + action.cameraState,
+            val cameraStateStack = state.previousCameraStates.subList(0, state.cameraStatePos + 1)
+            state.copy(previousCameraStates = cameraStateStack + action.cameraState,
                     cameraStatePos = state.cameraStatePos + 1)
         }
 
-        is CameraPositionReturn -> {
+        is CameraPositionBackward -> {
             if (state.cameraStatePos == 0) return state
             state.copy(cameraState = state.previousCameraStates[state.cameraStatePos - 1],
                     cameraStatePos = state.cameraStatePos - 1,
