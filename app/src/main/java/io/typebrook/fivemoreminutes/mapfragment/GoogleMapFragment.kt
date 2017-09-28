@@ -43,7 +43,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
 
     override fun onMapReady(map: GoogleMap) {
 
-        val (lat, lon, zoom) = mainStore.state.cameraState
+        val (lat, lon, zoom) = mainStore.state.currentTarget
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom))
 
         map.setOnCameraMoveListener {
@@ -51,8 +51,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback {
             mainStore.dispatch(CameraPositionChange(CameraState(
                     position.target.latitude,
                     position.target.longitude,
-                    position.zoom,
-                    false)))
+                    position.zoom)))
         }
 
         map.uiSettings.apply {

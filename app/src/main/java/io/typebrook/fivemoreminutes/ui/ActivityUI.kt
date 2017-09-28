@@ -2,11 +2,8 @@ package io.typebrook.fivemoreminutes.ui
 
 import android.graphics.Color
 import android.support.design.widget.Snackbar
-import android.support.v4.view.GravityCompat
-import android.view.Gravity
 import android.widget.TextView
 import io.typebrook.fivemoreminutes.MainActivity
-import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraState
 import org.jetbrains.anko.*
@@ -55,7 +52,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         }
     }.apply {
         mainStore.subscribe(this@ActivityUI) { subscription ->
-            subscription.select { it.cameraState }.skipRepeats()
+            subscription.select { it.currentTarget }.skipRepeats()
         }
     }
 

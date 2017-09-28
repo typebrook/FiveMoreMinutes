@@ -102,7 +102,7 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Camera
     override fun onMapReady(map: MapboxMap) {
         this.map = map
         mainStore.subscribe(this) { subscription ->
-            subscription.select { it.cameraState }.only { _, newState -> newState.moveMap }
+            subscription.select { it.destinationTarget }.skipRepeats()
         }
 
         map.setOnCameraMoveListener {
@@ -110,12 +110,12 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Camera
             mainStore.dispatch(CameraPositionChange(CameraState(
                     position.target.latitude,
                     position.target.longitude,
-                    position.zoom.toFloat(),
-                    false)))
+                    position.zoom.toFloat())))
         }
 
         map.setOnCameraIdleListener {
             val position = map.cameraPosition
+            Log.d("states", "====>on Idle")
             mainStore.dispatch(CameraPositionSave(CameraState(
                     position.target.latitude,
                     position.target.longitude,
@@ -125,11 +125,11 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Camera
 
     override fun newState(state: CameraState) {
         val (lat, lon, zoom) = state
-        map.animateCamera {
+        map.animateCamera({
             CameraPosition.Builder()
                     .target(LatLng(lat, lon))
                     .zoom(zoom.toDouble())
                     .build()
-        }
+        }, 400)
     }
 }

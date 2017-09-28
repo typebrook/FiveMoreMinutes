@@ -10,25 +10,27 @@ import tw.geothings.rekotlin.Action
 fun reducer(action: Action, oldState: State?): State {
 
     val state = oldState ?: State()
-    Log.d("states", "action ${action.javaClass.simpleName}")
 
     return when (action) {
         is CameraPositionChange -> {
-            state.copy(cameraState = action.cameraState)
+            state.copy(currentTarget = action.cameraState)
         }
 
         is CameraPositionSave -> {
-            if (!state.saveState) return state.copy(saveState = true)
+            if (action.cameraState == state.previousCameraStates[state.cameraStatePos]) return state
             val cameraStateStack = state.previousCameraStates.subList(0, state.cameraStatePos + 1)
+            Log.d("states", "---------->saved ${state.cameraStatePos + 1}")
             state.copy(previousCameraStates = cameraStateStack + action.cameraState,
                     cameraStatePos = state.cameraStatePos + 1)
         }
 
         is CameraPositionBackward -> {
             if (state.cameraStatePos == 0) return state
-            state.copy(cameraState = state.previousCameraStates[state.cameraStatePos - 1],
+            Log.d("states", "back to ${state.cameraStatePos - 1}")
+            state.copy(
                     cameraStatePos = state.cameraStatePos - 1,
-                    saveState = false)
+                    destinationTarget = state.previousCameraStates[state.cameraStatePos - 1]
+            )
         }
 
         else -> state

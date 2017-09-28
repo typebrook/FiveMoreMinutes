@@ -23,7 +23,7 @@ class MainActivity : Activity() {
     override fun onBackPressed() {
         mainStore.dispatch(CameraPositionBackward())
         contentView?.let {
-            snackbar(it, "press leave to exit", "leave", { super.onBackPressed() })
+            snackbar(it, mainStore.state.cameraStatePos.toString(), "leave", { super.onBackPressed() })
         }
     }
 }
