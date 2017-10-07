@@ -2,7 +2,7 @@ package io.typebrook.fivemoreminutes
 
 import android.app.Activity
 import android.os.Bundle
-import io.typebrook.fivemoreminutes.mapfragment.MapBoxMapFragment
+import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
 import io.typebrook.fivemoreminutes.redux.CameraPositionBackward
 import io.typebrook.fivemoreminutes.ui.ActivityUI
 import org.jetbrains.anko.contentView
@@ -16,7 +16,7 @@ class MainActivity : Activity() {
         ActivityUI().setContentView(this)
 
         fragmentManager.beginTransaction()
-                .add(ActivityUI.ID_CONTAINER, MapBoxMapFragment(), "map fragment")
+                .add(ActivityUI.ID_MAP_CONTAINER, GoogleMapFragment())
                 .commit()
     }
 

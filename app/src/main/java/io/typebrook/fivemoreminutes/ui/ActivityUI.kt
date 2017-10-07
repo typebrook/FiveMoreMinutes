@@ -1,14 +1,11 @@
 package io.typebrook.fivemoreminutes.ui
 
 import android.graphics.Color
-import android.support.design.widget.Snackbar
 import android.widget.TextView
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraState
 import org.jetbrains.anko.*
-import org.jetbrains.anko.design.floatingActionButton
-import org.jetbrains.anko.sdk25.coroutines.onClick
 import org.osgeo.proj4j.CoordinateTransform
 import tw.geothings.rekotlin.StoreSubscriber
 
@@ -21,7 +18,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     private var projTransform: CoordinateTransform? = null
 
     companion object {
-        val ID_CONTAINER = 1000
+        val ID_MAP_CONTAINER = 1000
     }
 
     override fun createView(ui: AnkoContext<MainActivity>) = with(ui) {
@@ -29,7 +26,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         relativeLayout {
 
             verticalLayout {
-                id = ID_CONTAINER
+                id = ID_MAP_CONTAINER
             }
 
             coordinate = textView {
@@ -39,15 +36,6 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 alignParentBottom()
                 centerHorizontally()
                 bottomMargin = dip(10)
-            }
-
-            floatingActionButton{
-                imageResource = android.R.drawable.ic_lock_idle_lock
-                onClick { Snackbar.make(this@floatingActionButton, "wow", 3000).show() }
-            }.lparams {
-                margin = dip(5)
-                alignParentBottom()
-                alignParentRight()
             }
         }
     }.apply {
