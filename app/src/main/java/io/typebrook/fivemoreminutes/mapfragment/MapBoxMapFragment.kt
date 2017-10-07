@@ -7,7 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.camera.CameraPosition
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
@@ -125,11 +125,6 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
 
     override fun newState(state: Int) {
         val (lat, lon, zoom) = mainStore.state.previousCameraStates[state]
-        map.animateCamera({
-            CameraPosition.Builder()
-                    .target(LatLng(lat, lon))
-                    .zoom(zoom.toDouble())
-                    .build()
-        }, 600)
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble()), 600)
     }
 }
