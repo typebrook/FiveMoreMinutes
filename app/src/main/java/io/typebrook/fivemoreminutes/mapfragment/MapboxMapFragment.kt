@@ -2,7 +2,6 @@ package io.typebrook.fivemoreminutes.mapfragment
 
 import android.app.Fragment
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,16 +11,16 @@ import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
+import com.mapbox.mapboxsdk.style.layers.RasterLayer
+import com.mapbox.mapboxsdk.style.sources.RasterSource
+import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.redux.CameraPositionChange
 import io.typebrook.fivemoreminutes.redux.CameraPositionSave
 import io.typebrook.fivemoreminutes.redux.CameraState
-import org.jetbrains.anko.UI
-import org.jetbrains.anko.centerInParent
-import org.jetbrains.anko.imageView
-import org.jetbrains.anko.relativeLayout
+import org.jetbrains.anko.*
 import tw.geothings.rekotlin.StoreSubscriber
 
 /**
@@ -29,10 +28,12 @@ import tw.geothings.rekotlin.StoreSubscriber
  * this fragment defines Google Map interaction with user
  */
 
-class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
+class MapboxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
 
     private val mapView by lazy { MapView(activity, MapFragmentUtils.resolveArgs(activity, arguments)) }
     private lateinit var map: MapboxMap
+
+    private val tileListener = TileListener()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,8 +94,10 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
     }
 
     override fun onDetach() {
+        toast("detach ${this::class.java.simpleName}")
         super.onDetach()
         mainStore.unsubscribe(this)
+        mainStore.unsubscribe(tileListener)
     }
 
     // endregion
@@ -102,29 +105,65 @@ class MapBoxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
     override fun onMapReady(map: MapboxMap) {
         this.map = map
         mainStore.subscribe(this) { subscription ->
-            subscription.select { it.cameraStatePos }.only { oldState, newState -> newState < oldState }
+            subscription.select { it.cameraStatePos }
+                    .skipRepeats()
+                    .only { oldState, newState -> newState < oldState }
         }
+
+        mainStore.subscribe(tileListener) { subscription ->
+            subscription.select { it.tileUrl }.skipRepeats()
+        }
+
+        val (lat, lon, zoom) = mainStore.state.currentTarget
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET))
 
         map.setOnCameraMoveListener {
             val position = map.cameraPosition
             mainStore.dispatch(CameraPositionChange(CameraState(
                     position.target.latitude,
                     position.target.longitude,
-                    position.zoom.toFloat())))
+                    position.zoom.toFloat() + ZOOMOFFSET)))
         }
 
         map.setOnCameraIdleListener {
             val position = map.cameraPosition
-            Log.d("states", "====>on Idle")
             mainStore.dispatch(CameraPositionSave(CameraState(
                     position.target.latitude,
                     position.target.longitude,
-                    position.zoom.toFloat())))
+                    position.zoom.toFloat() + 1)))
+        }
+
+        map.setOnMapLongClickListener {
+            toast("z=${map.cameraPosition.zoom}")
         }
     }
 
     override fun newState(state: Int) {
         val (lat, lon, zoom) = mainStore.state.previousCameraStates[state]
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble()), 600)
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET), 600)
+    }
+
+    inner class TileListener : StoreSubscriber<String?> {
+        override fun newState(state: String?) {
+            map.removeLayer(ID_WEBLAYER)
+            map.removeSource(ID_WEBSOURCE)
+            if (state == null) {
+                return
+            }
+
+            val webMapSource = RasterSource(ID_WEBSOURCE, TileSet(null, state), 256)
+            map.addSource(webMapSource)
+
+            // Add the web map source to the map.
+            val webMapLayer = RasterLayer(ID_WEBLAYER, "web-map-source")
+            map.addLayer(webMapLayer)
+        }
+    }
+
+    companion object {
+        val ID_WEBSOURCE = "web-map-source"
+        val ID_WEBLAYER = "web-map-layer"
+
+        val ZOOMOFFSET = 1
     }
 }

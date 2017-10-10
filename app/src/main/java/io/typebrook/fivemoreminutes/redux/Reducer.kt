@@ -34,6 +34,14 @@ fun reducer(action: Action, oldState: State?): State {
             state.copy(cameraSave = true)
         }
 
+        is SetDisplay -> {
+            state.copy(display = action.display)
+        }
+
+        is SetTile -> {
+            state.copy(tileUrl = action.tileUrl)
+        }
+
         else -> state
     }
 }

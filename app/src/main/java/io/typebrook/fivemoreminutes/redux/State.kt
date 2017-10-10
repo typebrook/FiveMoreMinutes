@@ -1,5 +1,6 @@
 package io.typebrook.fivemoreminutes.redux
 
+import io.typebrook.fivemoreminutes.mapfragment.Display
 import tw.geothings.rekotlin.StateType
 
 /**
@@ -9,7 +10,11 @@ data class State(
         val currentTarget: CameraState = CameraState(),
         val previousCameraStates: List<CameraState> = mutableListOf(CameraState()),
         val cameraStatePos: Int = 0,
-        val cameraSave:Boolean = true
+        val cameraSave: Boolean = true,
+
+        val display: Display = Display.Google,
+
+        val tileUrl: String? = null
 ) : StateType
 
 data class CameraState(
