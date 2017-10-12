@@ -16,6 +16,9 @@ import io.typebrook.fivemoreminutes.redux.CameraState
 import org.jetbrains.anko.*
 import tw.geothings.rekotlin.StoreSubscriber
 import java.net.URL
+import java.lang.reflect.AccessibleObject.setAccessible
+
+
 
 /**
  * Created by pham on 2017/9/19.
@@ -84,10 +87,6 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, StoreSubscriber<Int
 
         map.uiSettings.apply {
             isZoomControlsEnabled = true
-        }
-
-        map.setOnMapLongClickListener {
-            toast("z=${map.cameraPosition.zoom}")
         }
     }
 

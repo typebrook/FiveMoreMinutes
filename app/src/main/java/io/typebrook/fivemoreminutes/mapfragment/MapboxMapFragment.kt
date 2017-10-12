@@ -132,10 +132,6 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
                     position.target.longitude,
                     position.zoom.toFloat() + 1)))
         }
-
-        map.setOnMapLongClickListener {
-            toast("z=${map.cameraPosition.zoom}")
-        }
     }
 
     override fun newState(state: Int) {
