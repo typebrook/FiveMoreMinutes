@@ -2,6 +2,7 @@ package io.typebrook.fivemoreminutes.ui
 
 import android.graphics.Color
 import android.view.ViewManager
+import android.widget.FrameLayout
 import android.widget.TextView
 import com.nightonke.boommenu.BoomButtons.*
 import io.typebrook.fivemoreminutes.MainActivity
@@ -18,6 +19,7 @@ import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mapfragment.Display
 import io.typebrook.fivemoreminutes.redux.SetDisplay
 import io.typebrook.fivemoreminutes.redux.SetTile
+import kotlinx.coroutines.experimental.android.UI
 import tw.geothings.rekotlin.Action
 
 
@@ -29,13 +31,13 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     private var coordinate: TextView? = null
     private var projTransform: CoordinateTransform? = null
 
+    lateinit var mapContainer: FrameLayout
+
     override fun createView(ui: AnkoContext<MainActivity>) = with(ui) {
 
         relativeLayout {
 
-            frameLayout() {
-                id = ID_MAP_CONTAINER
-            }
+            mapContainer = frameLayout { id = ID_MAP_CONTAINER }
 
             coordinate = textView {
                 padding = dip(5)

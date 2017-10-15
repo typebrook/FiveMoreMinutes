@@ -1,30 +1,51 @@
 package io.typebrook.fivemoreminutes.mapfragment
 
 import android.app.Fragment
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import org.jetbrains.anko.UI
-import org.jetbrains.anko.frameLayout
-import org.jetbrains.anko.verticalLayout
+import org.jetbrains.anko.*
 
 /**
  * Created by pham on 2017/10/9.
  */
-class DualMapFragment : Fragment() {
+class DualMapFragment() : Fragment() {
+
+    private var firstMap: Fragment? = null
+    private var secondMap: Fragment? = null
+
+    constructor(map1: Fragment, map2: Fragment) : this() {
+        this.firstMap = map1
+        this.secondMap = map2
+    }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return UI {
-            verticalLayout {
-                frameLayout { id = ID_MAP1 }
-                frameLayout { id = ID_MAP2 }
+            when (configuration.orientation) {
+                Configuration.ORIENTATION_LANDSCAPE -> linearLayout {
+                    frameLayout { id = ID_FIRST_MAP }.lparams(weight = 1f)
+                    frameLayout { id = ID_SECOND_MAP }.lparams(weight = 1f)
+                }
+                else -> verticalLayout {
+                    frameLayout { id = ID_FIRST_MAP }.lparams(weight = 1f)
+                    frameLayout { id = ID_SECOND_MAP }.lparams(weight = 1f)
+                }
             }
         }.view
     }
 
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        childFragmentManager.beginTransaction()
+                .apply { firstMap?.let { replace(ID_FIRST_MAP, it) } }
+                .apply { secondMap?.let { replace(ID_SECOND_MAP, it) } }
+                .commit()
+    }
+
     companion object {
-        val ID_MAP1 = 1001
-        val ID_MAP2 = 1002
+        private val ID_FIRST_MAP = 3001
+        private val ID_SECOND_MAP = 3002
     }
 }

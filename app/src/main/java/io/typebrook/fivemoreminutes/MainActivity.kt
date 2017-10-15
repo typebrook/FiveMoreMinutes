@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Fragment
 import android.os.Bundle
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import io.typebrook.fivemoreminutes.mapfragment.Display
 import io.typebrook.fivemoreminutes.mapfragment.DualMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
@@ -17,9 +16,11 @@ import tw.geothings.rekotlin.StoreSubscriber
 
 class MainActivity : Activity(), StoreSubscriber<Display> {
 
+    private lateinit var ui: ActivityUI
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ActivityUI().setContentView(this)
+        ui = ActivityUI().apply { setContentView(this@MainActivity) }
 
         mainStore.subscribe(this) { subscription -> subscription.select { it.display }.skipRepeats() }
     }
@@ -31,33 +32,29 @@ class MainActivity : Activity(), StoreSubscriber<Display> {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        mainStore.unsubscribe(this)
+    }
+
     override fun newState(state: Display) {
-//        val container = contentView?.find<FrameLayout>(ActivityUI.ID_MAP_CONTAINER)
-//        container?.removeAllViews()
+        val mapContainer = ui.mapContainer
 
         when (state) {
             Display.Google -> {
                 fragmentManager.beginTransaction()
-                        .replace(ActivityUI.ID_MAP_CONTAINER, GoogleMapFragment())
+                        .replace(mapContainer.id, GoogleMapFragment())
                         .commit()
             }
             Display.MapBox -> {
                 fragmentManager.beginTransaction()
-                        .replace(ActivityUI.ID_MAP_CONTAINER, MapboxMapFragment())
+                        .replace(mapContainer.id, MapboxMapFragment())
                         .commit()
             }
             Display.Dual -> {
-//                container?.addView(UI {
-//                    verticalLayout {
-//                        frameLayout { id = 1001 }.lparams { weight = 1f }
-//                        frameLayout { id = 1002 }.lparams { weight = 1f }
-//                    }
-//                }.view)
-//
-//                fragmentManager.beginTransaction()
-//                        .replace(1001, GoogleMapFragment(), "map_fragment_1")
-//                        .replace(1002, MapboxMapFragment(), "map_fragment_2")
-//                        .commit()
+                fragmentManager.beginTransaction()
+                        .replace(mapContainer.id, DualMapFragment(GoogleMapFragment(), MapboxMapFragment()))
+                        .commit()
             }
         }
     }
