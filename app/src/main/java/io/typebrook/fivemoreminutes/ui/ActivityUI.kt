@@ -59,7 +59,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                         .rotateText(false)
                         .listener {
                             selector("選擇MapView", displayList.map { it.first }) { _, index ->
-                                mainStore.dispatch(SetDisplay(displayList[index].second))
+                                val selectedDisplay = displayList[index].second
+                                mainStore.dispatch(SetDisplay(selectedDisplay))
                             }
                         })
                 addBuilder(TextOutsideCircleButton.Builder()
@@ -67,7 +68,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                         .rotateText(false)
                         .listener {
                             selector("線上地圖", tileList.map { it.first }) { _, index ->
-                                mainStore.dispatch(SetTile(tileList[index].second))
+                                val selectedTile = tileList[index].second
+                                mainStore.dispatch(SetTile(selectedTile))
                             }
                         })
             }.lparams {

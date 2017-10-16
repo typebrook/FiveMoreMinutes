@@ -28,12 +28,13 @@ import tw.geothings.rekotlin.StoreSubscriber
  * this fragment defines Google Map interaction with user
  */
 
-class MapboxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
+class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
 
     private val mapView by lazy { MapView(activity, MapFragmentUtils.resolveArgs(activity, arguments)) }
     private lateinit var map: MapboxMap
 
-    private val tileListener = TileListener()
+    private val cameraListener = CameraListener(this)
+    private val tileListener = TileListener(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,7 +97,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
     override fun onDetach() {
         toast("detach ${this::class.java.simpleName}")
         super.onDetach()
-        mainStore.unsubscribe(this)
+        mainStore.unsubscribe(cameraListener)
         mainStore.unsubscribe(tileListener)
     }
 
@@ -104,7 +105,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
 
     override fun onMapReady(map: MapboxMap) {
         this.map = map
-        mainStore.subscribe(this) { subscription ->
+        mainStore.subscribe(cameraListener) { subscription ->
             subscription.select { it.cameraStatePos }
                     .skipRepeats()
                     .only { oldState, newState -> newState < oldState }
@@ -134,26 +135,23 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, StoreSubscriber<Int> {
         }
     }
 
-    override fun newState(state: Int) {
-        val (lat, lon, zoom) = mainStore.state.previousCameraStates[state]
+    override fun animateCamera(lat: Double, lon: Double, zoom: Float) {
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET), 600)
     }
 
-    inner class TileListener : StoreSubscriber<String?> {
-        override fun newState(state: String?) {
-            map.removeLayer(ID_WEBLAYER)
-            map.removeSource(ID_WEBSOURCE)
-            if (state == null) {
-                return
-            }
-
-            val webMapSource = RasterSource(ID_WEBSOURCE, TileSet(null, state), 256)
-            map.addSource(webMapSource)
-
-            // Add the web map source to the map.
-            val webMapLayer = RasterLayer(ID_WEBLAYER, "web-map-source")
-            map.addLayer(webMapLayer)
+    override fun addTile(tileUrl: String?) {
+        map.removeLayer(ID_WEBLAYER)
+        map.removeSource(ID_WEBSOURCE)
+        if (tileUrl == null) {
+            return
         }
+
+        val webMapSource = RasterSource(ID_WEBSOURCE, TileSet(null, tileUrl), 256)
+        map.addSource(webMapSource)
+
+        // Add the web map source to the map.
+        val webMapLayer = RasterLayer(ID_WEBLAYER, ID_WEBSOURCE)
+        map.addLayer(webMapLayer)
     }
 
     companion object {

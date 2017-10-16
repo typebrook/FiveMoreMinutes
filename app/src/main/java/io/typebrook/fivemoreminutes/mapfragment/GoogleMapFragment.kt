@@ -25,11 +25,12 @@ import java.lang.reflect.AccessibleObject.setAccessible
  * this fragment defines Google Map interaction with user
  */
 
-class GoogleMapFragment : MapFragment(), OnMapReadyCallback, StoreSubscriber<Int> {
+class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
 
     private lateinit var map: GoogleMap
 
-    private val tileListener = TileListener()
+    private val cameraListener = CameraListener(this)
+    private val tileListener = TileListener(this)
     private var tileOverlay: TileOverlay? = null
 
     init {
@@ -50,13 +51,13 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, StoreSubscriber<Int
     override fun onDetach() {
         toast("detach ${this::class.java.simpleName}")
         super.onDetach()
-        mainStore.unsubscribe(this)
+        mainStore.unsubscribe(cameraListener)
         mainStore.unsubscribe(tileListener)
     }
 
     override fun onMapReady(map: GoogleMap) {
         this.map = map
-        mainStore.subscribe(this) { subscription ->
+        mainStore.subscribe(cameraListener) { subscription ->
             subscription.select { it.cameraStatePos }
                     .skipRepeats()
                     .only { oldState, newState -> newState < oldState }
@@ -90,30 +91,28 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, StoreSubscriber<Int
         }
     }
 
-    override fun newState(state: Int) {
-        val (lat, lon, zoom) = mainStore.state.previousCameraStates[state]
+
+    override fun animateCamera(lat: Double, lon: Double, zoom: Float) {
+        toast("animate!")
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom), 600, null)
     }
 
-
-    inner class TileListener : StoreSubscriber<String?> {
-        override fun newState(state: String?) {
-            tileOverlay?.remove()
-            if (state == null) {
-                return
-            }
-
-            val tileProvider = object : UrlTileProvider(256, 256) {
-                override fun getTileUrl(x: Int, y: Int, z: Int): URL {
-                    val urlString = state
-                            .replace("{x}", x.toString())
-                            .replace("{y}", y.toString())
-                            .replace("{z}", z.toString())
-                    return URL(urlString)
-                }
-            }
-
-            tileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
+    override fun addTile(tileUrl: String?) {
+        tileOverlay?.remove()
+        if (tileUrl == null) {
+            return
         }
+
+        val tileProvider = object : UrlTileProvider(256, 256) {
+            override fun getTileUrl(x: Int, y: Int, z: Int): URL {
+                val urlString = tileUrl
+                        .replace("{x}", x.toString())
+                        .replace("{y}", y.toString())
+                        .replace("{z}", z.toString())
+                return URL(urlString)
+            }
+        }
+
+        tileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
     }
 }
