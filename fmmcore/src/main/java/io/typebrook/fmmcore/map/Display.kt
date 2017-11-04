@@ -1,4 +1,4 @@
-package io.typebrook.fivemoreminutes.mapfragment
+package io.typebrook.fmmcore.map
 
 /**
  * Created by pham on 2017/10/8.

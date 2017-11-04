@@ -1,4 +1,4 @@
-package io.typebrook.fivemoreminutes.redux
+package io.typebrook.fmmcore.redux
 
 import android.os.Handler
 import android.os.Looper

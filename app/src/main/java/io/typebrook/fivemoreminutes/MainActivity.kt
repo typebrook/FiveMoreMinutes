@@ -1,17 +1,16 @@
 package io.typebrook.fivemoreminutes
 
 import android.app.Activity
-import android.app.Fragment
 import android.os.Bundle
-import android.widget.FrameLayout
-import io.typebrook.fivemoreminutes.mapfragment.Display
 import io.typebrook.fivemoreminutes.mapfragment.DualMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.MapboxMapFragment
-import io.typebrook.fivemoreminutes.redux.CameraPositionBackward
 import io.typebrook.fivemoreminutes.ui.ActivityUI
-import org.jetbrains.anko.*
+import io.typebrook.fmmcore.map.Display
+import io.typebrook.fmmcore.redux.CameraPositionBackward
+import org.jetbrains.anko.contentView
 import org.jetbrains.anko.design.snackbar
+import org.jetbrains.anko.setContentView
 import tw.geothings.rekotlin.StoreSubscriber
 
 class MainActivity : Activity(), StoreSubscriber<Display> {
@@ -28,7 +27,7 @@ class MainActivity : Activity(), StoreSubscriber<Display> {
     override fun onBackPressed() {
         mainStore.dispatch(CameraPositionBackward())
         contentView?.let {
-            snackbar(it, mainStore.state.cameraStatePos.toString(), "leave", { super.onBackPressed() })
+            snackbar(it, mainStore.state.run { mapStates[currentMapNum].mapControl.cameraStatePos.toString() }, "leave", { super.onBackPressed() })
         }
     }
 

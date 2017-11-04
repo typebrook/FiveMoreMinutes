@@ -1,6 +1,7 @@
 package io.typebrook.fivemoreminutes.mapfragment
 
 import android.app.Fragment
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -17,11 +18,15 @@ import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fivemoreminutes.redux.CameraPositionChange
-import io.typebrook.fivemoreminutes.redux.CameraPositionSave
-import io.typebrook.fivemoreminutes.redux.CameraState
-import org.jetbrains.anko.*
-import tw.geothings.rekotlin.StoreSubscriber
+import io.typebrook.fmmcore.redux.AddMap
+import io.typebrook.fmmcore.redux.CameraState
+import io.typebrook.fmmcore.redux.RemoveMap
+import io.typebrook.fmmcore.redux.UpdateCameraTarget
+import io.typebrook.fmmcore.map.MapControl
+import org.jetbrains.anko.UI
+import org.jetbrains.anko.centerInParent
+import org.jetbrains.anko.imageView
+import org.jetbrains.anko.relativeLayout
 
 /**
  * Created by pham on 2017/9/19.
@@ -33,8 +38,11 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     private val mapView by lazy { MapView(activity, MapFragmentUtils.resolveArgs(activity, arguments)) }
     private lateinit var map: MapboxMap
 
-    private val cameraListener = CameraListener(this)
-    private val tileListener = TileListener(this)
+    override val cameraState: CameraState
+        get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom.toFloat() + ZOOMOFFSET) }
+
+    override var cameraQueue = listOf(mainStore.state.currentTarget)
+    override var cameraStatePos: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +70,11 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         super.onStart()
         mapView.onStart()
         mapView.getMapAsync(this)
+    }
+
+    override fun onAttach(context: Context?) {
+        super.onAttach(context)
+        mainStore.dispatch(AddMap(this))
     }
 
     override fun onResume() {
@@ -95,47 +108,35 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     }
 
     override fun onDetach() {
-        toast("detach ${this::class.java.simpleName}")
         super.onDetach()
-        mainStore.unsubscribe(cameraListener)
-        mainStore.unsubscribe(tileListener)
+        mainStore.dispatch(RemoveMap(this))
     }
 
     // endregion
 
     override fun onMapReady(map: MapboxMap) {
         this.map = map
-        mainStore.subscribe(cameraListener) { subscription ->
-            subscription.select { it.cameraStatePos }
-                    .skipRepeats()
-                    .only { oldState, newState -> newState < oldState }
-        }
 
-        mainStore.subscribe(tileListener) { subscription ->
-            subscription.select { it.tileUrl }.skipRepeats()
-        }
-
-        val (lat, lon, zoom) = mainStore.state.currentTarget
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET))
+        moveCamera(cameraQueue.last())
 
         map.setOnCameraMoveListener {
-            val position = map.cameraPosition
-            mainStore.dispatch(CameraPositionChange(CameraState(
-                    position.target.latitude,
-                    position.target.longitude,
-                    position.zoom.toFloat() + ZOOMOFFSET)))
+            mainStore.dispatch(UpdateCameraTarget(this, cameraState))
         }
 
         map.setOnCameraIdleListener {
-            val position = map.cameraPosition
-            mainStore.dispatch(CameraPositionSave(CameraState(
-                    position.target.latitude,
-                    position.target.longitude,
-                    position.zoom.toFloat() + 1)))
+            if (!mainStore.state.cameraSave) return@setOnCameraIdleListener
+            cameraStatePos += 1
+            cameraQueue = cameraQueue.take(cameraStatePos) + cameraState
         }
     }
 
-    override fun animateCamera(lat: Double, lon: Double, zoom: Float) {
+    override fun moveCamera(target: CameraState) {
+        val (lat, lon, zoom) = target
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET))
+    }
+
+    override fun animateCamera(target: CameraState) {
+        val (lat, lon, zoom) = target
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET), 600)
     }
 

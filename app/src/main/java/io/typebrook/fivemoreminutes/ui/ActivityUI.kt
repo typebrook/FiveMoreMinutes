@@ -4,23 +4,21 @@ import android.graphics.Color
 import android.view.ViewManager
 import android.widget.FrameLayout
 import android.widget.TextView
-import com.nightonke.boommenu.BoomButtons.*
-import io.typebrook.fivemoreminutes.MainActivity
-import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fivemoreminutes.redux.CameraState
-import org.jetbrains.anko.*
-import org.osgeo.proj4j.CoordinateTransform
-import tw.geothings.rekotlin.StoreSubscriber
+import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum
+import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton
 import com.nightonke.boommenu.BoomMenuButton
 import com.nightonke.boommenu.ButtonEnum
 import com.nightonke.boommenu.Piece.PiecePlaceEnum
+import io.typebrook.fivemoreminutes.MainActivity
+import io.typebrook.fivemoreminutes.mainStore
+import io.typebrook.fmmcore.map.Display
+import io.typebrook.fmmcore.redux.CameraState
+import io.typebrook.fmmcore.redux.SetDisplay
+import io.typebrook.fmmcore.redux.SetTile
+import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
-import io.typebrook.fivemoreminutes.R
-import io.typebrook.fivemoreminutes.mapfragment.Display
-import io.typebrook.fivemoreminutes.redux.SetDisplay
-import io.typebrook.fivemoreminutes.redux.SetTile
-import kotlinx.coroutines.experimental.android.UI
-import tw.geothings.rekotlin.Action
+import org.osgeo.proj4j.CoordinateTransform
+import tw.geothings.rekotlin.StoreSubscriber
 
 
 /**
@@ -42,6 +40,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             coordinate = textView {
                 padding = dip(5)
                 backgroundColor = Color.parseColor("#80FFFFFF")
+
             }.lparams(wrapContent) {
                 alignParentBottom()
                 centerHorizontally()

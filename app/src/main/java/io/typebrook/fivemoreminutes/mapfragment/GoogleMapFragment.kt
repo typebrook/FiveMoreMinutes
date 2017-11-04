@@ -1,23 +1,30 @@
 package io.typebrook.fivemoreminutes.mapfragment
 
+import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.google.android.gms.maps.*
-import com.google.android.gms.maps.model.*
-import com.mapbox.mapboxsdk.camera.CameraPosition
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapFragment
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.TileOverlay
+import com.google.android.gms.maps.model.TileOverlayOptions
+import com.google.android.gms.maps.model.UrlTileProvider
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fivemoreminutes.redux.CameraPositionChange
-import io.typebrook.fivemoreminutes.redux.CameraPositionSave
-import io.typebrook.fivemoreminutes.redux.CameraState
-import org.jetbrains.anko.*
-import tw.geothings.rekotlin.StoreSubscriber
+import io.typebrook.fmmcore.redux.AddMap
+import io.typebrook.fmmcore.redux.CameraState
+import io.typebrook.fmmcore.redux.RemoveMap
+import io.typebrook.fmmcore.redux.UpdateCameraTarget
+import io.typebrook.fmmcore.map.MapControl
+import org.jetbrains.anko.UI
+import org.jetbrains.anko.centerInParent
+import org.jetbrains.anko.imageView
+import org.jetbrains.anko.relativeLayout
 import java.net.URL
-import java.lang.reflect.AccessibleObject.setAccessible
-
 
 
 /**
@@ -29,13 +36,13 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
 
     private lateinit var map: GoogleMap
 
-    private val cameraListener = CameraListener(this)
-    private val tileListener = TileListener(this)
-    private var tileOverlay: TileOverlay? = null
+    override val cameraState: CameraState
+        get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom) }
 
-    init {
-        getMapAsync(this)
-    }
+    override var cameraQueue = listOf(mainStore.state.currentTarget)
+    override var cameraStatePos: Int = 0
+
+    private var tileOverlay: TileOverlay? = null
 
     override fun onCreateView(p0: LayoutInflater?, p1: ViewGroup?, p2: Bundle?): View {
         return UI {
@@ -48,42 +55,30 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
         }.view
     }
 
+    override fun onAttach(context: Context?) {
+        super.onAttach(context)
+        getMapAsync(this)
+        mainStore.dispatch(AddMap(this))
+    }
+
     override fun onDetach() {
-        toast("detach ${this::class.java.simpleName}")
         super.onDetach()
-        mainStore.unsubscribe(cameraListener)
-        mainStore.unsubscribe(tileListener)
+        mainStore.dispatch(RemoveMap(this))
     }
 
     override fun onMapReady(map: GoogleMap) {
         this.map = map
-        mainStore.subscribe(cameraListener) { subscription ->
-            subscription.select { it.cameraStatePos }
-                    .skipRepeats()
-                    .only { oldState, newState -> newState < oldState }
-        }
 
-        mainStore.subscribe(tileListener) { subscription ->
-            subscription.select { it.tileUrl }.skipRepeats()
-        }
-
-        val (lat, lon, zoom) = mainStore.state.currentTarget
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom))
+        moveCamera(cameraQueue.last())
 
         map.setOnCameraMoveListener {
-            val position = map.cameraPosition
-            mainStore.dispatch(CameraPositionChange(CameraState(
-                    position.target.latitude,
-                    position.target.longitude,
-                    position.zoom)))
+            mainStore.dispatch(UpdateCameraTarget(this, cameraState))
         }
 
         map.setOnCameraIdleListener {
-            val position = map.cameraPosition
-            mainStore.dispatch(CameraPositionSave(CameraState(
-                    position.target.latitude,
-                    position.target.longitude,
-                    position.zoom)))
+            if (!mainStore.state.cameraSave) return@setOnCameraIdleListener
+            cameraStatePos += 1
+            cameraQueue = cameraQueue.take(cameraStatePos) + cameraState
         }
 
         map.uiSettings.apply {
@@ -91,9 +86,13 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
         }
     }
 
+    override fun moveCamera(target: CameraState) {
+        val (lat, lon, zoom) = target
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom))
+    }
 
-    override fun animateCamera(lat: Double, lon: Double, zoom: Float) {
-        toast("animate!")
+    override fun animateCamera(target: CameraState) {
+        val (lat, lon, zoom) = target
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom), 600, null)
     }
 
