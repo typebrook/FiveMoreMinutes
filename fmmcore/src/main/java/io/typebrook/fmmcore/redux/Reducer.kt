@@ -13,7 +13,7 @@ fun reducer(action: Action, oldState: State?): State {
     return when (action) {
         is AddMap -> state.copy(mapStates = state.mapStates + MapState(mapControl = action.map))
         is RemoveMap -> state.copy(mapStates = state.mapStates.filter { it.mapControl != action.map })
-        is SwitchMap -> state.copy(currentMapNum = (state.currentMapNum + 1) % state.mapStates.size )
+        is SwitchMap -> state.copy(currentMapNum = (state.currentMapNum + 1) % state.mapStates.size)
 
         is GrantCameraSave -> state.copy(cameraSave = true)
         is BlockCameraSave -> state.copy(cameraSave = false)
@@ -22,6 +22,10 @@ fun reducer(action: Action, oldState: State?): State {
 
         is SetDisplay -> {
             state.copy(display = action.display)
+        }
+
+        is SetProjection -> {
+            state.copy(coordSystem = action.coordSystem)
         }
 
         else -> state

@@ -1,7 +1,9 @@
 package io.typebrook.fmmcore.redux
 
-import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Display
+import io.typebrook.fmmcore.map.MapControl
+import io.typebrook.fmmcore.projection.CRS
+import io.typebrook.fmmcore.projection.WGS84_Degree
 import tw.geothings.rekotlin.StateType
 
 /**
@@ -14,8 +16,9 @@ data class State(
         val currentTarget: CameraState = CameraState(),
         val cameraSave: Boolean = true,
 
-        val display: Display = Display.Google
+        val display: Display = Display.Google,
 
+        val coordSystem: CRS = WGS84_Degree
 ) : StateType
 
 data class MapState(

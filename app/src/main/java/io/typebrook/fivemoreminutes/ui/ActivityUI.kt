@@ -12,22 +12,46 @@ import com.nightonke.boommenu.Piece.PiecePlaceEnum
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.Display
+import io.typebrook.fmmcore.projection.*
 import io.typebrook.fmmcore.redux.CameraState
 import io.typebrook.fmmcore.redux.SetDisplay
+import io.typebrook.fmmcore.redux.SetProjection
 import io.typebrook.fmmcore.redux.SetTile
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
-import org.osgeo.proj4j.CoordinateTransform
+import org.jetbrains.anko.sdk25.coroutines.onClick
 import tw.geothings.rekotlin.StoreSubscriber
-
 
 /**
  * Created by pham on 2017/9/21.
  */
+
 class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
-    private var coordinate: TextView? = null
-    private var projTransform: CoordinateTransform? = null
+    private lateinit var coordinate: TextView
+
+    private val coordPrinter = object : StoreSubscriber<CRS> {
+        var coordConverter: CoordConverter = { xyPair -> xyPair }
+        var coordPrinter: CoordPrinter = defaultPrinter
+
+        operator fun invoke(xy: XYPair): String {
+            val xyString = coordConverter(xy).let { coordPrinter(it) }
+
+            return when (mainStore.state.coordSystem) {
+                WGS84_Degree -> xyString.run { "$second\n$first" }
+                WGS84_DMS -> xyString.run { "$second\n$first" }
+                TWD97 -> xyString.run { "TWD97: $first, $second" }
+                TWD67 -> xyString.run { "TWD67: $first, $second" }
+                else -> xyString.run { "$first\n$second" }
+            }
+        }
+
+        override fun newState(state: CRS) {
+            coordConverter = generateConverter(WGS84_Degree, state)
+            coordPrinter = state.printer
+            this@ActivityUI.newState(mainStore.state.currentTarget)
+        }
+    }
 
     lateinit var mapContainer: FrameLayout
 
@@ -40,7 +64,12 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             coordinate = textView {
                 padding = dip(5)
                 backgroundColor = Color.parseColor("#80FFFFFF")
-
+                onClick {
+                    selector("座標系統", coordList.map { it.displayName }) { _, index ->
+                        val selectedProj = coordList[index]
+                        mainStore.dispatch(SetProjection(selectedProj))
+                    }
+                }
             }.lparams(wrapContent) {
                 alignParentBottom()
                 centerHorizontally()
@@ -80,27 +109,18 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         mainStore.subscribe(this@ActivityUI) { subscription ->
             subscription.select { it.currentTarget }.skipRepeats()
         }
+        mainStore.subscribe(coordPrinter) { subscription ->
+            subscription.select { it.coordSystem }.skipRepeats()
+        }
     }
 
     override fun newState(state: CameraState) {
-        val latPrefix = if (state.lat >= 0) "北緯" else "南緯"
-        val lonPrefix = if (state.lon >= 0) "東經" else "西經"
-
-        val lat = state.lat
-                .let { Math.abs(it) }
-                .let { "%.6f".format(it) }
-                .run { dropLast(3) + "-" + takeLast(3) }
-        val lon = state.lon
-                .let { Math.abs(it) }
-                .let { "%.6f".format(it) }
-                .run { dropLast(3) + "-" + takeLast(3) }
-
-        coordinate?.text = "$latPrefix $lat 度\n$lonPrefix $lon 度"
+        val (lat, lon, _) = state
+        coordinate.text = coordPrinter(lon to lat)
     }
 
-    private inline fun ViewManager.boomMenuButton(init: BoomMenuButton.() -> Unit): BoomMenuButton {
-        return ankoView({ BoomMenuButton(it, null) }, theme = 0, init = init)
-    }
+    private inline fun ViewManager.boomMenuButton(init: BoomMenuButton.() -> Unit): BoomMenuButton =
+            ankoView({ BoomMenuButton(it, null) }, theme = 0, init = init)
 
     companion object {
         val ID_MAP_CONTAINER = 1000
@@ -116,5 +136,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 "經建三版" to "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
                 "清空" to null
         )
+
+        val coordList = listOf(WGS84_Degree, WGS84_DMS, TWD97, TWD67, Brazil, Japan)
     }
 }
