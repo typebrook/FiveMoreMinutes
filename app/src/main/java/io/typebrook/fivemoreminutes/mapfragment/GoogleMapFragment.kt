@@ -43,7 +43,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
     override var cameraQueue = listOf(mainStore.state.currentTarget)
     override var cameraStatePos: Int = 0
 
-    override val selfStyles = listOf(
+    override val styles = listOf(
             "Google 街道" fromStyle GoogleMap.MAP_TYPE_NORMAL,
             "Google 衛星混合" fromStyle GoogleMap.MAP_TYPE_HYBRID
     )

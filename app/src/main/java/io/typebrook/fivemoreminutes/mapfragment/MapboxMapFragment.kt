@@ -20,7 +20,6 @@ import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.MapControl
-import io.typebrook.fmmcore.map.Tile.SelfStyle
 import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.redux.AddMap
 import io.typebrook.fmmcore.redux.CameraState
@@ -47,7 +46,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     override var cameraQueue = listOf(mainStore.state.currentTarget)
     override var cameraStatePos: Int = 0
 
-    override val selfStyles = listOf(
+    override val styles = listOf(
             "Mapbox 戶外" fromStyle Style.OUTDOORS,
             "Mapbox 衛星混合" fromStyle Style.SATELLITE_STREETS
     )

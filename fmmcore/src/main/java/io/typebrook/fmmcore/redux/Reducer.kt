@@ -25,7 +25,7 @@ fun reducer(action: Action, oldState: State?): State {
         }
 
         is SetProjection -> {
-            state.copy(coordSystem = action.coordSystem)
+            state.copy(datum = action.coordSystem)
         }
 
         else -> state

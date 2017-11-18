@@ -3,7 +3,7 @@ package io.typebrook.fmmcore.redux
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
-import io.typebrook.fmmcore.projection.CRS
+import io.typebrook.fmmcore.projection.Datum
 import tw.geothings.rekotlin.Action
 
 /**
@@ -24,4 +24,4 @@ class BlockCameraSave : Action
 
 data class SetDisplay(val display: Display) : Action
 data class SetTile(val tileUrl: Tile?) : Action
-data class SetProjection(val coordSystem: CRS) : Action
+data class SetProjection(val coordSystem: Datum) : Action

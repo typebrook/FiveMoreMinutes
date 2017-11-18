@@ -10,7 +10,7 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import io.realm.Realm
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fmmcore.projection.CRS
+import io.typebrook.fmmcore.projection.Datum
 import io.typebrook.fmmcore.projection.ParameterType
 import io.typebrook.fmmcore.redux.SetProjection
 import org.jetbrains.anko.*
@@ -30,8 +30,8 @@ class CrsCreateDialog : DialogFragment() {
                 .setTitle("創建新的座標參照系統")
                 .setView(createBox)
                 .setPositiveButton("新增") { _, _ ->
-                    val newCrs = try {
-                        CRS(parameterType, parameterText.text.toString(), displayName.text.toString())
+                    val newDatum = try {
+                        Datum(parameterType, parameterText.text.toString(), displayName.text.toString())
                     } catch (e: Exception) {
                         activity.toast("Invalid Parameter")
                         CrsCreateDialog().show(fragmentManager, null)
@@ -39,9 +39,9 @@ class CrsCreateDialog : DialogFragment() {
                     }
                     val realm = Realm.getDefaultInstance()
                     realm.executeTransaction {
-                        realm.copyToRealm(newCrs)
+                        realm.copyToRealm(newDatum)
                     }
-                    mainStore.dispatch(SetProjection(newCrs))
+                    mainStore.dispatch(SetProjection(newDatum))
                 }
                 .setNegativeButton("離開", null)
                 .show()

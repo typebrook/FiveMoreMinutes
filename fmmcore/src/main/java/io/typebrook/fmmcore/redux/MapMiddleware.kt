@@ -34,7 +34,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
     }
 
     private val setMapTile: ActionHandler<State> = handler@ { action, getState ->
-        val mapControl: MapControl = getState()?.run { mapStates[currentMapNum].mapControl }
+        val mapControl: MapControl = getState()?.currentMap?.mapControl
                 ?: return@handler
 
         val tile = (action as? SetTile)?.tileUrl ?: return@handler

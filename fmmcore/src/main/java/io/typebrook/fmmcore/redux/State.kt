@@ -2,7 +2,7 @@ package io.typebrook.fmmcore.redux
 
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.MapControl
-import io.typebrook.fmmcore.projection.CRS
+import io.typebrook.fmmcore.projection.Datum
 import io.typebrook.fmmcore.projection.WGS84_Degree
 import tw.geothings.rekotlin.StateType
 
@@ -18,8 +18,10 @@ data class State(
 
         val display: Display = Display.Google,
 
-        val coordSystem: CRS = WGS84_Degree
-) : StateType
+        val datum: Datum = WGS84_Degree
+) : StateType {
+    val currentMap get() = mapStates[currentMapNum]
+}
 
 data class MapState(
         val mapControl: MapControl,

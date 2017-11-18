@@ -34,25 +34,26 @@ import tw.geothings.rekotlin.StoreSubscriber
 class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
     private lateinit var coordinate: TextView
+    private lateinit var zoomText: TextView
 
-    private val coordPrinter = object : StoreSubscriber<CRS> {
+    private val coordPrinter = object : StoreSubscriber<Datum> {
         var coordConverter: CoordConverter = { xyPair -> xyPair }
         var textPrinter: CoordPrinter = defaultPrinter
 
         operator fun invoke(xy: XYPair): String {
             val xyString = coordConverter(xy).let { textPrinter(it) }
-            val crs = mainStore.state.coordSystem
-            return when (crs) {
+            val datum = mainStore.state.datum
+            return when (datum) {
                 WGS84_Degree -> xyString.run { "$second\n$first" }
                 WGS84_DMS -> xyString.run { "$second\n$first" }
                 TWD97 -> xyString.run { "TWD97: $first, $second" }
                 TWD67 -> xyString.run { "TWD67: $first, $second" }
-                else -> xyString.run { "${crs.displayName}\n$first\n$second" }
+                else -> xyString.run { "${datum.displayName}\n$first\n$second" }
             }
         }
 
-        override fun newState(state: CRS) {
-            coordConverter = CRS.generateConverter(WGS84_Degree, state)
+        override fun newState(state: Datum) {
+            coordConverter = Datum.generateConverter(WGS84_Degree, state)
             textPrinter = state.printerº ?: defaultPrinter
             this@ActivityUI.newState(mainStore.state.currentTarget)
         }
@@ -81,7 +82,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                             })
                 }
                 onLongClick {
-                    val crs = mainStore.state.coordSystem
+                    val crs = mainStore.state.datum
                     val realm = Realm.getDefaultInstance()
                     realm.executeTransaction {
                         if (crs.isManaged) {
@@ -130,7 +131,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             subscription.select { it.currentTarget }.skipRepeats()
         }
         mainStore.subscribe(coordPrinter) { subscription ->
-            subscription.select { it.coordSystem }.skipRepeats()
+            subscription.select { it.datum }.skipRepeats()
         }
     }
 
@@ -152,15 +153,15 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         )
 
         val tileList: List<Tile>
-            get() = mainStore.state.run { mapStates[currentMapNum].mapControl.selfStyles } + listOf(
+            get() = mainStore.state.currentMap.mapControl.styles + listOf(
                     "魯地圖" fromWebTile "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
                     "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}"
             )
 
-        val coordList: List<CRS>
+        val coordList: List<Datum>
             get() {
                 val realm = Realm.getDefaultInstance()
-                val crsInRealm = realm.where(CRS::class.java).findAll().toList()
+                val crsInRealm = realm.where(Datum::class.java).findAll().toList()
 
                 return listOf(WGS84_Degree, WGS84_DMS, TWD97, TWD67) + crsInRealm
             }

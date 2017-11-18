@@ -26,7 +26,7 @@ enum class ParameterType {
 }
 
 @RealmClass
-open class CRS() : RealmObject() {
+open class Datum() : RealmObject() {
 
     @PrimaryKey
     private var id: String = UUID.randomUUID().toString()
@@ -53,7 +53,7 @@ open class CRS() : RealmObject() {
         }
 
     override fun hashCode(): Int = parameter.hashCode() shl typeValue
-    override fun equals(other: Any?): Boolean = other is CRS
+    override fun equals(other: Any?): Boolean = other is Datum
             && typeValue == other.typeValue
             && parameter == other.parameter
             && printerº == other.printerº
@@ -61,12 +61,12 @@ open class CRS() : RealmObject() {
     companion object {
 
         fun buildByCode(parameter: String, displayName: String, printer: CoordPrinter? = null)
-                = CRS(ParameterType.Code, parameter, displayName, printer)
+                = Datum(ParameterType.Code, parameter, displayName, printer)
 
         fun buildByBursaWolf(parameter: String, displayName: String, printer: CoordPrinter? = null)
-                = CRS(ParameterType.BursaWolf, parameter, displayName, printer)
+                = Datum(ParameterType.BursaWolf, parameter, displayName, printer)
 
-        fun generateConverter(crs1: CRS, crs2: CRS): CoordConverter {
+        fun generateConverter(crs1: Datum, crs2: Datum): CoordConverter {
             if (crs1 == crs2) return { xyPair -> xyPair }
 
             val trans = CoordinateTransformFactory().createTransform(crs1.crs, crs2.crs)
