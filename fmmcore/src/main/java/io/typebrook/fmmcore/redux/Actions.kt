@@ -21,7 +21,6 @@ class CameraPositionBackward : Action
 class GrantCameraSave : Action
 class BlockCameraSave : Action
 
-
 data class SetDisplay(val display: Display) : Action
 data class SetTile(val tileUrl: String?) : Action
 data class SetProjection(val coordSystem: CRS) : Action

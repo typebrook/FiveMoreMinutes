@@ -9,6 +9,8 @@ import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton
 import com.nightonke.boommenu.BoomMenuButton
 import com.nightonke.boommenu.ButtonEnum
 import com.nightonke.boommenu.Piece.PiecePlaceEnum
+import io.realm.Realm
+import io.typebrook.fivemoreminutes.Dialog.CrsCreateDialog
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.Display
@@ -20,6 +22,7 @@ import io.typebrook.fmmcore.redux.SetTile
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
 import org.jetbrains.anko.sdk25.coroutines.onClick
+import org.jetbrains.anko.sdk25.coroutines.onLongClick
 import tw.geothings.rekotlin.StoreSubscriber
 
 /**
@@ -32,23 +35,23 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
     private val coordPrinter = object : StoreSubscriber<CRS> {
         var coordConverter: CoordConverter = { xyPair -> xyPair }
-        var coordPrinter: CoordPrinter = defaultPrinter
+        var textPrinter: CoordPrinter = defaultPrinter
 
         operator fun invoke(xy: XYPair): String {
-            val xyString = coordConverter(xy).let { coordPrinter(it) }
-
-            return when (mainStore.state.coordSystem) {
+            val xyString = coordConverter(xy).let { textPrinter(it) }
+            val crs = mainStore.state.coordSystem
+            return when (crs) {
                 WGS84_Degree -> xyString.run { "$second\n$first" }
                 WGS84_DMS -> xyString.run { "$second\n$first" }
                 TWD97 -> xyString.run { "TWD97: $first, $second" }
                 TWD67 -> xyString.run { "TWD67: $first, $second" }
-                else -> xyString.run { "$first\n$second" }
+                else -> xyString.run { "${crs.displayName}\n$first\n$second" }
             }
         }
 
         override fun newState(state: CRS) {
-            coordConverter = generateConverter(WGS84_Degree, state)
-            coordPrinter = state.printer
+            coordConverter = CRS.generateConverter(WGS84_Degree, state)
+            textPrinter = state.printerº ?: defaultPrinter
             this@ActivityUI.newState(mainStore.state.currentTarget)
         }
     }
@@ -65,9 +68,24 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 padding = dip(5)
                 backgroundColor = Color.parseColor("#80FFFFFF")
                 onClick {
-                    selector("座標系統", coordList.map { it.displayName }) { _, index ->
-                        val selectedProj = coordList[index]
-                        mainStore.dispatch(SetProjection(selectedProj))
+                    selector("座標系統", coordList.map { it.displayName } + "+ Add New",
+                            { _, index ->
+                                if (index > coordList.lastIndex) {
+                                    CrsCreateDialog().show(owner.fragmentManager, null)
+                                } else {
+                                    val selectedProj = coordList[index]
+                                    mainStore.dispatch(SetProjection(selectedProj))
+                                }
+                            })
+                }
+                onLongClick {
+                    val crs = mainStore.state.coordSystem
+                    val realm = Realm.getDefaultInstance()
+                    realm.executeTransaction {
+                        if (crs.isManaged) {
+                            mainStore.dispatch(SetProjection(WGS84_Degree))
+                            crs.deleteFromRealm()
+                        }
                     }
                 }
             }.lparams(wrapContent) {
@@ -131,12 +149,19 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 "Dual" to Display.Dual
         )
 
-        val tileList = listOf(
-                "魯地圖" to "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
-                "經建三版" to "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
-                "清空" to null
-        )
+        val tileList
+            get() = listOf(
+                    "魯地圖" to "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
+                    "經建三版" to "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
+                    "清空" to null
+            )
 
-        val coordList = listOf(WGS84_Degree, WGS84_DMS, TWD97, TWD67, Brazil, Japan)
+        val coordList: List<CRS>
+            get() {
+                val realm = Realm.getDefaultInstance()
+                val crsInRealm = realm.where(CRS::class.java).findAll().toList()
+
+                return listOf(WGS84_Degree, WGS84_DMS, TWD97, TWD67) + crsInRealm
+            }
     }
 }

@@ -4,12 +4,12 @@ package io.typebrook.fmmcore.projection
  * Created by pham on 2017/11/5.
  */
 
-val defaultPrinter: CoordPrinter = { (x, y) -> "$x" to "$y" }
+val defaultPrinter: CoordPrinter = { (x, y) -> "%.6f".format(x) to "%.6f".format(y) }
 
 val xy2DegreeString: CoordPrinter = { (lon, lat) ->
 
     val lonPrefix = if (lon >= 0) "東經" else "西經"
-    val latPrefix = if (lat >= 0) "北緯" else "南緯"
+    val latPrefix = if (lat >= 0) "北緯  " else "南緯  "
 
     val lonString = lon
             .let { Math.abs(it) }
@@ -37,7 +37,7 @@ val xy2DMSString: CoordPrinter = { (lon, lat) ->
         "${dValue}度${mValue}分${"%.1f".format(sValue)} 秒"
     }
 
-    "$lonPrefix ${degree2Dms(lon)}" to "$latPrefix ${degree2Dms(lat)}"
+    "$lonPrefix ${degree2Dms(Math.abs(lon))}" to "$latPrefix ${degree2Dms(Math.abs(lat))}"
 }
 
 val xy2TWDString: CoordPrinter = { (x, y) ->
@@ -51,7 +51,7 @@ val xy2TWDString: CoordPrinter = { (x, y) ->
     xString to yString
 }
 
-val WGS84_Degree = CRS.createFromCode("EPSG:4326", "WGS84(度)", xy2DegreeString)
-val WGS84_DMS = CRS.createFromCode("EPSG:4326", "WGS84(度分秒)", xy2DMSString)
-val TWD97 = CRS.createFromCode("EPSG:3826", "TWD97", xy2TWDString)
-val TWD67 = CRS.createFromCode("EPSG:3828", "TWD67", xy2TWDString)
+val WGS84_Degree = CRS.buildByCode("EPSG:4326", "WGS84(度)", xy2DegreeString)
+val WGS84_DMS = CRS.buildByCode("EPSG:4326", "WGS84(度分秒)", xy2DMSString)
+val TWD97 = CRS.buildByCode("EPSG:3826", "TWD97", xy2TWDString)
+val TWD67 = CRS.buildByBursaWolf("+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-752,-358,-179,-0.0000011698,0.0000018398,0.0000009822,0.00002329 +units=m +no_defs", "TWD67", xy2TWDString)

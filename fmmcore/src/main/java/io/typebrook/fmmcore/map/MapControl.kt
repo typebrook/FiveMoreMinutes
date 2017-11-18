@@ -14,6 +14,8 @@ interface MapControl {
     var cameraQueue: List<CameraState>
     var cameraStatePos: Int
 
+//    val selfStyles:
+
     fun moveCamera(target: CameraState)
     fun animateCamera(target: CameraState)
 

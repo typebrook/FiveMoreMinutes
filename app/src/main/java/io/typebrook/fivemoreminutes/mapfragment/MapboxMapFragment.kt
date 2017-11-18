@@ -54,7 +54,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
             relativeLayout {
                 addView(mapView)
                 imageView {
-                    background = resources.getDrawable(R.drawable.ic_cross_24dp)
+                    background = resources.getDrawable(R.drawable.ic_cross_24dp, null)
                 }.lparams { centerInParent() }
             }
         }.view

@@ -25,7 +25,7 @@ class MainActivity : Activity(), StoreSubscriber<Display> {
     }
 
     override fun onBackPressed() {
-        mainStore.dispatch(CameraPositionBackward())
+        mainStore dispatch CameraPositionBackward()
         contentView?.let {
             snackbar(it, mainStore.state.run { mapStates[currentMapNum].mapControl.cameraStatePos.toString() }, "leave", { super.onBackPressed() })
         }
