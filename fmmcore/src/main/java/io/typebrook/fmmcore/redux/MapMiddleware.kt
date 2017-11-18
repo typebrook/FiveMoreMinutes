@@ -3,6 +3,7 @@ package io.typebrook.fmmcore.redux
 import android.os.Handler
 import android.os.Looper
 import io.typebrook.fmmcore.map.MapControl
+import io.typebrook.fmmcore.map.Tile
 import tw.geothings.rekotlin.Action
 import kotlin.reflect.KClass
 
@@ -36,23 +37,30 @@ class MapMiddleware : SpawningMiddleware<State>() {
         val mapControl: MapControl = getState()?.run { mapStates[currentMapNum].mapControl }
                 ?: return@handler
 
-        val setTile = action as? SetTile ?: return@handler
-        mapControl.addTile(setTile.tileUrl)
+        val tile = (action as? SetTile)?.tileUrl ?: return@handler
+        when (tile) {
+            is Tile.WebTile -> mapControl.changeWebTile(tile.url)
+            is Tile.PrivateStyle -> {
+                mapControl.changeWebTile(null)
+                mapControl.changeStyle(tile.style)
+            }
+        }
+
     }
 
     private val updateCurrentTarget: ActionTransformer<State> = transformer@ { action, getState ->
-        val updateTarget = action as? UpdateCameraTarget ?: return@transformer PureAction()
+        val updateTarget = action as? UpdateCameraTarget ?: return@transformer Nothing()
 
         if (updateTarget.holder == getState()?.run { mapStates[currentMapNum].mapControl })
             updateTarget
         else
-            PureAction()
+            Nothing()
     }
 
 
     private val cameraPositionBackward: ActionSpawner<State> = spawner@ { _, getState, callback ->
         val mapControl: MapControl = getState()?.run { mapStates[currentMapNum].mapControl }
-                ?: return@spawner PureAction()
+                ?: return@spawner Nothing()
 
         mapControl.run {
             if (cameraStatePos == 0) return@run

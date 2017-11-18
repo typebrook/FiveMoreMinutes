@@ -15,11 +15,12 @@ import com.google.android.gms.maps.model.TileOverlayOptions
 import com.google.android.gms.maps.model.UrlTileProvider
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
+import io.typebrook.fmmcore.map.MapControl
+import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.redux.AddMap
 import io.typebrook.fmmcore.redux.CameraState
 import io.typebrook.fmmcore.redux.RemoveMap
 import io.typebrook.fmmcore.redux.UpdateCameraTarget
-import io.typebrook.fmmcore.map.MapControl
 import org.jetbrains.anko.UI
 import org.jetbrains.anko.centerInParent
 import org.jetbrains.anko.imageView
@@ -41,6 +42,11 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
 
     override var cameraQueue = listOf(mainStore.state.currentTarget)
     override var cameraStatePos: Int = 0
+
+    override val selfStyles = listOf(
+            "Google 街道" fromStyle GoogleMap.MAP_TYPE_NORMAL,
+            "Google 衛星混合" fromStyle GoogleMap.MAP_TYPE_HYBRID
+    )
 
     private var tileOverlay: TileOverlay? = null
 
@@ -84,6 +90,8 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
         map.uiSettings.apply {
             isZoomControlsEnabled = true
         }
+
+        map.mapType = GoogleMap.MAP_TYPE_SATELLITE
     }
 
     override fun moveCamera(target: CameraState) {
@@ -96,7 +104,11 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom), 600, null)
     }
 
-    override fun addTile(tileUrl: String?) {
+    override fun changeStyle(tileUrl: Any?) {
+        map.mapType = tileUrl as Int
+    }
+
+    override fun changeWebTile(tileUrl: String?) {
         tileOverlay?.remove()
         if (tileUrl == null) {
             return

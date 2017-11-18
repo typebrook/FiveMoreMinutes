@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
+import com.mapbox.mapboxsdk.constants.Style
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
@@ -18,11 +19,13 @@ import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
+import io.typebrook.fmmcore.map.MapControl
+import io.typebrook.fmmcore.map.Tile.SelfStyle
+import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.redux.AddMap
 import io.typebrook.fmmcore.redux.CameraState
 import io.typebrook.fmmcore.redux.RemoveMap
 import io.typebrook.fmmcore.redux.UpdateCameraTarget
-import io.typebrook.fmmcore.map.MapControl
 import org.jetbrains.anko.UI
 import org.jetbrains.anko.centerInParent
 import org.jetbrains.anko.imageView
@@ -44,6 +47,11 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     override var cameraQueue = listOf(mainStore.state.currentTarget)
     override var cameraStatePos: Int = 0
 
+    override val selfStyles = listOf(
+            "Mapbox 戶外" fromStyle Style.OUTDOORS,
+            "Mapbox 衛星混合" fromStyle Style.SATELLITE_STREETS
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Mapbox.getInstance(activity.applicationContext, resources.getString(R.string.token_mapbox))
@@ -54,7 +62,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
             relativeLayout {
                 addView(mapView)
                 imageView {
-                    background = resources.getDrawable(R.drawable.ic_cross_24dp, null)
+                    background = resources.getDrawable(R.drawable.ic_cross_24dp)
                 }.lparams { centerInParent() }
             }
         }.view
@@ -140,7 +148,11 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET), 600)
     }
 
-    override fun addTile(tileUrl: String?) {
+    override fun changeStyle(tileUrl: Any?) {
+        map.setStyle(tileUrl as String)
+    }
+
+    override fun changeWebTile(tileUrl: String?) {
         map.removeLayer(ID_WEBLAYER)
         map.removeSource(ID_WEBSOURCE)
         if (tileUrl == null) {

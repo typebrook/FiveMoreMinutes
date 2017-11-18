@@ -14,6 +14,8 @@ import io.typebrook.fivemoreminutes.Dialog.CrsCreateDialog
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.Display
+import io.typebrook.fmmcore.map.Tile
+import io.typebrook.fmmcore.map.fromWebTile
 import io.typebrook.fmmcore.projection.*
 import io.typebrook.fmmcore.redux.CameraState
 import io.typebrook.fmmcore.redux.SetDisplay
@@ -113,8 +115,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                         .normalText("選擇地圖")
                         .rotateText(false)
                         .listener {
-                            selector("線上地圖", tileList.map { it.first }) { _, index ->
-                                val selectedTile = tileList[index].second
+                            selector("線上地圖", tileList.map { it.name }) { _, index ->
+                                val selectedTile = tileList[index]
                                 mainStore.dispatch(SetTile(selectedTile))
                             }
                         })
@@ -149,11 +151,10 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 "Dual" to Display.Dual
         )
 
-        val tileList
-            get() = listOf(
-                    "魯地圖" to "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
-                    "經建三版" to "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
-                    "清空" to null
+        val tileList: List<Tile>
+            get() = mainStore.state.run { mapStates[currentMapNum].mapControl.selfStyles } + listOf(
+                    "魯地圖" fromWebTile "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
+                    "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}"
             )
 
         val coordList: List<CRS>
