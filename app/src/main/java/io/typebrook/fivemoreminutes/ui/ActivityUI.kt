@@ -1,6 +1,7 @@
 package io.typebrook.fivemoreminutes.ui
 
 import android.graphics.Color
+import android.view.Gravity
 import android.view.ViewManager
 import android.widget.FrameLayout
 import android.widget.TextView
@@ -12,6 +13,7 @@ import com.nightonke.boommenu.Piece.PiecePlaceEnum
 import io.realm.Realm
 import io.typebrook.fivemoreminutes.Dialog.CrsCreateDialog
 import io.typebrook.fivemoreminutes.MainActivity
+import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.Tile
@@ -23,6 +25,7 @@ import io.typebrook.fmmcore.redux.SetProjection
 import io.typebrook.fmmcore.redux.SetTile
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
+import org.jetbrains.anko.custom.style
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import org.jetbrains.anko.sdk25.coroutines.onLongClick
 import tw.geothings.rekotlin.StoreSubscriber
@@ -125,6 +128,17 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 alignParentBottom()
                 alignParentLeft()
             }
+
+            zoomText = textView {
+                background = resources.getDrawable(R.drawable.mapbutton_background)
+                gravity = Gravity.CENTER
+                textSize = 20f
+            }.lparams{
+                alignParentRight()
+                alignParentBottom()
+                rightMargin = dip(9.8f)
+                bottomMargin = dip(95f)
+            }
         }
     }.apply {
         mainStore.subscribe(this@ActivityUI) { subscription ->
@@ -136,8 +150,9 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     }
 
     override fun newState(state: CameraState) {
-        val (lat, lon, _) = state
+        val (lat, lon, zoom) = state
         coordinate.text = coordPrinter(lon to lat)
+        zoomText.text = zoom.toInt().toString()
     }
 
     private inline fun ViewManager.boomMenuButton(init: BoomMenuButton.() -> Unit): BoomMenuButton =
