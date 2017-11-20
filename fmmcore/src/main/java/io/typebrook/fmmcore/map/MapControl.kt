@@ -17,7 +17,8 @@ interface MapControl {
     val styles: List<Tile.PrivateStyle>
 
     fun moveCamera(target: CameraState)
-    fun animateCamera(target: CameraState)
+    fun animateCamera(target: CameraState, duration: Int)
+    fun zoomBy(value: Float)
 
     fun changeStyle(tileUrl: Any?)
     fun changeWebTile(tileUrl: String?)

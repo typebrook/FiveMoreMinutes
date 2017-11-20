@@ -7,7 +7,7 @@ import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.MapboxMapFragment
 import io.typebrook.fivemoreminutes.ui.ActivityUI
 import io.typebrook.fmmcore.map.Display
-import io.typebrook.fmmcore.redux.CameraPositionBackward
+import io.typebrook.fmmcore.redux.TargetBackward
 import org.jetbrains.anko.contentView
 import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.setContentView
@@ -25,7 +25,7 @@ class MainActivity : Activity(), StoreSubscriber<Display> {
     }
 
     override fun onBackPressed() {
-        mainStore dispatch CameraPositionBackward()
+        mainStore dispatch TargetBackward()
         contentView?.let {
             snackbar(it, mainStore.state.run { mapStates[currentMapNum].mapControl.cameraStatePos.toString() }, "leave", { super.onBackPressed() })
         }

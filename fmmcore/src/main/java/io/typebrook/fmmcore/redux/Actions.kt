@@ -16,9 +16,10 @@ data class AddMap(val map: MapControl) : Action
 data class RemoveMap(val map: MapControl) : Action
 class SwitchMap : Action
 
-data class UpdateCameraTarget(val holder: MapControl, val cameraState: CameraState) : Action
+data class UpdateCurrentTarget(val holder: MapControl, val camera: CameraState) : Action
 
-class CameraPositionBackward : Action
+data class ZoomBy(val value: Float) : Action
+class TargetBackward : Action
 class GrantCameraSave : Action
 class BlockCameraSave : Action
 

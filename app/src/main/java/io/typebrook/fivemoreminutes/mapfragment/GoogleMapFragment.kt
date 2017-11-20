@@ -2,6 +2,7 @@ package io.typebrook.fivemoreminutes.mapfragment
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,17 +15,13 @@ import com.google.android.gms.maps.model.TileOverlay
 import com.google.android.gms.maps.model.TileOverlayOptions
 import com.google.android.gms.maps.model.UrlTileProvider
 import io.typebrook.fivemoreminutes.R
+import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.fromStyle
-import io.typebrook.fmmcore.redux.AddMap
-import io.typebrook.fmmcore.redux.CameraState
-import io.typebrook.fmmcore.redux.RemoveMap
-import io.typebrook.fmmcore.redux.UpdateCameraTarget
-import org.jetbrains.anko.UI
-import org.jetbrains.anko.centerInParent
-import org.jetbrains.anko.imageView
-import org.jetbrains.anko.relativeLayout
+import io.typebrook.fmmcore.redux.*
+import org.jetbrains.anko.*
+import tw.geothings.rekotlin.StoreSubscriber
 import java.net.URL
 
 
@@ -40,7 +37,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
     override val cameraState: CameraState
         get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom) }
 
-    override var cameraQueue = listOf(mainStore.state.currentTarget)
+    override var cameraQueue = listOf(mainStore.state.currentCamera)
     override var cameraStatePos: Int = 0
 
     override val styles = listOf(
@@ -78,7 +75,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
         moveCamera(cameraQueue.last())
 
         map.setOnCameraMoveListener {
-            mainStore.dispatch(UpdateCameraTarget(this, cameraState))
+            mainStore.dispatch(UpdateCurrentTarget(this, cameraState))
         }
 
         map.setOnCameraIdleListener {
@@ -86,11 +83,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
             cameraStatePos += 1
             cameraQueue = cameraQueue.take(cameraStatePos) + cameraState
         }
-
-        map.uiSettings.apply {
-            isZoomControlsEnabled = true
-        }
-
+        
         map.mapType = GoogleMap.MAP_TYPE_SATELLITE
     }
 
@@ -99,9 +92,13 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom))
     }
 
-    override fun animateCamera(target: CameraState) {
+    override fun animateCamera(target: CameraState, duration: Int) {
         val (lat, lon, zoom) = target
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom), 600, null)
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom), duration, null)
+    }
+
+    override fun zoomBy(value: Float) {
+        map.animateCamera(CameraUpdateFactory.zoomBy(value))
     }
 
     override fun changeStyle(tileUrl: Any?) {

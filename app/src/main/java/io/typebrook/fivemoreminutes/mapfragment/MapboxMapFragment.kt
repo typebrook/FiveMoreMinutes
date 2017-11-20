@@ -24,7 +24,7 @@ import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.redux.AddMap
 import io.typebrook.fmmcore.redux.CameraState
 import io.typebrook.fmmcore.redux.RemoveMap
-import io.typebrook.fmmcore.redux.UpdateCameraTarget
+import io.typebrook.fmmcore.redux.UpdateCurrentTarget
 import org.jetbrains.anko.UI
 import org.jetbrains.anko.centerInParent
 import org.jetbrains.anko.imageView
@@ -43,7 +43,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     override val cameraState: CameraState
         get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom.toFloat() + ZOOMOFFSET) }
 
-    override var cameraQueue = listOf(mainStore.state.currentTarget)
+    override var cameraQueue = listOf(mainStore.state.currentCamera)
     override var cameraStatePos: Int = 0
 
     override val styles = listOf(
@@ -127,7 +127,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         moveCamera(cameraQueue.last())
 
         map.setOnCameraMoveListener {
-            mainStore.dispatch(UpdateCameraTarget(this, cameraState))
+            mainStore.dispatch(UpdateCurrentTarget(this, cameraState))
         }
 
         map.setOnCameraIdleListener {
@@ -142,9 +142,13 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET))
     }
 
-    override fun animateCamera(target: CameraState) {
+    override fun animateCamera(target: CameraState, duration: Int) {
         val (lat, lon, zoom) = target
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET), 600)
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET), duration)
+    }
+
+    override fun zoomBy(value: Float) {
+        map.animateCamera(CameraUpdateFactory.zoomBy(value.toDouble()))
     }
 
     override fun changeStyle(tileUrl: Any?) {

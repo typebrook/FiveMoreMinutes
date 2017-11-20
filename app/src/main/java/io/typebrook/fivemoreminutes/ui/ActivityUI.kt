@@ -1,9 +1,11 @@
 package io.typebrook.fivemoreminutes.ui
 
 import android.graphics.Color
+import android.util.Log
 import android.view.Gravity
 import android.view.ViewManager
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton
@@ -14,18 +16,15 @@ import io.realm.Realm
 import io.typebrook.fivemoreminutes.Dialog.CrsCreateDialog
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.R
+import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromWebTile
 import io.typebrook.fmmcore.projection.*
-import io.typebrook.fmmcore.redux.CameraState
-import io.typebrook.fmmcore.redux.SetDisplay
-import io.typebrook.fmmcore.redux.SetProjection
-import io.typebrook.fmmcore.redux.SetTile
+import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
-import org.jetbrains.anko.custom.style
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import org.jetbrains.anko.sdk25.coroutines.onLongClick
 import tw.geothings.rekotlin.StoreSubscriber
@@ -36,8 +35,11 @@ import tw.geothings.rekotlin.StoreSubscriber
 
 class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
+    lateinit var mapContainer: FrameLayout
     private lateinit var coordinate: TextView
     private lateinit var zoomText: TextView
+    private lateinit var zoomIn: ImageView
+    private lateinit var zoomOut: ImageView
 
     private val coordPrinter = object : StoreSubscriber<Datum> {
         var coordConverter: CoordConverter = { xyPair -> xyPair }
@@ -58,11 +60,9 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         override fun newState(state: Datum) {
             coordConverter = Datum.generateConverter(WGS84_Degree, state)
             textPrinter = state.printerº ?: defaultPrinter
-            this@ActivityUI.newState(mainStore.state.currentTarget)
+            this@ActivityUI.newState(mainStore.state.currentCamera)
         }
     }
-
-    lateinit var mapContainer: FrameLayout
 
     override fun createView(ui: AnkoContext<MainActivity>) = with(ui) {
 
@@ -133,16 +133,40 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 background = resources.getDrawable(R.drawable.mapbutton_background)
                 gravity = Gravity.CENTER
                 textSize = 20f
-            }.lparams{
+            }.lparams {
                 alignParentRight()
                 alignParentBottom()
                 rightMargin = dip(9.8f)
-                bottomMargin = dip(95f)
+                bottomMargin = dip(91f)
+            }
+            zoomIn = imageView {
+                imageResource = R.drawable.ic_zoom_in_black_24dp
+                background = resources.getDrawable(R.drawable.mapbutton_background)
+                padding = 15
+                isClickable = true
+                onClick { mainStore dispatch ZoomBy(1f) }
+            }.lparams {
+                alignParentRight()
+                alignParentBottom()
+                rightMargin = dip(9.8f)
+                bottomMargin = dip(53f)
+            }
+            zoomOut = imageView {
+                imageResource = R.drawable.ic_zoom_out_black_24dp
+                background = resources.getDrawable(R.drawable.mapbutton_background)
+                padding = 15
+                isClickable = true
+                onClick { mainStore dispatch ZoomBy(-1f) }
+            }.lparams {
+                alignParentRight()
+                alignParentBottom()
+                rightMargin = dip(9.8f)
+                bottomMargin = dip(15f)
             }
         }
     }.apply {
         mainStore.subscribe(this@ActivityUI) { subscription ->
-            subscription.select { it.currentTarget }.skipRepeats()
+            subscription.select { it.currentCamera }.skipRepeats()
         }
         mainStore.subscribe(coordPrinter) { subscription ->
             subscription.select { it.datum }.skipRepeats()
@@ -152,14 +176,14 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     override fun newState(state: CameraState) {
         val (lat, lon, zoom) = state
         coordinate.text = coordPrinter(lon to lat)
-        zoomText.text = zoom.toInt().toString()
+        zoomText.text = "${zoom.toInt()}"
     }
 
     private inline fun ViewManager.boomMenuButton(init: BoomMenuButton.() -> Unit): BoomMenuButton =
             ankoView({ BoomMenuButton(it, null) }, theme = 0, init = init)
 
     companion object {
-        val ID_MAP_CONTAINER = 1000
+        val ID_MAP_CONTAINER = "ID_MAP_CONTAINER".hashCode()
 
         val displayList = listOf(
                 "Google" to Display.Google,

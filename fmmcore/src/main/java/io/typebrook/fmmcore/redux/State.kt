@@ -13,7 +13,7 @@ data class State(
         val mapStates: List<MapState> = emptyList(),
         val currentMapNum: Int = 0,
 
-        val currentTarget: CameraState = CameraState(),
+        val currentCamera: CameraState = CameraState(),
         val cameraSave: Boolean = true,
 
         val display: Display = Display.Google,

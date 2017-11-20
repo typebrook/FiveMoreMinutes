@@ -18,7 +18,7 @@ fun reducer(action: Action, oldState: State?): State {
         is GrantCameraSave -> state.copy(cameraSave = true)
         is BlockCameraSave -> state.copy(cameraSave = false)
 
-        is UpdateCameraTarget -> state.copy(currentTarget = action.cameraState)
+        is UpdateCurrentTarget -> state.copy(currentCamera = action.camera)
 
         is SetDisplay -> {
             state.copy(display = action.display)
