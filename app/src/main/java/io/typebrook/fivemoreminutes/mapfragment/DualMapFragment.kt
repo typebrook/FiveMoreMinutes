@@ -9,22 +9,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fmmcore.redux.SwitchMap
 import org.jetbrains.anko.*
-import org.jetbrains.anko.sdk25.coroutines.onClick
 import tw.geothings.rekotlin.StoreSubscriber
 
 /**
  * Created by pham on 2017/10/9.
  */
-class DualMapFragment() : Fragment(), StoreSubscriber<Int> {
+class DualMapFragment : Fragment(), StoreSubscriber<Int> {
 
     private var firstMap: Fragment? = null
     private var secondMap: Fragment? = null
 
     private lateinit var currentMap: TextView
 
-    constructor(map1: Fragment, map2: Fragment) : this() {
+    fun insertMap(map1: Fragment, map2: Fragment) {
         this.firstMap = map1
         this.secondMap = map2
     }
@@ -33,11 +31,11 @@ class DualMapFragment() : Fragment(), StoreSubscriber<Int> {
         return UI {
             relativeLayout {
                 when (configuration.orientation) {
-                    Configuration.ORIENTATION_LANDSCAPE -> linearLayout {
+                    Configuration.ORIENTATION_PORTRAIT -> verticalLayout {
                         frameLayout { id = ID_FIRST_MAP }.lparams(weight = 1f)
                         frameLayout { id = ID_SECOND_MAP }.lparams(weight = 1f)
                     }
-                    else -> verticalLayout {
+                    else -> linearLayout {
                         frameLayout { id = ID_FIRST_MAP }.lparams(weight = 1f)
                         frameLayout { id = ID_SECOND_MAP }.lparams(weight = 1f)
                     }
@@ -46,7 +44,6 @@ class DualMapFragment() : Fragment(), StoreSubscriber<Int> {
                 currentMap = textView {
                     text = mainStore.state.currentMapNum.toString()
                     backgroundColor = Color.parseColor("#80FFFFFF")
-                    onClick { mainStore.dispatch(SwitchMap()) }
                 }.lparams { centerInParent() }
             }
         }.view

@@ -13,6 +13,7 @@ import com.nightonke.boommenu.BoomMenuButton
 import com.nightonke.boommenu.ButtonEnum
 import com.nightonke.boommenu.Piece.PiecePlaceEnum
 import io.realm.Realm
+import io.typebrook.fivemoreminutes.Dialog.CoordInputDialog
 import io.typebrook.fivemoreminutes.Dialog.CrsCreateDialog
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.R
@@ -20,6 +21,7 @@ import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.Tile
+import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.map.fromWebTile
 import io.typebrook.fmmcore.projection.*
 import io.typebrook.fmmcore.redux.*
@@ -73,27 +75,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             coordinate = textView {
                 padding = dip(5)
                 backgroundColor = Color.parseColor("#80FFFFFF")
-                onClick {
-                    selector("座標系統", coordList.map { it.displayName } + "+ Add New",
-                            { _, index ->
-                                if (index > coordList.lastIndex) {
-                                    CrsCreateDialog().show(owner.fragmentManager, null)
-                                } else {
-                                    val selectedProj = coordList[index]
-                                    mainStore.dispatch(SetProjection(selectedProj))
-                                }
-                            })
-                }
-                onLongClick {
-                    val crs = mainStore.state.datum
-                    val realm = Realm.getDefaultInstance()
-                    realm.executeTransaction {
-                        if (crs.isManaged) {
-                            mainStore.dispatch(SetProjection(WGS84_Degree))
-                            crs.deleteFromRealm()
-                        }
-                    }
-                }
+                onClick { CoordInputDialog().show(owner.fragmentManager, null) }
             }.lparams(wrapContent) {
                 alignParentBottom()
                 centerHorizontally()
@@ -176,7 +158,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     override fun newState(state: CameraState) {
         val (lat, lon, zoom) = state
         coordinate.text = coordPrinter(lon to lat)
-        zoomText.text = "${zoom.toInt()}"
+//        zoomText.text = "${zoom.toInt()}"
+        zoomText.text = "%.1f".format(zoom)
     }
 
     private inline fun ViewManager.boomMenuButton(init: BoomMenuButton.() -> Unit): BoomMenuButton =
@@ -194,7 +177,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         val tileList: List<Tile>
             get() = mainStore.state.currentMap.mapControl.styles + listOf(
                     "魯地圖" fromWebTile "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
-                    "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}"
+                    "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
+                    "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}"
             )
 
         val coordList: List<Datum>

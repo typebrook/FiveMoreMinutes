@@ -18,13 +18,11 @@ import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import io.typebrook.fivemoreminutes.R
+import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.fromStyle
-import io.typebrook.fmmcore.redux.AddMap
-import io.typebrook.fmmcore.redux.CameraState
-import io.typebrook.fmmcore.redux.RemoveMap
-import io.typebrook.fmmcore.redux.UpdateCurrentTarget
+import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.UI
 import org.jetbrains.anko.centerInParent
 import org.jetbrains.anko.imageView
@@ -47,6 +45,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     override var cameraStatePos: Int = 0
 
     override val styles = listOf(
+            "Test" fromStyle "mapbox://styles/typebrook/cjada7wtq52jt2rquqg3mkyzu",
             "Mapbox 戶外" fromStyle Style.OUTDOORS,
             "Mapbox 衛星混合" fromStyle Style.SATELLITE_STREETS
     )
@@ -77,11 +76,6 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         super.onStart()
         mapView.onStart()
         mapView.getMapAsync(this)
-    }
-
-    override fun onAttach(context: Context?) {
-        super.onAttach(context)
-        mainStore.dispatch(AddMap(this))
     }
 
     override fun onResume() {
@@ -123,23 +117,27 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
 
     override fun onMapReady(map: MapboxMap) {
         this.map = map
+        mainStore.dispatch(AddMap(this))
+        animateCamera(cameraQueue.last(), 10)
 
-        moveCamera(cameraQueue.last())
+        map.setOnMapClickListener { mainStore dispatch FocusMap(this) }
 
         map.setOnCameraMoveListener {
-            mainStore.dispatch(UpdateCurrentTarget(this, cameraState))
+            mainStore dispatch UpdateCurrentTarget(this, cameraState)
         }
 
         map.setOnCameraIdleListener {
             if (!mainStore.state.cameraSave) return@setOnCameraIdleListener
             cameraStatePos += 1
             cameraQueue = cameraQueue.take(cameraStatePos) + cameraState
+            mainStore dispatch UpdateCurrentTarget(this, cameraState)
         }
     }
 
     override fun moveCamera(target: CameraState) {
         val (lat, lon, zoom) = target
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET))
+        mainStore dispatch UpdateCurrentTarget(this, target)
     }
 
     override fun animateCamera(target: CameraState, duration: Int) {
@@ -152,15 +150,14 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     }
 
     override fun changeStyle(tileUrl: Any?) {
-        map.setStyle(tileUrl as String)
+        val style = tileUrl?.takeIf { styles.map { it.value }.contains(it) } ?: styles[0].value
+        map.setStyle(style as String)
     }
 
     override fun changeWebTile(tileUrl: String?) {
         map.removeLayer(ID_WEBLAYER)
         map.removeSource(ID_WEBSOURCE)
-        if (tileUrl == null) {
-            return
-        }
+        if (tileUrl == null) return
 
         val webMapSource = RasterSource(ID_WEBSOURCE, TileSet(null, tileUrl), 256)
         map.addSource(webMapSource)

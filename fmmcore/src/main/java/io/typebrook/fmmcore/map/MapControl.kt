@@ -14,7 +14,7 @@ interface MapControl {
     var cameraQueue: List<CameraState>
     var cameraStatePos: Int
 
-    val styles: List<Tile.PrivateStyle>
+    val styles: List<Tile>
 
     fun moveCamera(target: CameraState)
     fun animateCamera(target: CameraState, duration: Int)
@@ -26,7 +26,7 @@ interface MapControl {
 
 sealed class Tile(val name: String) {
     class WebTile(name: String, val url: String) : Tile(name)
-    class PrivateStyle(name: String, val style: Any) : Tile(name)
+    class PrivateStyle(name: String, val value: Any) : Tile(name)
 }
 
 infix fun String.fromWebTile(url: String): Tile.WebTile = Tile.WebTile(this, url)

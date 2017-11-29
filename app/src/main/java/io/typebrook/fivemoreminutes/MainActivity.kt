@@ -52,7 +52,7 @@ class MainActivity : Activity(), StoreSubscriber<Display> {
             }
             Display.Dual -> {
                 fragmentManager.beginTransaction()
-                        .replace(mapContainer.id, DualMapFragment(GoogleMapFragment(), MapboxMapFragment()))
+                        .replace(mapContainer.id, DualMapFragment().apply { insertMap(MapboxMapFragment(), GoogleMapFragment()) })
                         .commit()
             }
         }
