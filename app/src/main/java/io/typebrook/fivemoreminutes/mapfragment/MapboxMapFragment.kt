@@ -1,7 +1,6 @@
 package io.typebrook.fivemoreminutes.mapfragment
 
 import android.app.Fragment
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -21,7 +20,9 @@ import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.MapControl
+import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
+import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.UI
 import org.jetbrains.anko.centerInParent
@@ -40,6 +41,10 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
 
     override val cameraState: CameraState
         get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom.toFloat() + ZOOMOFFSET) }
+    override val screenBound: Pair<XYPair, XYPair>
+        get() = map.projection.visibleRegion.latLngBounds.run {
+            (latNorth to lonEast) to (latSouth to lonWest)
+        }
 
     override var cameraQueue = listOf(mainStore.state.currentCamera)
     override var cameraStatePos: Int = 0
@@ -117,7 +122,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
 
     override fun onMapReady(map: MapboxMap) {
         this.map = map
-        mainStore.dispatch(AddMap(this))
+        mainStore dispatch AddMap(this)
         animateCamera(cameraQueue.last(), 10)
 
         map.setOnMapClickListener { mainStore dispatch FocusMap(this) }
@@ -149,17 +154,18 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         map.animateCamera(CameraUpdateFactory.zoomBy(value.toDouble()))
     }
 
-    override fun changeStyle(tileUrl: Any?) {
-        val style = tileUrl?.takeIf { styles.map { it.value }.contains(it) } ?: styles[0].value
-        map.setStyle(style as String)
+    override fun changeStyle(style: Tile.PrivateStyle?) {
+        val newStyle = style?.value?.takeIf { styles.map { it.value }.contains(style) } ?: styles[0].value
+        map.setStyle(newStyle as String)
+        mainStore dispatch DidFinishSetTile(style)
     }
 
-    override fun changeWebTile(tileUrl: String?) {
+    override fun changeWebTile(tile: Tile.WebTile?) {
         map.removeLayer(ID_WEBLAYER)
         map.removeSource(ID_WEBSOURCE)
-        if (tileUrl == null) return
+        if (tile == null) return
 
-        val webMapSource = RasterSource(ID_WEBSOURCE, TileSet(null, tileUrl), 256)
+        val webMapSource = RasterSource(ID_WEBSOURCE, TileSet(null, tile.url), 256)
         map.addSource(webMapSource)
 
         // Add the web map source to the map.

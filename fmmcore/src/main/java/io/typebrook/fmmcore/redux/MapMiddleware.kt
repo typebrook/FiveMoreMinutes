@@ -36,7 +36,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
     }
 
     // Handlers
-    private val addMap: ActionHandler<State> = handler@ { action, getState ->
+    private val addMap: ActionHandler<State> = handler@ { action, _ ->
         val map = (action as? AddMap)?.map ?: return@handler
 
         map.changeStyle(null)
@@ -45,12 +45,12 @@ class MapMiddleware : SpawningMiddleware<State>() {
     private val setMapTile: ActionHandler<State> = handler@ { action, getState ->
         val mapControl: MapControl = getState()?.currentMap?.mapControl ?: return@handler
 
-        val tile = (action as? SetTile)?.tileUrl ?: return@handler
+        val tile = (action as? SetTile)?.tile ?: return@handler
         when (tile) {
-            is Tile.WebTile -> mapControl.changeWebTile(tile.url)
+            is Tile.WebTile -> mapControl.changeWebTile(tile)
             is Tile.PrivateStyle -> {
                 mapControl.changeWebTile(null)
-                mapControl.changeStyle(tile.value)
+                mapControl.changeStyle(tile)
             }
         }
     }
@@ -67,7 +67,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
         val updateTarget = action as? UpdateCurrentTarget ?: return@transformer Nothing()
 
         if (updateTarget.holder == getState()?.currentMap?.mapControl) {
-            val otherMaps = getState()?.mapStates?.map { it.mapControl }?.filter { it != updateTarget.holder }
+            val otherMaps = getState()?.mapState?.maps?.map { it.mapControl }?.filter { it != updateTarget.holder }
             otherMaps?.forEach { it.moveCamera(updateTarget.camera) }
             updateTarget
         } else
@@ -76,7 +76,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
 
     // Spawner
     private val cameraPositionBackward: ActionSpawner<State> = spawner@ { _, getState, callback ->
-        val mapControl: MapControl = getState()?.run { mapStates[currentMapNum].mapControl }
+        val mapControl: MapControl = getState()?.mapState?.run { maps[currentMapNum].mapControl }
                 ?: return@spawner Nothing()
 
         mapControl.run {

@@ -17,7 +17,9 @@ import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.MapControl
+import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
+import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import java.net.URL
@@ -34,6 +36,10 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
 
     override val cameraState: CameraState
         get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom) }
+    override val screenBound: Pair<XYPair, XYPair>
+        get() = map.projection.visibleRegion.latLngBounds.run {
+            (northeast.latitude to northeast.longitude) to (southwest.latitude to southwest.longitude)
+        }
 
     override var cameraQueue = listOf(mainStore.state.currentCamera)
     override var cameraStatePos: Int = 0
@@ -65,7 +71,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
 
     override fun onMapReady(map: GoogleMap) {
         this.map = map
-        mainStore.dispatch(AddMap(this))
+        mainStore dispatch AddMap(this)
         moveCamera(cameraQueue.last())
 
         map.setOnMapClickListener { mainStore dispatch FocusMap(this) }
@@ -101,18 +107,18 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
         map.animateCamera(CameraUpdateFactory.zoomBy(value))
     }
 
-    override fun changeStyle(tileUrl: Any?) {
-        val mapType = tileUrl?.takeIf { styles.map { it.value }.contains(it) } ?: styles[0].value
+    override fun changeStyle(style: Tile.PrivateStyle?) {
+        val mapType = style?.takeIf { styles.map { it.value }.contains(style) } ?: styles[0].value
         map.mapType = mapType as Int
     }
 
-    override fun changeWebTile(tileUrl: String?) {
+    override fun changeWebTile(tile: Tile.WebTile?) {
         tileOverlay?.remove()
-        if (tileUrl == null) return
+        if (tile == null) return
 
         val tileProvider = object : UrlTileProvider(256, 256) {
             override fun getTileUrl(x: Int, y: Int, z: Int): URL {
-                val urlString = tileUrl
+                val urlString = tile.url
                         .replace("{x}", x.toString())
                         .replace("{y}", y.toString())
                         .replace("{z}", z.toString())

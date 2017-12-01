@@ -20,6 +20,11 @@ typealias XYString = Pair<String, String>
 typealias CoordConverter = (XYPair) -> (XYPair)
 typealias CoordPrinter = (XYPair) -> XYString
 
+fun isValidInWGS84(xy: XYPair): Boolean {
+    val (lon, lat) = xy
+    return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
+}
+
 enum class ParameterType {
     Code,
     BursaWolf

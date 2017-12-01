@@ -7,6 +7,8 @@ import android.view.ViewManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import com.mapbox.mapboxsdk.offline.OfflineManager
+import com.mapbox.mapboxsdk.offline.OfflineRegion
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton
 import com.nightonke.boommenu.BoomMenuButton
@@ -29,6 +31,7 @@ import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import org.jetbrains.anko.sdk25.coroutines.onLongClick
+import tw.geothings.geomaptool.offline_map.OfflineListDialog
 import tw.geothings.rekotlin.StoreSubscriber
 
 /**
@@ -115,6 +118,20 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 background = resources.getDrawable(R.drawable.mapbutton_background)
                 gravity = Gravity.CENTER
                 textSize = 20f
+                onClick {
+                    OfflineManager.getInstance(owner).listOfflineRegions(object : OfflineManager.ListOfflineRegionsCallback {
+                        override fun onList(offlineRegions: Array<OfflineRegion>?) {
+                            // Check result. If no regions have been
+                            // downloaded yet, return empty array
+                            OfflineListDialog().run {
+                                this.offlineRegions = offlineRegions ?: emptyArray()
+                                show(owner.fragmentManager, null)
+                            }
+                        }
+
+                        override fun onError(error: String) {}
+                    })
+                }
             }.lparams {
                 alignParentRight()
                 alignParentBottom()

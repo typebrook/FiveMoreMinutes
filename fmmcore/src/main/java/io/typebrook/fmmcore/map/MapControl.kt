@@ -1,5 +1,6 @@
 package io.typebrook.fmmcore.map
 
+import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.CameraState
 
 /**
@@ -10,6 +11,7 @@ import io.typebrook.fmmcore.redux.CameraState
 interface MapControl {
 
     val cameraState: CameraState
+    val screenBound: Pair<XYPair, XYPair>
 
     var cameraQueue: List<CameraState>
     var cameraStatePos: Int
@@ -20,8 +22,8 @@ interface MapControl {
     fun animateCamera(target: CameraState, duration: Int)
     fun zoomBy(value: Float)
 
-    fun changeStyle(tileUrl: Any?)
-    fun changeWebTile(tileUrl: String?)
+    fun changeStyle(style: Tile.PrivateStyle?)
+    fun changeWebTile(tile: Tile.WebTile?)
 }
 
 sealed class Tile(val name: String) {

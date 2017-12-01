@@ -12,6 +12,7 @@ import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.ui.ActivityUI
 import io.typebrook.fmmcore.projection.Datum
 import io.typebrook.fmmcore.projection.WGS84_Degree
+import io.typebrook.fmmcore.projection.isValidInWGS84
 import io.typebrook.fmmcore.redux.CameraState
 import io.typebrook.fmmcore.redux.SetProjection
 import org.jetbrains.anko.*
@@ -32,8 +33,10 @@ class CoordInputDialog : DialogFragment() {
                 .setView(InputBox)
                 .setPositiveButton("GOTO") { _, _ ->
                     val xy = try {
-                        converter(extractCoor(xValue.text) to extractCoor(yValue.text))
-                    } catch (e: Exception) {
+                        val rawXY = converter(extractCoor(xValue.text) to extractCoor(yValue.text))
+                        if (!isValidInWGS84(rawXY)) throw Error()
+                        rawXY
+                    } catch (e: Throwable) {
                         toast("Invalid Number")
                         return@setPositiveButton
                     }
