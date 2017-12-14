@@ -3,6 +3,7 @@ package io.typebrook.fivemoreminutes.ui
 import android.graphics.Color
 import android.util.Log
 import android.view.Gravity
+import android.view.View
 import android.view.ViewManager
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -46,6 +47,9 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     private lateinit var zoomIn: ImageView
     private lateinit var zoomOut: ImageView
 
+    private var isHide = false
+    private val components by lazy { listOf(coordinate, zoomText, zoomIn, zoomOut) }
+
     private val coordPrinter = object : StoreSubscriber<Datum> {
         var coordConverter: CoordConverter = { xyPair -> xyPair }
         var textPrinter: CoordPrinter = defaultPrinter
@@ -87,8 +91,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
             boomMenuButton {
                 buttonEnum = ButtonEnum.TextOutsideCircle
-                piecePlaceEnum = PiecePlaceEnum.DOT_2_2
-                buttonPlaceEnum = ButtonPlaceEnum.SC_2_2
+                piecePlaceEnum = PiecePlaceEnum.DOT_3_3
+                buttonPlaceEnum = ButtonPlaceEnum.SC_3_3
                 isDraggable = true
 
                 addBuilder(TextOutsideCircleButton.Builder()
@@ -108,6 +112,13 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                                 val selectedTile = tileList[index]
                                 mainStore.dispatch(SetTile(selectedTile))
                             }
+                        })
+                addBuilder(TextOutsideCircleButton.Builder()
+                        .normalText("切換工具可見度")
+                        .rotateText(false)
+                        .listener {
+                            components.forEach { it.visibility = if (isHide) View.VISIBLE else View.INVISIBLE }
+                            isHide = !isHide
                         })
             }.lparams {
                 alignParentBottom()
