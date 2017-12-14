@@ -161,7 +161,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     }
 
     override fun changeStyle(style: Tile.PrivateStyle?) {
-        val newStyle = style?.value?.takeIf { styles.map { it.value }.contains(style) } ?: styles[0].value
+        val newStyle = style?.value?.takeIf { styles.contains(style) } ?: styles[0].value
         map.setStyle(newStyle as String)
         mainStore dispatch DidFinishSetTile(style)
     }
