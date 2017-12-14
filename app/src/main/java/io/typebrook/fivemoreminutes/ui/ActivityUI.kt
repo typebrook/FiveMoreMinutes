@@ -197,13 +197,5 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                     "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
                     "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}"
             )
-
-        val coordList: List<Datum>
-            get() {
-                val realm = Realm.getDefaultInstance()
-                val crsInRealm = realm.where(Datum::class.java).findAll().toList()
-
-                return listOf(WGS84_Degree, WGS84_DMS, TWD97, TWD67) + crsInRealm
-            }
     }
 }

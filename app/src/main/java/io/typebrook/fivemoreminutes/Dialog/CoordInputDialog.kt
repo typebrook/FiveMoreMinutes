@@ -10,9 +10,7 @@ import android.widget.EditText
 import io.realm.Realm
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.ui.ActivityUI
-import io.typebrook.fmmcore.projection.Datum
-import io.typebrook.fmmcore.projection.WGS84_Degree
-import io.typebrook.fmmcore.projection.isValidInWGS84
+import io.typebrook.fmmcore.projection.*
 import io.typebrook.fmmcore.redux.CameraState
 import io.typebrook.fmmcore.redux.SetProjection
 import org.jetbrains.anko.*
@@ -26,6 +24,14 @@ class CoordInputDialog : DialogFragment() {
     private val converter get() = Datum.generateConverter(crs, WGS84_Degree)
     private lateinit var xValue: EditText
     private lateinit var yValue: EditText
+
+    private val coordList: List<Datum>
+        get() {
+            val realm = Realm.getDefaultInstance()
+            val crsInRealm = realm.where(Datum::class.java).findAll().toList()
+
+            return listOf(WGS84_Degree, WGS84_DMS, TWD97, TWD67) + crsInRealm
+        }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return AlertDialog.Builder(activity)
@@ -45,12 +51,12 @@ class CoordInputDialog : DialogFragment() {
                 }
                 .setNeutralButton("change CRS") { _, _ ->
                     val owner = activity
-                    val choices = ActivityUI.coordList.map { it.displayName } + "+ Add New"
+                    val choices = coordList.map { it.displayName } + "+ Add New"
                     selector("座標系統", choices) { _, index ->
-                        if (index > ActivityUI.coordList.lastIndex) {
+                        if (index > coordList.lastIndex) {
                             CrsCreateDialog().show(owner.fragmentManager, null)
                         } else {
-                            val selectedProj = ActivityUI.coordList[index]
+                            val selectedProj = coordList[index]
                             mainStore.dispatch(SetProjection(selectedProj))
                         }
                     }
@@ -60,8 +66,9 @@ class CoordInputDialog : DialogFragment() {
                     setNegativeButton("刪除") { _, _ ->
                         val realm = Realm.getDefaultInstance()
                         realm.executeTransaction {
+                            val abandonCrs = crs
                             mainStore.dispatch(SetProjection(WGS84_Degree))
-                            crs.deleteFromRealm()
+                            abandonCrs.deleteFromRealm()
                         }
                     }
                 }
