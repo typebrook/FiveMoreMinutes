@@ -9,6 +9,7 @@ import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.constants.Style
 import com.mapbox.mapboxsdk.geometry.LatLng
+import com.mapbox.mapboxsdk.geometry.LatLngBounds
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
@@ -150,6 +151,11 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom.toDouble() - ZOOMOFFSET), duration)
     }
 
+    override fun animateToBound(ne: XYPair, sw: XYPair, duration: Int) {
+        map.animateCamera(CameraUpdateFactory.newLatLngBounds(
+                LatLngBounds.from(ne.first, ne.second, sw.first, sw.second), 30), duration)
+    }
+
     override fun zoomBy(value: Float) {
         map.animateCamera(CameraUpdateFactory.zoomBy(value.toDouble()))
     }
@@ -165,7 +171,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         map.removeSource(ID_WEBSOURCE)
         if (tile == null) return
 
-        val webMapSource = RasterSource(ID_WEBSOURCE, TileSet(null, tile.url), 256)
+        val webMapSource = RasterSource(ID_WEBSOURCE, TileSet(null, tile.url))
         map.addSource(webMapSource)
 
         // Add the web map source to the map.

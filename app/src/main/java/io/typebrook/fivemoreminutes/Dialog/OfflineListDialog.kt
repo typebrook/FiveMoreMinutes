@@ -4,7 +4,9 @@ import android.app.*
 import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import com.mapbox.mapboxsdk.offline.OfflineManager
 import com.mapbox.mapboxsdk.offline.OfflineRegion
@@ -12,10 +14,7 @@ import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition
 import io.typebrook.fivemoreminutes.Dialog.DownloadDialog
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.redux.CameraState
-import org.jetbrains.anko.UI
-import org.jetbrains.anko.alert
-import org.jetbrains.anko.editText
-import org.jetbrains.anko.horizontalProgressBar
+import org.jetbrains.anko.*
 import org.json.JSONObject
 
 /**
@@ -25,10 +24,15 @@ class OfflineListDialog : DialogFragment() {
 
     private val mapControl = mainStore.state.currentMap.mapControl
     private var regionSelected = 0
-    var offlineRegions = arrayOf<OfflineRegion>()
+    var offlineRegionsResult: Array<OfflineRegion>? = null
     private val deleteProgressBar by lazy { UI {}.horizontalProgressBar { visibility = View.GONE } }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val offlineRegions = offlineRegionsResult
+        if (offlineRegions == null) {
+            this.dismiss()
+            return Dialog(activity)
+        }
 
         val items = offlineRegions.map { getRegionName(it) }.toTypedArray()
 
@@ -39,7 +43,7 @@ class OfflineListDialog : DialogFragment() {
                         setView(deleteProgressBar)
                         setSingleChoiceItems(items, 0) { _, which -> regionSelected = which }
                         setPositiveButton("GO TO") { _, _ ->
-                            Toast.makeText(activity, items[regionSelected], Toast.LENGTH_LONG).show()
+                            toast(items[regionSelected])
 
                             // Get the region bounds and zoom
                             val definition = offlineRegions[regionSelected].definition as OfflineTilePyramidRegionDefinition
@@ -47,10 +51,10 @@ class OfflineListDialog : DialogFragment() {
                             val regionZoom = definition.minZoom
 
                             // Move camera to new position
-                            mapControl.animateCamera(
-                                    with(bounds.center) { CameraState(latitude, longitude, regionZoom.toFloat()) },
-                                    800
-                            )
+                            mapControl.animateToBound(
+                                    bounds.latNorth to bounds.lonEast,
+                                    bounds.latSouth to bounds.lonWest,
+                                    800)
                         }
                         setNeutralButton("Delete") { _, _ -> }
                     } else {
@@ -78,9 +82,8 @@ class OfflineListDialog : DialogFragment() {
                     setOnShowListener {
                         val deleteButton = getButton(DialogInterface.BUTTON_NEUTRAL)
                         deleteButton.setOnClickListener {
-                            // Make deleteProgressBar indeterminate and
-                            // set it to visible to signal that
-                            // the deletion process has begun
+                            // Make deleteProgressBar indeterminate and set it to visible to
+                            //  signal that the deletion process has begun
                             deleteProgressBar.isIndeterminate = true
                             deleteProgressBar.visibility = View.VISIBLE
 

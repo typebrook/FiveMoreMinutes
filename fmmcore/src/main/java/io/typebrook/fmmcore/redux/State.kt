@@ -2,6 +2,7 @@ package io.typebrook.fmmcore.redux
 
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.MapControl
+import io.typebrook.fmmcore.map.SimpleMap
 import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.projection.Datum
 import io.typebrook.fmmcore.projection.WGS84_Degree
@@ -20,7 +21,8 @@ data class State(
 
         val datum: Datum = WGS84_Degree
 ) : StateType {
-    val currentMap get() = mapState.run { maps[currentMapNum] }
+    val currentMap: MapInfo get() = mapState.run {
+        if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else  MapInfo(SimpleMap(), null)}
 }
 
 data class MapInfo(

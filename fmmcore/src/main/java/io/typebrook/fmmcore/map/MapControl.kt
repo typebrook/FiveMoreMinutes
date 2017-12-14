@@ -20,6 +20,7 @@ interface MapControl {
 
     fun moveCamera(target: CameraState)
     fun animateCamera(target: CameraState, duration: Int)
+    fun animateToBound(ne: XYPair, sw: XYPair, duration: Int)
     fun zoomBy(value: Float)
 
     fun changeStyle(style: Tile.PrivateStyle?)
@@ -33,3 +34,23 @@ sealed class Tile(val name: String) {
 
 infix fun String.fromWebTile(url: String): Tile.WebTile = Tile.WebTile(this, url)
 infix fun String.fromStyle(style: Any): Tile.PrivateStyle = Tile.PrivateStyle(this, style)
+
+// Simple class fulfills interface to replace actual MapControl, used when onMapReady not yer done
+class SimpleMap : MapControl {
+
+    override val cameraState: CameraState = CameraState()
+    override val screenBound: Pair<XYPair, XYPair> = (0.0 to 0.0) to (0.0 to 0.0)
+
+    override var cameraQueue: List<CameraState> = emptyList()
+    override var cameraStatePos: Int = 0
+
+    override val styles: List<Tile> = emptyList()
+
+    override fun moveCamera(target: CameraState) {}
+    override fun animateCamera(target: CameraState, duration: Int) {}
+    override fun animateToBound(ne: XYPair, sw: XYPair, duration: Int) {}
+    override fun zoomBy(value: Float) {}
+
+    override fun changeStyle(style: Tile.PrivateStyle?) {}
+    override fun changeWebTile(tile: Tile.WebTile?) {}
+}

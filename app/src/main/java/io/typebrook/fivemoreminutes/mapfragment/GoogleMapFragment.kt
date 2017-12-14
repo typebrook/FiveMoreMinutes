@@ -9,10 +9,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.TileOverlay
-import com.google.android.gms.maps.model.TileOverlayOptions
-import com.google.android.gms.maps.model.UrlTileProvider
+import com.google.android.gms.maps.model.*
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
@@ -101,6 +98,11 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
     override fun animateCamera(target: CameraState, duration: Int) {
         val (lat, lon, zoom) = target
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon), zoom), duration, null)
+    }
+
+    override fun animateToBound(ne: XYPair, sw: XYPair, duration: Int) {
+        map.animateCamera(CameraUpdateFactory.newLatLngBounds(
+                LatLngBounds(LatLng(ne.first, ne.second), LatLng(sw.first, sw.second)), 30), duration, null)
     }
 
     override fun zoomBy(value: Float) {

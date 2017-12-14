@@ -124,7 +124,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                             // Check result. If no regions have been
                             // downloaded yet, return empty array
                             OfflineListDialog().run {
-                                this.offlineRegions = offlineRegions ?: emptyArray()
+                                this.offlineRegionsResult = offlineRegions ?: emptyArray()
                                 show(owner.fragmentManager, null)
                             }
                         }
