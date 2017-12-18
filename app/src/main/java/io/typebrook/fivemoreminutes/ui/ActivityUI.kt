@@ -115,10 +115,11 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                         })
                 addBuilder(TextOutsideCircleButton.Builder()
                         .normalText("切換工具可見度")
-                        .rotateText(false)
                         .listener {
-                            components.forEach { it.visibility = if (isHide) View.VISIBLE else View.INVISIBLE }
                             isHide = !isHide
+                            components.forEach { it.visibility = if (isHide) View.INVISIBLE else View.VISIBLE }
+                            owner.window.decorView.systemUiVisibility = if (isHide) View.SYSTEM_UI_FLAG_FULLSCREEN else View.VISIBLE
+
                         })
             }.lparams {
                 alignParentBottom()

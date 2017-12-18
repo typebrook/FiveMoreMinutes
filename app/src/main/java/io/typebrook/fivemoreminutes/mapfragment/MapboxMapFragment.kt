@@ -51,8 +51,10 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     override var cameraStatePos: Int = 0
 
     override val styles = listOf(
-            "Test" fromStyle "mapbox://styles/typebrook/cjada7wtq52jt2rquqg3mkyzu",
+            "Taiwan Topo on Web" fromStyle "mapbox://styles/typebrook/cjada7wtq52jt2rquqg3mkyzu",
+            "Taiwan Topo" fromStyle "asset://Taiwan_Topo.json",
             "Mapbox 戶外" fromStyle Style.OUTDOORS,
+            "Mapbox 街道" fromStyle Style.MAPBOX_STREETS,
             "Mapbox 衛星混合" fromStyle Style.SATELLITE_STREETS
     )
 
