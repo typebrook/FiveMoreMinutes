@@ -110,7 +110,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
     }
 
     override fun changeStyle(style: Tile.PrivateStyle?) {
-        val mapType = style?.takeIf { styles.contains(style) } ?: styles[0].value
+        val mapType = style?.value.takeIf { styles.contains(style) } ?: styles[0].value
         map.mapType = mapType as Int
     }
 
