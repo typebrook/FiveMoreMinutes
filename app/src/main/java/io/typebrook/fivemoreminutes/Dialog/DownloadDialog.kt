@@ -60,7 +60,7 @@ class DownloadDialog constructor() : DialogFragment() {
     }
 
     private fun downloadRegion(regionName: String) {
-        val styleUrl = "mapbox://styles/typebrook/cjada7wtq52jt2rquqg3mkyzu"
+        val styleUrl = "mapbox://styles/typebrook/cjb2gaiwv59ay2so0ofmzfzji"
         val bounds = mapControl.screenBound.run {
             LatLngBounds.from(first.first, first.second, second.first, second.second)
         }
@@ -153,7 +153,7 @@ class DownloadDialog constructor() : DialogFragment() {
         fun newInstance(regionName: String): DownloadDialog {
             val bundle = Bundle()
             bundle.putString(ARG_REGIONNAME, regionName)
-            return DownloadDialog().apply { setArguments(bundle) }
+            return DownloadDialog().apply { arguments = bundle }
         }
     }
 }
