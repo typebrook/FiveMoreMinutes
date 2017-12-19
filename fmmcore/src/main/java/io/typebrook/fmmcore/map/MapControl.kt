@@ -25,6 +25,9 @@ interface MapControl {
 
     fun changeStyle(style: Tile.PrivateStyle?)
     fun changeWebTile(tile: Tile.WebTile?)
+
+    fun enableLocation()
+    fun disableLocation()
 }
 
 sealed class Tile(val name: String) {
@@ -53,4 +56,7 @@ class SimpleMap : MapControl {
 
     override fun changeStyle(style: Tile.PrivateStyle?) {}
     override fun changeWebTile(tile: Tile.WebTile?) {}
+
+    override fun enableLocation() {}
+    override fun disableLocation() {}
 }

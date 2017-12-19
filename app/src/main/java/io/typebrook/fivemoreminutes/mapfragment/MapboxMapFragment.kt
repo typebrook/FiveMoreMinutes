@@ -1,15 +1,19 @@
 package io.typebrook.fivemoreminutes.mapfragment
 
+import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.app.Fragment
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.constants.Style
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
+import com.mapbox.mapboxsdk.location.LocationSource
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
@@ -17,6 +21,8 @@ import com.mapbox.mapboxsdk.style.layers.RasterLayer
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
+import com.mapbox.services.android.telemetry.permissions.PermissionsListener
+import com.mapbox.services.android.telemetry.permissions.PermissionsManager
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
@@ -25,10 +31,7 @@ import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
-import org.jetbrains.anko.UI
-import org.jetbrains.anko.centerInParent
-import org.jetbrains.anko.imageView
-import org.jetbrains.anko.relativeLayout
+import org.jetbrains.anko.*
 
 /**
  * Created by pham on 2017/9/19.
@@ -180,6 +183,23 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         val webMapLayer = RasterLayer(ID_WEBLAYER, ID_WEBSOURCE)
         map.addLayer(webMapLayer)
     }
+
+    override fun enableLocation() {
+        if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
+            map.isMyLocationEnabled = true
+            val lastLocation = LocationSource(activity).lastLocation
+            lastLocation?.apply {
+                val zoom = if (cameraState.zoom < 16) 16f else cameraState.zoom
+                animateCamera(CameraState(latitude, longitude, zoom), 1000)
+            }
+        }
+    }
+
+    override fun disableLocation() {
+        map.isMyLocationEnabled = false
+    }
+
+    //endregion
 
     companion object {
         val ID_WEBSOURCE = "web-map-source"

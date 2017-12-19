@@ -2,6 +2,8 @@ package io.typebrook.fivemoreminutes
 
 import android.app.Activity
 import android.os.Bundle
+import com.mapbox.services.android.telemetry.permissions.PermissionsListener
+import com.mapbox.services.android.telemetry.permissions.PermissionsManager
 import io.typebrook.fivemoreminutes.mapfragment.DualMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.MapboxMapFragment
@@ -13,7 +15,7 @@ import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.setContentView
 import tw.geothings.rekotlin.StoreSubscriber
 
-class MainActivity : Activity(), StoreSubscriber<Display> {
+class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
 
     private lateinit var ui: ActivityUI
 
@@ -57,4 +59,9 @@ class MainActivity : Activity(), StoreSubscriber<Display> {
             }
         }
     }
+
+    // region locate myself
+    override fun onPermissionResult(granted: Boolean) {}
+
+    override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {}
 }

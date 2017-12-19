@@ -4,12 +4,15 @@ import android.graphics.Color
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import android.view.ViewManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import com.mapbox.mapboxsdk.offline.OfflineManager
 import com.mapbox.mapboxsdk.offline.OfflineRegion
+import com.mapbox.services.android.telemetry.permissions.PermissionsManager
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton
 import com.nightonke.boommenu.BoomMenuButton
@@ -43,6 +46,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
     lateinit var mapContainer: FrameLayout
     private lateinit var coordinate: TextView
+    private lateinit var gpsOn: ImageView
+    private lateinit var gpsOff: ImageView
     private lateinit var zoomText: TextView
     private lateinit var zoomIn: ImageView
     private lateinit var zoomOut: ImageView
@@ -126,6 +131,40 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 alignParentLeft()
             }
 
+            gpsOn = imageView {
+                imageResource = R.drawable.ic_gps_not_fixed_black_24dp
+                background = resources.getDrawable(R.drawable.mapbutton_background)
+                padding = 25
+                onClick {
+                    if (!PermissionsManager.areLocationPermissionsGranted(owner)) {
+                        PermissionsManager(owner).requestLocationPermissions(owner)
+                    } else {
+                        gpsOff.visibility = VISIBLE
+                        mainStore.state.currentMap.mapControl.enableLocation()
+                        imageResource = R.drawable.ic_gps_fixed_black_24dp
+                    }
+                }
+            }.lparams {
+                alignParentRight()
+                rightMargin = dip(9.8f)
+                topMargin = dip(9.8f)
+            }
+            gpsOff = imageView {
+                imageResource = R.drawable.ic_gps_off_black_24dp
+                background = resources.getDrawable(R.drawable.mapbutton_background)
+                padding = 25
+                visibility = INVISIBLE
+                onClick {
+                    mainStore.state.currentMap.mapControl.disableLocation()
+                    visibility = INVISIBLE
+                    gpsOn.setImageDrawable(resources.getDrawable(R.drawable.ic_gps_not_fixed_black_24dp))
+                }
+            }.lparams {
+                alignParentRight()
+                rightMargin = dip(9.8f)
+                topMargin = dip(53f)
+            }
+
             zoomText = textView {
                 background = resources.getDrawable(R.drawable.mapbutton_background)
                 gravity = Gravity.CENTER
@@ -153,8 +192,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             zoomIn = imageView {
                 imageResource = R.drawable.ic_zoom_in_black_24dp
                 background = resources.getDrawable(R.drawable.mapbutton_background)
-                padding = 15
-                isClickable = true
+                padding = 20
                 onClick { mainStore dispatch ZoomBy(1f) }
             }.lparams {
                 alignParentRight()
@@ -166,7 +204,6 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 imageResource = R.drawable.ic_zoom_out_black_24dp
                 background = resources.getDrawable(R.drawable.mapbutton_background)
                 padding = 15
-                isClickable = true
                 onClick { mainStore dispatch ZoomBy(-1f) }
             }.lparams {
                 alignParentRight()
