@@ -1,21 +1,17 @@
 package io.typebrook.fivemoreminutes.mapfragment
 
-import android.Manifest
 import android.Manifest.permission.ACCESS_FINE_LOCATION
-import android.content.Context
-import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.*
-import com.mapbox.mapboxsdk.camera.CameraPosition
-import com.mapbox.mapboxsdk.location.LocationSource
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
@@ -24,7 +20,10 @@ import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
-import org.jetbrains.anko.*
+import org.jetbrains.anko.UI
+import org.jetbrains.anko.centerInParent
+import org.jetbrains.anko.imageView
+import org.jetbrains.anko.relativeLayout
 import java.net.URL
 
 
@@ -52,6 +51,8 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
             "Google 街道" fromStyle GoogleMap.MAP_TYPE_NORMAL,
             "Google 地形" fromStyle GoogleMap.MAP_TYPE_TERRAIN
     )
+
+    override val locating get() = map.isMyLocationEnabled
 
     private var tileOverlay: TileOverlay? = null
 
@@ -138,15 +139,19 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
     }
 
     override fun enableLocation() {
-        if (activity.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, 0, 0) == PackageManager.PERMISSION_GRANTED) {
+        if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
             map.isMyLocationEnabled = true
-            val lastLocation = LocationSource(activity).lastLocation
-            lastLocation?.apply {
-                val zoom = if (cameraState.zoom < 16) 16f else cameraState.zoom
-                animateCamera(CameraState(latitude, longitude, zoom), 1000)
+            map.uiSettings.isMyLocationButtonEnabled = false
+            val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
+            fusedLocationClient.lastLocation.addOnSuccessListener(activity) { lastLocation ->
+                lastLocation?.apply {
+                    val zoom = if (cameraState.zoom < 16) 16f else cameraState.zoom
+                    animateCamera(CameraState(latitude, longitude, zoom), 1000)
+                }
             }
         }
     }
+
     override fun disableLocation() {
         if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
             map.isMyLocationEnabled = false

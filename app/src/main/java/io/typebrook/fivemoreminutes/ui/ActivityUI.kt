@@ -1,7 +1,6 @@
 package io.typebrook.fivemoreminutes.ui
 
 import android.graphics.Color
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.View.INVISIBLE
@@ -18,23 +17,19 @@ import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton
 import com.nightonke.boommenu.BoomMenuButton
 import com.nightonke.boommenu.ButtonEnum
 import com.nightonke.boommenu.Piece.PiecePlaceEnum
-import io.realm.Realm
 import io.typebrook.fivemoreminutes.Dialog.CoordInputDialog
-import io.typebrook.fivemoreminutes.Dialog.CrsCreateDialog
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.Tile
-import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.map.fromWebTile
 import io.typebrook.fmmcore.projection.*
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
 import org.jetbrains.anko.sdk25.coroutines.onClick
-import org.jetbrains.anko.sdk25.coroutines.onLongClick
 import tw.geothings.geomaptool.offline_map.OfflineListDialog
 import tw.geothings.rekotlin.StoreSubscriber
 
@@ -75,6 +70,19 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             coordConverter = Datum.generateConverter(WGS84_Degree, state)
             textPrinter = state.printerº ?: defaultPrinter
             this@ActivityUI.newState(mainStore.state.currentCamera)
+        }
+    }
+
+    private val mapNumSubscriber = object : StoreSubscriber<Int> {
+        override fun newState(state: Int) {
+            val newControl = mainStore.state.currentMap.mapControl
+            if (newControl.locating) {
+                gpsOn.imageResource = R.drawable.ic_gps_fixed_black_24dp
+                gpsOff.visibility = VISIBLE
+            } else {
+                gpsOn.imageResource = R.drawable.ic_gps_not_fixed_black_24dp
+                gpsOff.visibility = INVISIBLE
+            }
         }
     }
 
@@ -218,6 +226,9 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         }
         mainStore.subscribe(coordPrinter) { subscription ->
             subscription.select { it.datum }.skipRepeats()
+        }
+        mainStore.subscribe(mapNumSubscriber) { subscription ->
+            subscription.select { it.mapState.currentMapNum }.skipRepeats()
         }
     }
 

@@ -18,6 +18,8 @@ interface MapControl {
 
     val styles: List<Tile>
 
+    val locating: Boolean
+
     fun moveCamera(target: CameraState)
     fun animateCamera(target: CameraState, duration: Int)
     fun animateToBound(ne: XYPair, sw: XYPair, duration: Int)
@@ -48,6 +50,8 @@ class SimpleMap : MapControl {
     override var cameraStatePos: Int = 0
 
     override val styles: List<Tile> = emptyList()
+
+    override val locating = false
 
     override fun moveCamera(target: CameraState) {}
     override fun animateCamera(target: CameraState, duration: Int) {}

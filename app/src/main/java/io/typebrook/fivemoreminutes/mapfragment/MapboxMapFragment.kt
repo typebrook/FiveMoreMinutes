@@ -61,6 +61,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
             "Mapbox 衛星混合" fromStyle Style.SATELLITE_STREETS
     )
 
+    override val locating get() = map.isMyLocationEnabled
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Mapbox.getInstance(activity.applicationContext, resources.getString(R.string.token_mapbox))

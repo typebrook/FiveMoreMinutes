@@ -25,11 +25,6 @@ data class State(
         if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else  MapInfo(SimpleMap(), null)}
 }
 
-data class MapInfo(
-        val mapControl: MapControl,
-        val tile: Tile? = null
-)
-
 data class MapState(
         val maps: List<MapInfo> = emptyList(),
         val currentMapNum: Int = 0
@@ -39,6 +34,11 @@ data class MapState(
         return currentMapNum
     }
 }
+
+data class MapInfo(
+        val mapControl: MapControl,
+        val tile: Tile? = null
+)
 
 data class CameraState(
         val lat: Double = 23.76,
