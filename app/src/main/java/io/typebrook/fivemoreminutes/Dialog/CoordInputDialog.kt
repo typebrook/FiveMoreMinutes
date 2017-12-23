@@ -1,12 +1,11 @@
 package io.typebrook.fivemoreminutes.Dialog
 
-import android.R
 import android.app.AlertDialog
 import android.app.Dialog
 import android.app.DialogFragment
 import android.os.Bundle
 import android.text.Editable
-import android.text.InputType
+import android.text.InputType.*
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -81,28 +80,31 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<Datum> {
         UI {
             verticalLayout {
                 padding = 25
+                xValue = editText { inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL }
+                yValue = editText { inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL }
 
-                xValue = editText { inputType = InputType.TYPE_NUMBER_FLAG_DECIMAL }
-                yValue = editText { inputType = InputType.TYPE_NUMBER_FLAG_SIGNED }
-
-                spinner {
-                    val choices = coordList.map { it.displayName } + "+ Add New"
-                    adapter = ArrayAdapter(ctx, R.layout.simple_spinner_dropdown_item, choices)
-                    onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                        override fun onNothingSelected(p0: AdapterView<*>?) {}
-                        override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
-                            if (pos <= coordList.lastIndex) {
-                                val selectedProj = coordList[pos]
-                                mainStore.dispatch(SetProjection(selectedProj))
-                            } else {
-                                CrsCreateDialog().show(owner.fragmentManager, null)
-                                dismiss()
+                linearLayout {
+                    padding = 25
+                    textView("座標系統: ")
+                    spinner {
+                        val choices = coordList.map { it.displayName } + "+ Add New"
+                        adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item, choices)
+                        onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                            override fun onNothingSelected(p0: AdapterView<*>?) {}
+                            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
+                                if (pos <= coordList.lastIndex) {
+                                    val selectedProj = coordList[pos]
+                                    mainStore.dispatch(SetProjection(selectedProj))
+                                } else {
+                                    CrsCreateDialog().show(owner.fragmentManager, null)
+                                    dismiss()
+                                }
                             }
                         }
-                    }
 
-                    val selectedPos = coordList.indexOf(mainStore.state.datum)
-                    this@spinner.setSelection(selectedPos)
+                        val selectedPos = coordList.indexOf(mainStore.state.datum)
+                        this@spinner.setSelection(selectedPos)
+                    }
                 }
             }
         }.view
