@@ -1,29 +1,40 @@
 package io.typebrook.fivemoreminutes.Dialog
 
+import android.R
 import android.app.AlertDialog
 import android.app.Dialog
 import android.app.DialogFragment
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import io.realm.Realm
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fivemoreminutes.ui.ActivityUI
 import io.typebrook.fmmcore.projection.*
 import io.typebrook.fmmcore.redux.CameraState
 import io.typebrook.fmmcore.redux.SetProjection
 import org.jetbrains.anko.*
+import tw.geothings.rekotlin.StoreSubscriber
 
 /**
  * Created by pham on 2017/11/24.
  */
-class CoordInputDialog : DialogFragment() {
+class CoordInputDialog : DialogFragment(), StoreSubscriber<Datum> {
 
     private val crs get() = mainStore.state.datum
     private val converter get() = Datum.generateConverter(crs, WGS84_Degree)
     private lateinit var xValue: EditText
     private lateinit var yValue: EditText
+
+    override fun newState(state: Datum) {
+        val reverseConverter = Datum.generateConverter(WGS84_Degree, crs)
+        val hintXY = mainStore.state.currentCamera.run { reverseConverter(lon to lat) }
+        xValue.hint = hintXY.first.let { "%.6f".format(it) }
+        yValue.hint = hintXY.second.let { "%.6f".format(it) }
+    }
 
     private val coordList: List<Datum>
         get() {
@@ -35,8 +46,8 @@ class CoordInputDialog : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return AlertDialog.Builder(activity)
-                .setTitle(mainStore.state.datum.displayName)
-                .setView(InputBox)
+                .setTitle("請輸入座標")
+                .setView(inputBox)
                 .setPositiveButton("GOTO") { _, _ ->
                     val xy = try {
                         val rawXY = converter(extractCoor(xValue.text) to extractCoor(yValue.text))
@@ -49,43 +60,49 @@ class CoordInputDialog : DialogFragment() {
                     val target = CameraState(xy.second, xy.first, mainStore.state.currentCamera.zoom)
                     mainStore.state.currentMap.mapControl.animateCamera(target, 600)
                 }
-                .setNeutralButton("change CRS") { _, _ ->
-                    val owner = activity
-                    val choices = coordList.map { it.displayName } + "+ Add New"
-                    selector("座標系統", choices) { _, index ->
-                        if (index > coordList.lastIndex) {
-                            CrsCreateDialog().show(owner.fragmentManager, null)
-                        } else {
-                            val selectedProj = coordList[index]
-                            mainStore.dispatch(SetProjection(selectedProj))
-                        }
-                    }
-                }
                 .apply {
-                    if (!crs.isManaged) return@apply
-                    setNegativeButton("刪除") { _, _ ->
+                    if (crs.isManaged) setNegativeButton("刪除") { _, _ ->
                         val realm = Realm.getDefaultInstance()
                         realm.executeTransaction {
-                            val abandonCrs = crs
+                            val abandonedCrs = crs
                             mainStore.dispatch(SetProjection(WGS84_Degree))
-                            abandonCrs.deleteFromRealm()
+                            abandonedCrs.deleteFromRealm()
                         }
+                    }
+
+                    mainStore.subscribe(this@CoordInputDialog) { subscription ->
+                        subscription.select { it.datum }.skipRepeats()
                     }
                 }
                 .show()
     }
 
-    private val InputBox by lazy {
+    private val inputBox by lazy {
         UI {
             verticalLayout {
                 padding = 25
-                xValue = editText {
-                    hint = "120.960000"
-                    inputType = InputType.TYPE_CLASS_PHONE
-                }
-                yValue = editText {
-                    hint = "23.760000"
-                    inputType = InputType.TYPE_CLASS_PHONE
+
+                xValue = editText { inputType = InputType.TYPE_NUMBER_FLAG_DECIMAL }
+                yValue = editText { inputType = InputType.TYPE_NUMBER_FLAG_SIGNED }
+
+                spinner {
+                    val choices = coordList.map { it.displayName } + "+ Add New"
+                    adapter = ArrayAdapter(ctx, R.layout.simple_spinner_dropdown_item, choices)
+                    onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                        override fun onNothingSelected(p0: AdapterView<*>?) {}
+                        override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
+                            if (pos <= coordList.lastIndex) {
+                                val selectedProj = coordList[pos]
+                                mainStore.dispatch(SetProjection(selectedProj))
+                            } else {
+                                CrsCreateDialog().show(owner.fragmentManager, null)
+                                dismiss()
+                            }
+                        }
+                    }
+
+                    val selectedPos = coordList.indexOf(mainStore.state.datum)
+                    this@spinner.setSelection(selectedPos)
                 }
             }
         }.view

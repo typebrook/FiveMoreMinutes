@@ -21,9 +21,7 @@ fun reducer(action: Action, oldState: State?): State {
         is UpdateCurrentTarget -> state.copy(currentCamera = action.camera)
 
         is SetDisplay -> state.copy(display = action.display)
-        is DidFinishSetTile -> state.apply {
-            Log.d("Wow", action.tile.toString())
-        }
+        is DidFinishSetTile -> state
         is SetProjection -> state.copy(datum = action.coordSystem)
 
         else -> state
