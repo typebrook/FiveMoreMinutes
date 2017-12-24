@@ -16,6 +16,10 @@ data class AddMap(val map: MapControl) : Action
 data class RemoveMap(val map: MapControl) : Action
 data class FocusMap(val map: MapControl) : Action
 
+class EnableLocation : Action
+class DisableLocation : Action
+class DidSwitchLocation(val isEnabled: Boolean) : Action
+
 data class UpdateCurrentTarget(val holder: MapControl, val camera: CameraState) : Action
 
 data class ZoomBy(val value: Float) : Action

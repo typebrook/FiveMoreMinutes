@@ -24,7 +24,9 @@ class MapMiddleware : SpawningMiddleware<State>() {
     @Suppress("UNCHECKED_CAST")
     override fun transformers(): List<Pair<KClass<Action>, ActionTransformer<State>>> {
         return listOf(
-                UpdateCurrentTarget::class as KClass<Action> to updateCurrentTarget
+                UpdateCurrentTarget::class as KClass<Action> to updateCurrentTarget,
+                EnableLocation::class as KClass<Action> to enableLocation,
+                DisableLocation::class as KClass<Action> to disableLocation
         )
     }
 
@@ -43,7 +45,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
     }
 
     private val setMapTile: ActionHandler<State> = handler@ { action, getState ->
-        val mapControl: MapControl = getState()?.currentMap?.mapControl ?: return@handler
+        val mapControl = getState()?.currentMap?.mapControl ?: return@handler
 
         val tile = (action as? SetTile)?.tile ?: return@handler
         when (tile) {
@@ -56,7 +58,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
     }
 
     private val zoomMap: ActionHandler<State> = handler@ { action, getState ->
-        val mapControl: MapControl = getState()?.currentMap?.mapControl ?: return@handler
+        val mapControl = getState()?.currentMap?.mapControl ?: return@handler
 
         val value = (action as? ZoomBy)?.value ?: return@handler
         mapControl.zoomBy(value)
@@ -67,16 +69,28 @@ class MapMiddleware : SpawningMiddleware<State>() {
         val updateTarget = action as? UpdateCurrentTarget ?: return@transformer Nothing()
 
         if (updateTarget.holder == getState()?.currentMap?.mapControl) {
-            val otherMaps = getState()?.mapState?.maps?.map { it.mapControl }?.filter { it != updateTarget.holder }
+            val otherMaps = getState()?.maps?.map { it.mapControl }?.filter { it != updateTarget.holder }
             otherMaps?.forEach { it.moveCamera(updateTarget.camera) }
             updateTarget
         } else
             Nothing()
     }
 
+    private val enableLocation: ActionTransformer<State> = transformer@ { _, getState ->
+        val mapControl = getState()?.currentMap?.mapControl ?: return@transformer Nothing()
+        mapControl.enableLocation()
+        return@transformer DidSwitchLocation(mapControl.locating)
+    }
+
+    private val disableLocation: ActionTransformer<State> = transformer@ { _, getState ->
+        val mapControl = getState()?.currentMap?.mapControl ?: return@transformer Nothing()
+        mapControl.disableLocation()
+        return@transformer DidSwitchLocation(mapControl.locating)
+    }
+
     // Spawner
     private val cameraPositionBackward: ActionSpawner<State> = spawner@ { _, getState, callback ->
-        val mapControl: MapControl = getState()?.mapState?.run { maps[currentMapNum].mapControl }
+        val mapControl = getState()?.run { maps[currentMapNum].mapControl }
                 ?: return@spawner Nothing()
 
         mapControl.run {

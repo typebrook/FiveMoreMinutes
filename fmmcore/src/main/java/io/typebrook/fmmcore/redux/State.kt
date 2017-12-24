@@ -12,7 +12,8 @@ import tw.geothings.rekotlin.StateType
  * Created by pham on 2017/9/20.
  */
 data class State(
-        val mapState: MapState = MapState(),
+        val maps: List<MapInfo> = emptyList(),
+        val currentMapNum: Int = 0,
 
         val currentCamera: CameraState = CameraState(),
         val cameraSave: Boolean = true,
@@ -21,14 +22,9 @@ data class State(
 
         val datum: Datum = WGS84_Degree
 ) : StateType {
-    val currentMap: MapInfo get() = mapState.run {
-        if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else  MapInfo(SimpleMap(), null)}
-}
+    val currentMap: MapInfo
+        get() = if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else MapInfo(SimpleMap())
 
-data class MapState(
-        val maps: List<MapInfo> = emptyList(),
-        val currentMapNum: Int = 0
-) : StateType {
     fun indexOf(mapControl: MapControl): Int {
         maps.mapIndexed { index, mapInfo -> if (mapInfo.mapControl == mapControl) return index }
         return currentMapNum
@@ -37,6 +33,7 @@ data class MapState(
 
 data class MapInfo(
         val mapControl: MapControl,
+        val locating: Boolean = false,
         val tile: Tile? = null
 )
 

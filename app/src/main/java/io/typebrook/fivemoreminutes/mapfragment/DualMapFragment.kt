@@ -42,7 +42,7 @@ class DualMapFragment : Fragment(), StoreSubscriber<Int> {
                 }
 
                 currentMap = textView {
-                    text = mainStore.state.mapState.currentMapNum.toString()
+                    text = mainStore.state.currentMapNum.toString()
                     backgroundColor = Color.parseColor("#80FFFFFF")
                 }.lparams { centerInParent() }
             }
@@ -57,7 +57,7 @@ class DualMapFragment : Fragment(), StoreSubscriber<Int> {
                 .commit()
 
         mainStore.subscribe(this){subscription ->
-            subscription.select { it.mapState.currentMapNum }.skipRepeats()
+            subscription.select { it.currentMapNum }.skipRepeats()
         }
     }
 

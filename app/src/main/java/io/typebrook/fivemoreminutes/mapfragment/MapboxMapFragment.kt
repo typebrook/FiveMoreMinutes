@@ -3,12 +3,13 @@ package io.typebrook.fivemoreminutes.mapfragment
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.app.Fragment
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.location.Location
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.constants.Style
 import com.mapbox.mapboxsdk.geometry.LatLng
@@ -17,12 +18,14 @@ import com.mapbox.mapboxsdk.location.LocationSource
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
+import com.mapbox.mapboxsdk.style.layers.Property
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory
 import com.mapbox.mapboxsdk.style.layers.RasterLayer
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
-import com.mapbox.services.android.telemetry.permissions.PermissionsListener
-import com.mapbox.services.android.telemetry.permissions.PermissionsManager
+import com.mapbox.services.android.telemetry.location.LocationEngineListener
+import com.mapzen.android.lost.internal.LocationEngine
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
@@ -42,6 +45,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
 
     private val mapView by lazy { MapView(activity, MapFragmentUtils.resolveArgs(activity, arguments)) }
     private lateinit var map: MapboxMap
+    private lateinit var testButton: ImageView
 
     override val cameraState: CameraState
         get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom.toFloat() + ZOOMOFFSET) }
@@ -73,8 +77,11 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
             relativeLayout {
                 addView(mapView)
                 imageView {
-                    background = resources.getDrawable(R.drawable.ic_cross_24dp)
+                    backgroundResource = R.drawable.ic_cross_24dp
                 }.lparams { centerInParent() }
+                testButton = imageView {
+                    backgroundResource = R.drawable.mapbutton_background
+                }
             }
         }.view
     }
@@ -144,6 +151,13 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
             cameraStatePos += 1
             cameraQueue = cameraQueue.take(cameraStatePos) + cameraState
             mainStore dispatch UpdateCurrentTarget(this, cameraState)
+        }
+
+        testButton.setOnClickListener {
+            selector("${map.layers.size} layers", map.layers.map { it.id }) { _, index ->
+                val layer = map.layers[index]
+                layer.setProperties(PropertyFactory.visibility(Property.NONE))
+            }
         }
     }
 

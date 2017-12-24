@@ -73,10 +73,10 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         }
     }
 
-    private val mapNumSubscriber = object : StoreSubscriber<Int> {
-        override fun newState(state: Int) {
-            val newControl = mainStore.state.currentMap.mapControl
-            if (newControl.locating) {
+    private val mapSubscriber = object : StoreSubscriber<List<MapInfo>> {
+        override fun newState(state: List<MapInfo>) {
+            val currentMap = mainStore.state.currentMap
+            if (currentMap.locating) {
                 gpsOn.imageResource = R.drawable.ic_gps_fixed_black_24dp
                 gpsOff.visibility = VISIBLE
             } else {
@@ -141,15 +141,13 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
             gpsOn = imageView {
                 imageResource = R.drawable.ic_gps_not_fixed_black_24dp
-                background = resources.getDrawable(R.drawable.mapbutton_background)
+                backgroundResource = R.drawable.mapbutton_background
                 padding = 25
                 onClick {
                     if (!PermissionsManager.areLocationPermissionsGranted(owner)) {
                         PermissionsManager(owner).requestLocationPermissions(owner)
                     } else {
-                        gpsOff.visibility = VISIBLE
-                        mainStore.state.currentMap.mapControl.enableLocation()
-                        imageResource = R.drawable.ic_gps_fixed_black_24dp
+                        mainStore dispatch EnableLocation()
                     }
                 }
             }.lparams {
@@ -159,13 +157,11 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             }
             gpsOff = imageView {
                 imageResource = R.drawable.ic_gps_off_black_24dp
-                background = resources.getDrawable(R.drawable.mapbutton_background)
+                backgroundResource = R.drawable.mapbutton_background
                 padding = 25
                 visibility = INVISIBLE
                 onClick {
-                    mainStore.state.currentMap.mapControl.disableLocation()
-                    visibility = INVISIBLE
-                    gpsOn.setImageDrawable(resources.getDrawable(R.drawable.ic_gps_not_fixed_black_24dp))
+                    mainStore dispatch DisableLocation()
                 }
             }.lparams {
                 alignParentRight()
@@ -174,7 +170,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             }
 
             zoomText = textView {
-                background = resources.getDrawable(R.drawable.mapbutton_background)
+                backgroundResource = R.drawable.mapbutton_background
                 gravity = Gravity.CENTER
                 textSize = 20f
                 onClick {
@@ -199,7 +195,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             }
             zoomIn = imageView {
                 imageResource = R.drawable.ic_zoom_in_black_24dp
-                background = resources.getDrawable(R.drawable.mapbutton_background)
+                backgroundResource = R.drawable.mapbutton_background
                 padding = 20
                 onClick { mainStore dispatch ZoomBy(1f) }
             }.lparams {
@@ -210,7 +206,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             }
             zoomOut = imageView {
                 imageResource = R.drawable.ic_zoom_out_black_24dp
-                background = resources.getDrawable(R.drawable.mapbutton_background)
+                backgroundResource = R.drawable.mapbutton_background
                 padding = 15
                 onClick { mainStore dispatch ZoomBy(-1f) }
             }.lparams {
@@ -227,8 +223,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         mainStore.subscribe(coordPrinter) { subscription ->
             subscription.select { it.datum }.skipRepeats()
         }
-        mainStore.subscribe(mapNumSubscriber) { subscription ->
-            subscription.select { it.mapState.currentMapNum }.skipRepeats()
+        mainStore.subscribe(mapSubscriber) { subscription ->
+            subscription.select { it.maps }.skipRepeats()
         }
     }
 
