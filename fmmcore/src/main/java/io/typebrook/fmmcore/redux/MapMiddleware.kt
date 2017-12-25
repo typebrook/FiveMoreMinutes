@@ -2,7 +2,6 @@ package io.typebrook.fmmcore.redux
 
 import android.os.Handler
 import android.os.Looper
-import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
 import tw.geothings.rekotlin.Action
 import kotlin.reflect.KClass
@@ -41,7 +40,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
     private val addMap: ActionHandler<State> = handler@ { action, _ ->
         val map = (action as? AddMap)?.map ?: return@handler
 
-        map.changeStyle(null)
+        map.setStyle(null)
     }
 
     private val setMapTile: ActionHandler<State> = handler@ { action, getState ->
@@ -49,11 +48,8 @@ class MapMiddleware : SpawningMiddleware<State>() {
 
         val tile = (action as? SetTile)?.tile ?: return@handler
         when (tile) {
-            is Tile.WebTile -> mapControl.changeWebTile(tile)
-            is Tile.PrivateStyle -> {
-                mapControl.changeWebTile(null)
-                mapControl.changeStyle(tile)
-            }
+            is Tile.WebTile -> mapControl.setWebTile(tile)
+            is Tile.PrivateStyle -> mapControl.setStyle(tile)
         }
     }
 

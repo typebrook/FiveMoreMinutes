@@ -1,0 +1,38 @@
+{
+    "version": 8,
+    "name": "Dark",
+    "metadata": {
+        "mapbox:autocomposite": true,
+        "mapbox:type": "default",
+        "mapbox:origin": "dark-v9",
+        "mapbox:groups": {}
+    },
+    "center": [
+        121.5371677134425,
+        25.039333479471594
+    ],
+    "zoom": 12.287021166678992,
+    "bearing": 0,
+    "pitch": 0,
+    "sources": {},
+    "sprite": "mapbox://sprites/typebrook/cjblt97vr27su2smn3sr4gi2b",
+    "glyphs": "mapbox://fonts/typebrook/{fontstack}/{range}.pbf",
+    "layers": [
+        {
+            "id": "background",
+            "type": "background",
+            "layout": {
+                "visibility": "visible"
+            },
+            "paint": {
+                "background-color": "hsl(60, 13%, 90%)"
+            }
+        }
+    ],
+    "created": "2017-12-25T06:17:32.551Z",
+    "id": "cjblt97vr27su2smn3sr4gi2b",
+    "modified": "2017-12-25T14:30:29.909Z",
+    "owner": "typebrook",
+    "visibility": "private",
+    "draft": false
+}

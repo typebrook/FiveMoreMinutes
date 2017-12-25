@@ -25,8 +25,9 @@ interface MapControl {
     fun animateToBound(ne: XYPair, sw: XYPair, duration: Int)
     fun zoomBy(value: Float)
 
-    fun changeStyle(style: Tile.PrivateStyle?)
-    fun changeWebTile(tile: Tile.WebTile?)
+    fun setStyle(style: Tile.PrivateStyle?)
+    fun setWebTile(tile: Tile.WebTile?)
+    fun addWebTile(tile: Tile.WebTile)
 
     fun enableLocation()
     fun disableLocation()
@@ -58,8 +59,9 @@ class SimpleMap : MapControl {
     override fun animateToBound(ne: XYPair, sw: XYPair, duration: Int) {}
     override fun zoomBy(value: Float) {}
 
-    override fun changeStyle(style: Tile.PrivateStyle?) {}
-    override fun changeWebTile(tile: Tile.WebTile?) {}
+    override fun setStyle(style: Tile.PrivateStyle?) {}
+    override fun setWebTile(tile: Tile.WebTile?) {}
+    override fun addWebTile(tile: Tile.WebTile) {}
 
     override fun enableLocation() {}
     override fun disableLocation() {}

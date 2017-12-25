@@ -43,6 +43,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     private lateinit var coordinate: TextView
     private lateinit var gpsOn: ImageView
     private lateinit var gpsOff: ImageView
+    private lateinit var layers: ImageView
     private lateinit var zoomText: TextView
     private lateinit var zoomIn: ImageView
     private lateinit var zoomOut: ImageView
@@ -121,8 +122,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                         .normalText("選擇地圖")
                         .rotateText(false)
                         .listener {
-                            selector("線上地圖", tileList.map { it.name }) { _, index ->
-                                val selectedTile = tileList[index]
+                            selector("線上地圖", styleList.map { it.name }) { _, index ->
+                                val selectedTile = styleList[index]
                                 mainStore.dispatch(SetTile(selectedTile))
                             }
                         })
@@ -169,6 +170,22 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 topMargin = dip(53f)
             }
 
+            layers = imageView {
+                imageResource = R.drawable.ic_layers_black_24dp
+                backgroundResource = R.drawable.mapbutton_background
+                padding = 20
+                onClick {
+                    selector("疊加圖層", tileList.map { it.name }) { _, index ->
+                        val selectedTile = tileList[index]
+                        mainStore.dispatch(SetTile(selectedTile))
+                    }
+                }
+            }.lparams {
+                alignParentRight()
+                alignParentBottom()
+                rightMargin = dip(9.8f)
+                bottomMargin = dip(129f)
+            }
             zoomText = textView {
                 backgroundResource = R.drawable.mapbutton_background
                 gravity = Gravity.CENTER
@@ -247,11 +264,15 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 "Dual" to Display.Dual
         )
 
-        val tileList: List<Tile>
+        val styleList: List<Tile>
             get() = mainStore.state.currentMap.mapControl.styles + listOf(
                     "魯地圖" fromWebTile "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
                     "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
                     "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}"
             )
+
+        val tileList: List<Tile> = listOf(
+                "地圖產生器航跡" fromWebTile "http://rs.happyman.idv.tw/map/gpxtrack/{z}/{x}/{y}.png"
+        )
     }
 }

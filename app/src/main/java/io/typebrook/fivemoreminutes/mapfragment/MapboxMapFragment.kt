@@ -3,8 +3,8 @@ package io.typebrook.fivemoreminutes.mapfragment
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.app.Fragment
 import android.content.pm.PackageManager.PERMISSION_GRANTED
-import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,14 +18,11 @@ import com.mapbox.mapboxsdk.location.LocationSource
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
-import com.mapbox.mapboxsdk.style.layers.Property
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory.textField
 import com.mapbox.mapboxsdk.style.layers.RasterLayer
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
-import com.mapbox.services.android.telemetry.location.LocationEngineListener
-import com.mapzen.android.lost.internal.LocationEngine
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
@@ -35,6 +32,7 @@ import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
+import org.jetbrains.anko.sdk25.coroutines.onClick
 
 /**
  * Created by pham on 2017/9/19.
@@ -139,6 +137,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         this.map = map
         mainStore dispatch AddMap(this)
         animateCamera(cameraQueue.last(), 10)
+        map.layers.forEach { it.setProperties(textField("{name_zh}")) } // may set on original style
 
         map.setOnMapClickListener { mainStore dispatch FocusMap(this) }
 
@@ -153,11 +152,17 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
             mainStore dispatch UpdateCurrentTarget(this, cameraState)
         }
 
-        testButton.setOnClickListener {
-            selector("${map.layers.size} layers", map.layers.map { it.id }) { _, index ->
-                val layer = map.layers[index]
-                layer.setProperties(PropertyFactory.visibility(Property.NONE))
+        mapView.addOnMapChangedListener { change ->
+            Log.d("mapChange", change.toString())
+            when (change) {
+                MapView.DID_FINISH_RENDERING_MAP_FULLY_RENDERED -> toast("Finish Loading")
+                MapView.DID_FINISH_LOADING_MAP ->
+                    map.layers.forEach { it.setProperties(textField("{name}")) }
             }
+        }
+
+        testButton.onClick {
+            map.layers.forEach { it.setProperties(textField("{name_en}")) }
         }
     }
 
@@ -181,22 +186,38 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         map.animateCamera(CameraUpdateFactory.zoomBy(value.toDouble()))
     }
 
-    override fun changeStyle(style: Tile.PrivateStyle?) {
+    override fun setStyle(style: Tile.PrivateStyle?) {
+        setWebTile(null)
         val newStyle = style?.value?.takeIf { styles.contains(style) } ?: styles[0].value
         map.setStyle(newStyle as String)
-        mainStore dispatch DidFinishSetTile(style)
     }
 
-    override fun changeWebTile(tile: Tile.WebTile?) {
-        map.removeLayer(ID_WEBLAYER)
-        map.removeSource(ID_WEBSOURCE)
+    override fun setWebTile(tile: Tile.WebTile?) {
+        map.removeLayer(ID_WEBLAYER_BASE)
+        map.removeSource(ID_WEBSOURCE_BASE)
         if (tile == null) return
 
-        val webMapSource = RasterSource(ID_WEBSOURCE, TileSet(null, tile.url))
+        if (map.styleUrl != "asset://None.json") {
+            map.setStyle("asset://None.json") {
+                setWebTile(tile)
+            }
+            return
+        }
+
+        val webMapSource = RasterSource(ID_WEBSOURCE_BASE, TileSet(null, tile.url))
         map.addSource(webMapSource)
 
         // Add the web map source to the map.
-        val webMapLayer = RasterLayer(ID_WEBLAYER, ID_WEBSOURCE)
+        val webMapLayer = RasterLayer(ID_WEBLAYER_BASE, ID_WEBSOURCE_BASE)
+        map.addLayer(webMapLayer)
+    }
+
+    override fun addWebTile(tile: Tile.WebTile) {
+        val webMapSource = RasterSource(tile.url, TileSet(null, tile.url))
+        map.addSource(webMapSource)
+
+        // Add the web map source to the map.
+        val webMapLayer = RasterLayer(tile.name, tile.url)
         map.addLayer(webMapLayer)
     }
 
@@ -218,8 +239,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     //endregion
 
     companion object {
-        val ID_WEBSOURCE = "web-map-source"
-        val ID_WEBLAYER = "web-map-layer"
+        val ID_WEBSOURCE_BASE = "web-map-source"
+        val ID_WEBLAYER_BASE = "web-map-layer"
 
         val ZOOMOFFSET = 1
     }

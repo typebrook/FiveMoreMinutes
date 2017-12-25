@@ -29,7 +29,6 @@ class BlockCameraSave : Action
 
 data class SetDisplay(val display: Display) : Action
 data class SetTile(val tile: Tile?) : Action
-data class DidFinishSetTile(val tile: Tile?) : Action
 data class SetProjection(val coordSystem: Datum) : Action
 
 class SwitchMap : Action // Not Valid for now

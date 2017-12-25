@@ -80,8 +80,8 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<Datum> {
         UI {
             verticalLayout {
                 padding = 25
-                xValue = editText { inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL }
-                yValue = editText { inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_SIGNED or TYPE_NUMBER_FLAG_DECIMAL }
+                xValue = editText { inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL }
+                yValue = editText { inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL }
 
                 linearLayout {
                     padding = 25

@@ -54,7 +54,8 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
 
     override val locating get() = map.isMyLocationEnabled
 
-    private var tileOverlay: TileOverlay? = null
+    private var baseTileOverlay: TileOverlay? = null
+    private var tileOverlays: List<TileOverlay> = listOf()
 
     override fun onCreateView(p0: LayoutInflater?, p1: ViewGroup?, p2: Bundle?): View {
         getMapAsync(this)
@@ -116,13 +117,15 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
         map.animateCamera(CameraUpdateFactory.zoomBy(value))
     }
 
-    override fun changeStyle(style: Tile.PrivateStyle?) {
+    override fun setStyle(style: Tile.PrivateStyle?) {
+        baseTileOverlay?.remove()
         val mapType = style?.value.takeIf { styles.contains(style) } ?: styles[0].value
         map.mapType = mapType as Int
     }
 
-    override fun changeWebTile(tile: Tile.WebTile?) {
-        tileOverlay?.remove()
+    override fun setWebTile(tile: Tile.WebTile?) {
+        baseTileOverlay?.remove()
+        map.mapType = GoogleMap.MAP_TYPE_NONE
         if (tile == null) return
 
         val tileProvider = object : UrlTileProvider(256, 256) {
@@ -135,7 +138,22 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
             }
         }
 
-        tileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
+        baseTileOverlay = map.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
+    }
+
+    override fun addWebTile(tile: Tile.WebTile) {
+
+        val tileProvider = object : UrlTileProvider(256, 256) {
+            override fun getTileUrl(x: Int, y: Int, z: Int): URL {
+                val urlString = tile.url
+                        .replace("{x}", x.toString())
+                        .replace("{y}", y.toString())
+                        .replace("{z}", z.toString())
+                return URL(urlString)
+            }
+        }
+
+        tileOverlays += map.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
     }
 
     override fun enableLocation() {
