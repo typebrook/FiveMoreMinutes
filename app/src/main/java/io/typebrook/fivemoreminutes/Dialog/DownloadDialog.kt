@@ -56,7 +56,7 @@ class DownloadDialog constructor() : DialogFragment() {
                     })
                 }
             }
-        }.build() as AlertDialog
+        }.build() as Dialog
     }
 
     private fun downloadRegion(regionName: String) {

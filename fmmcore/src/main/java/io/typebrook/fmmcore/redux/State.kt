@@ -5,7 +5,7 @@ import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.SimpleMap
 import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.projection.Datum
-import io.typebrook.fmmcore.projection.WGS84_Degree
+import io.typebrook.fmmcore.projection.WGS84
 import tw.geothings.rekotlin.StateType
 
 /**
@@ -20,7 +20,7 @@ data class State(
 
         val display: Display = Display.MapBox,
 
-        val datum: Datum = WGS84_Degree
+        val datum: Datum = WGS84
 ) : StateType {
     val currentMap: MapInfo
         get() = if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else MapInfo(SimpleMap())

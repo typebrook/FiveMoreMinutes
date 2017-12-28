@@ -24,6 +24,7 @@ import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.Tile
+import io.typebrook.fmmcore.map.fromRoughWebTile
 import io.typebrook.fmmcore.map.fromWebTile
 import io.typebrook.fmmcore.projection.*
 import io.typebrook.fmmcore.redux.*
@@ -53,23 +54,23 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
     private val coordPrinter = object : StoreSubscriber<Datum> {
         var coordConverter: CoordConverter = { xyPair -> xyPair }
-        var textPrinter: CoordPrinter = defaultPrinter
+        var textPrinter: CoordPrinter = xy2MeterString
 
         operator fun invoke(xy: XYPair): String {
             val xyString = coordConverter(xy).let { textPrinter(it) }
             val datum = mainStore.state.datum
             return when (datum) {
-                WGS84_Degree -> xyString.run { "$second\n$first" }
-                WGS84_DMS -> xyString.run { "$second\n$first" }
-                TWD97 -> xyString.run { "TWD97: $first, $second" }
-                TWD67 -> xyString.run { "TWD67: $first, $second" }
-                else -> xyString.run { "${datum.displayName}\n$first\n$second" }
+                WGS84 -> xyString.run { "$first\n$second" }
+                else -> xyString.run {
+                    if (datum.isLonLat) "${datum.displayName}:\n$first\n$second"
+                    else "${datum.displayName}: $first, $second"
+                }
             }
         }
 
         override fun newState(state: Datum) {
-            coordConverter = Datum.generateConverter(WGS84_Degree, state)
-            textPrinter = state.printerº ?: defaultPrinter
+            coordConverter = Datum.generateConverter(WGS84, state)
+            textPrinter = if (state.isLonLat) xy2DegreeString else xy2MeterString
             this@ActivityUI.newState(mainStore.state.currentCamera)
         }
     }

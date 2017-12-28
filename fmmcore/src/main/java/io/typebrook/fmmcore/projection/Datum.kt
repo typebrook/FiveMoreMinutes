@@ -38,17 +38,22 @@ open class Datum() : RealmObject() {
     var typeValue: Int = ParameterType.Code.ordinal
     var parameter: String = ""
     var displayName: String = ""
-    @Ignore
-    var printerº: CoordPrinter? = null
+    var isLonLat: Boolean = false
 
     @Throws
-    constructor(parameterType: ParameterType, parameter: String, displayName: String, printer: CoordPrinter? = null
+    constructor(parameterType: ParameterType,
+                parameter: String,
+                displayName: String,
+                isLonLat: Boolean? = null
     ) : this() {
         this.typeValue = parameterType.ordinal
         this.parameter = parameter
         this.displayName = displayName
-        this.printerº = printer
-        this.crs
+        this.isLonLat = isLonLat ?: {
+            val converter = generateConverter(WGS84, Datum(parameterType, parameter, "", false))
+            converter(179.0 to 89.0).let { (x, y) -> x < 180 && y < 90 }
+        }()
+        crs // throws error when parameter is invalid
     }
 
     val crs: CoordinateReferenceSystem
@@ -61,21 +66,13 @@ open class Datum() : RealmObject() {
     override fun equals(other: Any?): Boolean = other is Datum
             && typeValue == other.typeValue
             && parameter == other.parameter
-            && printerº == other.printerº
 
     companion object {
-
-        fun buildByCode(parameter: String, displayName: String, printer: CoordPrinter? = null)
-                = Datum(ParameterType.Code, parameter, displayName, printer)
-
-        fun buildByBursaWolf(parameter: String, displayName: String, printer: CoordPrinter? = null)
-                = Datum(ParameterType.BursaWolf, parameter, displayName, printer)
 
         fun generateConverter(crs1: Datum, crs2: Datum): CoordConverter {
             if (crs1 == crs2) return { xyPair -> xyPair }
 
             val trans = CoordinateTransformFactory().createTransform(crs1.crs, crs2.crs)
-
             return { (x, y): XYPair ->
                 val p1 = ProjCoordinate(x, y)
                 val p2 = ProjCoordinate()

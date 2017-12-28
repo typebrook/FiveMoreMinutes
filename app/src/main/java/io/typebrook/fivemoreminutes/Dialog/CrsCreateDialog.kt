@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.CheckBox
 import android.widget.EditText
 import io.realm.Realm
 import io.typebrook.fivemoreminutes.mainStore
@@ -26,25 +27,26 @@ class CrsCreateDialog : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        return AlertDialog.Builder(activity)
-                .setTitle("創建新的座標參照系統")
-                .setView(createBox)
-                .setPositiveButton("新增") { _, _ ->
-                    val newDatum = try {
-                        Datum(parameterType, parameterText.text.toString(), displayName.text.toString())
-                    } catch (e: Exception) {
-                        activity.toast("Invalid Parameter")
-                        CrsCreateDialog().show(fragmentManager, null)
-                        return@setPositiveButton
-                    }
-                    val realm = Realm.getDefaultInstance()
-                    realm.executeTransaction {
-                        realm.copyToRealm(newDatum)
-                    }
-                    mainStore.dispatch(SetProjection(newDatum))
+        return alert {
+            title = "創建新的座標參照系統"
+            customView = createBox
+            positiveButton("新增") {
+                val newDatum = try {
+                    Datum(parameterType, parameterText.text.toString(), displayName.text.toString())
+                } catch (e: Exception) {
+                    activity.toast("Invalid Parameter")
+                    CrsCreateDialog().show(fragmentManager, null)
+                    return@positiveButton
                 }
-                .setNegativeButton("離開", null)
-                .show()
+                val realm = Realm.getDefaultInstance()
+                realm.executeTransaction {
+                    realm.copyToRealm(newDatum)
+                }
+                toast(if (newDatum.isLonLat) "is LonLat" else "not LonLat")
+                mainStore.dispatch(SetProjection(newDatum))
+            }
+            negativeButton("離開") {}
+        }.build() as Dialog
     }
 
     private val createBox by lazy {
@@ -66,6 +68,7 @@ class CrsCreateDialog : DialogFragment() {
                             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
                                 parameterType = ParameterType.values()[pos]
                                 if (parameterType == ParameterType.Code) {
+                                    parameterText.text.append("EPSG:")
                                     parameterText.hint = "EPSG:3857"
                                 } else {
                                     parameterText.hint = "+proj=tmerc +lat_0=0 +lon_0=..."

@@ -40,7 +40,7 @@ val xy2DMSString: CoordPrinter = { (lon, lat) ->
     "$lonPrefix ${degree2Dms(Math.abs(lon))}" to "$latPrefix ${degree2Dms(Math.abs(lat))}"
 }
 
-val xy2TWDString: CoordPrinter = { (x, y) ->
+val xy2MeterString: CoordPrinter = { (x, y) ->
 
     val xString = x.toInt().toString()
             .run { dropLast(3) + "-" + takeLast(3) }
@@ -51,7 +51,6 @@ val xy2TWDString: CoordPrinter = { (x, y) ->
     xString to yString
 }
 
-val WGS84_Degree = Datum.buildByCode("EPSG:4326", "WGS84(度)", xy2DegreeString)
-val WGS84_DMS = Datum.buildByCode("EPSG:4326", "WGS84(度分秒)", xy2DMSString)
-val TWD97 = Datum.buildByCode("EPSG:3826", "TWD97", xy2TWDString)
-val TWD67 = Datum.buildByBursaWolf("+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-752,-358,-179,-0.0000011698,0.0000018398,0.0000009822,0.00002329 +units=m +no_defs", "TWD67", xy2TWDString)
+val WGS84 = Datum(ParameterType.Code, "EPSG:4326", "WGS84", true)
+val TWD97 = Datum(ParameterType.Code, "EPSG:3826", "TWD97")
+val TWD67 = Datum(ParameterType.BursaWolf, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-752,-358,-179,-0.0000011698,0.0000018398,0.0000009822,0.00002329 +units=m +no_defs", "TWD67")
