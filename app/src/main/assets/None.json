@@ -15,8 +15,8 @@
     "bearing": 0,
     "pitch": 0,
     "sources": {},
-    "sprite": "mapbox://sprites/typebrook/cjblt97vr27su2smn3sr4gi2b",
-    "glyphs": "mapbox://fonts/typebrook/{fontstack}/{range}.pbf",
+    "sprite": "",
+    "glyphs": "",
     "layers": [
         {
             "id": "background",

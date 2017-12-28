@@ -25,6 +25,9 @@ data class State(
     val currentMap: MapInfo
         get() = if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else MapInfo(SimpleMap())
 
+    val currentControl: MapControl
+        get() = currentMap.mapControl
+
     fun indexOf(mapControl: MapControl): Int {
         maps.mapIndexed { index, mapInfo -> if (mapInfo.mapControl == mapControl) return index }
         return currentMapNum

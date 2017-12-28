@@ -175,9 +175,9 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 backgroundResource = R.drawable.mapbutton_background
                 padding = 20
                 onClick {
-                    selector("疊加圖層", tileList.map { it.name }) { _, index ->
+                    selector("圖層", tileList.map { it.name }) { _, index ->
                         val selectedTile = tileList[index]
-                        mainStore.dispatch(SetTile(selectedTile))
+                        mainStore.dispatch(AddWebTile(selectedTile))
                     }
                 }
             }.lparams {
@@ -266,13 +266,13 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
         val styleList: List<Tile>
             get() = mainStore.state.currentMap.mapControl.styles + listOf(
-                    "魯地圖" fromWebTile "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
+                    "魯地圖" fromRoughWebTile "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
                     "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
                     "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}"
             )
 
-        val tileList: List<Tile> = listOf(
-                "地圖產生器航跡" fromWebTile "http://rs.happyman.idv.tw/map/gpxtrack/{z}/{x}/{y}.png"
+        val tileList: List<Tile.WebTile> = listOf(
+                "地圖產生器航跡" fromRoughWebTile "http://rs.happyman.idv.tw/map/gpxtrack/{z}/{x}/{y}.png"
         )
     }
 }

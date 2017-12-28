@@ -34,11 +34,12 @@ interface MapControl {
 }
 
 sealed class Tile(val name: String) {
-    class WebTile(name: String, val url: String) : Tile(name)
+    class WebTile(name: String, val url: String, val size: Int = 128) : Tile(name)
     class PrivateStyle(name: String, val value: Any) : Tile(name)
 }
 
 infix fun String.fromWebTile(url: String): Tile.WebTile = Tile.WebTile(this, url)
+infix fun String.fromRoughWebTile(url: String): Tile.WebTile = Tile.WebTile(this, url, 256)
 infix fun String.fromStyle(style: Any): Tile.PrivateStyle = Tile.PrivateStyle(this, style)
 
 // Simple class fulfills interface to replace actual MapControl, used when onMapReady not yer done

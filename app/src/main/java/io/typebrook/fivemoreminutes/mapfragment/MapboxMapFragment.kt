@@ -3,12 +3,18 @@ package io.typebrook.fivemoreminutes.mapfragment
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.app.Fragment
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
+import android.widget.Spinner
+import android.widget.TextView
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.constants.Style
@@ -16,6 +22,7 @@ import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
 import com.mapbox.mapboxsdk.location.LocationSource
 import com.mapbox.mapboxsdk.maps.MapView
+import com.mapbox.mapboxsdk.maps.MapView.*
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory.textField
@@ -44,6 +51,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     private val mapView by lazy { MapView(activity, MapFragmentUtils.resolveArgs(activity, arguments)) }
     private lateinit var map: MapboxMap
     private lateinit var testButton: ImageView
+    private lateinit var indicator: ProgressBar
 
     override val cameraState: CameraState
         get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom.toFloat() + ZOOMOFFSET) }
@@ -80,6 +88,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
                 testButton = imageView {
                     backgroundResource = R.drawable.mapbutton_background
                 }
+                indicator = progressBar().lparams { centerInParent() }
             }
         }.view
     }
@@ -131,13 +140,12 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         mainStore.dispatch(RemoveMap(this))
     }
 
-    // endregion
+// endregion
 
     override fun onMapReady(map: MapboxMap) {
         this.map = map
         mainStore dispatch AddMap(this)
         animateCamera(cameraQueue.last(), 10)
-        map.layers.forEach { it.setProperties(textField("{name_zh}")) } // may set on original style
 
         map.setOnMapClickListener { mainStore dispatch FocusMap(this) }
 
@@ -155,9 +163,11 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         mapView.addOnMapChangedListener { change ->
             Log.d("mapChange", change.toString())
             when (change) {
-                MapView.DID_FINISH_RENDERING_MAP_FULLY_RENDERED -> toast("Finish Loading")
-                MapView.DID_FINISH_LOADING_MAP ->
-                    map.layers.forEach { it.setProperties(textField("{name}")) }
+                WILL_START_RENDERING_FRAME, WILL_START_RENDERING_MAP ->
+                    indicator.visibility = VISIBLE
+
+                DID_FINISH_RENDERING_FRAME_FULLY_RENDERED, DID_FINISH_RENDERING_MAP_FULLY_RENDERED ->
+                    indicator.visibility = INVISIBLE
             }
         }
 
@@ -204,7 +214,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
             return
         }
 
-        val webMapSource = RasterSource(ID_WEBSOURCE_BASE, TileSet(null, tile.url))
+        val webMapSource = RasterSource(ID_WEBSOURCE_BASE, TileSet(null, tile.url), tile.size)
         map.addSource(webMapSource)
 
         // Add the web map source to the map.
@@ -213,7 +223,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
     }
 
     override fun addWebTile(tile: Tile.WebTile) {
-        val webMapSource = RasterSource(tile.url, TileSet(null, tile.url))
+        val webMapSource = RasterSource(tile.url, TileSet(null, tile.url), tile.size)
         map.addSource(webMapSource)
 
         // Add the web map source to the map.
@@ -236,7 +246,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         map.isMyLocationEnabled = false
     }
 
-    //endregion
+//endregion
 
     companion object {
         val ID_WEBSOURCE_BASE = "web-map-source"
