@@ -58,7 +58,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
         operator fun invoke(xy: XYPair): String {
             val xyString = coordConverter(xy).let { textPrinter(it) }
-            val datum = mainStore.state.datum
+            val datum = mainStore.state.crs
             return when (datum) {
                 WGS84 -> xyString.run { "$first\n$second" }
                 else -> xyString.run {
@@ -239,7 +239,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             subscription.select { it.currentCamera }.skipRepeats()
         }
         mainStore.subscribe(coordPrinter) { subscription ->
-            subscription.select { it.datum }.skipRepeats()
+            subscription.select { it.crs }.skipRepeats()
         }
         mainStore.subscribe(mapSubscriber) { subscription ->
             subscription.select { it.maps }.skipRepeats()

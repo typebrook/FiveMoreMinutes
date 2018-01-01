@@ -18,7 +18,7 @@ data class FocusMap(val map: MapControl) : Action
 
 class EnableLocation : Action
 class DisableLocation : Action
-class DidSwitchLocation(val isEnabled: Boolean) : Action
+class DidSwitchLocation(val map: MapControl, val isEnabled: Boolean) : Action
 
 data class UpdateCurrentTarget(val holder: MapControl, val camera: CameraState) : Action
 

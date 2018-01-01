@@ -51,9 +51,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
             "Google 街道" fromStyle GoogleMap.MAP_TYPE_NORMAL,
             "Google 地形" fromStyle GoogleMap.MAP_TYPE_TERRAIN
     )
-
-    override val locating get() = map.isMyLocationEnabled
-
+    
     private var baseTileOverlay: TileOverlay? = null
     private var tileOverlays: List<TileOverlay> = listOf()
 
@@ -162,6 +160,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
             map.uiSettings.isMyLocationButtonEnabled = false
             val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
             fusedLocationClient.lastLocation.addOnSuccessListener(activity) { lastLocation ->
+                mainStore dispatch DidSwitchLocation(this, true)
                 lastLocation?.apply {
                     val zoom = if (cameraState.zoom < 16) 16f else cameraState.zoom
                     animateCamera(CameraState(latitude, longitude, zoom), 1000)
@@ -173,6 +172,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
     override fun disableLocation() {
         if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
             map.isMyLocationEnabled = false
+            mainStore dispatch DidSwitchLocation(this, false)
         }
     }
 }

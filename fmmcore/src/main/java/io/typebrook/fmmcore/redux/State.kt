@@ -20,7 +20,7 @@ data class State(
 
         val display: Display = Display.MapBox,
 
-        val datum: Datum = WGS84
+        val crs: Datum = WGS84
 ) : StateType {
     val currentMap: MapInfo
         get() = if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else MapInfo(SimpleMap())

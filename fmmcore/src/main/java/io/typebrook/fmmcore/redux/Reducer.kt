@@ -15,8 +15,8 @@ fun reducer(action: Action, oldState: State?): State {
         is RemoveMap -> state.copy(currentMapNum = 0, maps = state.maps.filter { it.mapControl != action.map })
         is SwitchMap -> state.copy(currentMapNum = (state.currentMapNum + 1) % state.maps.size)
         is FocusMap -> state.copy(currentMapNum = state.indexOf(action.map))
-        is DidSwitchLocation -> state.copy(maps = state.maps.mapIndexed { index, it ->
-            if (index == state.currentMapNum) it.copy(locating = action.isEnabled) else it
+        is DidSwitchLocation -> state.copy(maps = state.maps.map {
+            if (it.mapControl == action.map) it.copy(locating = action.isEnabled) else it
         })
 
         is GrantCameraSave -> state.copy(cameraSave = true)
@@ -25,7 +25,7 @@ fun reducer(action: Action, oldState: State?): State {
         is UpdateCurrentTarget -> state.copy(currentCamera = action.camera)
 
         is SetDisplay -> state.copy(display = action.display)
-        is SetProjection -> state.copy(datum = action.coordSystem)
+        is SetProjection -> state.copy(crs = action.coordSystem)
 
         else -> state
     }

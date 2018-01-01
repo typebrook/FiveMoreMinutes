@@ -1,13 +1,11 @@
 package io.typebrook.fivemoreminutes.Dialog
 
-import android.app.AlertDialog
 import android.app.Dialog
 import android.app.DialogFragment
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.CheckBox
 import android.widget.EditText
 import io.realm.Realm
 import io.typebrook.fivemoreminutes.mainStore
@@ -21,7 +19,7 @@ import org.jetbrains.anko.*
  */
 class CrsCreateDialog : DialogFragment() {
 
-    var parameterType: ParameterType = ParameterType.Code
+    lateinit var parameterType: ParameterType
     lateinit var parameterText: EditText
     lateinit var displayName: EditText
 
@@ -32,7 +30,7 @@ class CrsCreateDialog : DialogFragment() {
             customView = createBox
             positiveButton("新增") {
                 val newDatum = try {
-                    Datum(parameterType, parameterText.text.toString(), displayName.text.toString())
+                    Datum(parameterType.ordinal, parameterText.text.toString(), displayName.text.toString())
                 } catch (e: Exception) {
                     activity.toast("Invalid Parameter")
                     CrsCreateDialog().show(fragmentManager, null)

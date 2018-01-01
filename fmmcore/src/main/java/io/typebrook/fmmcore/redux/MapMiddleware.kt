@@ -17,16 +17,16 @@ class MapMiddleware : SpawningMiddleware<State>() {
                 AddMap::class as KClass<Action> to addMap,
                 SetTile::class as KClass<Action> to setTile,
                 AddWebTile::class as KClass<Action> to addWebTile,
-                ZoomBy::class as KClass<Action> to zoomMap
+                ZoomBy::class as KClass<Action> to zoomMap,
+                EnableLocation::class as KClass<Action> to enableLocation,
+                DisableLocation::class as KClass<Action> to disableLocation
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun transformers(): List<Pair<KClass<Action>, ActionTransformer<State>>> {
         return listOf(
-                UpdateCurrentTarget::class as KClass<Action> to updateCurrentTarget,
-                EnableLocation::class as KClass<Action> to enableLocation,
-                DisableLocation::class as KClass<Action> to disableLocation
+                UpdateCurrentTarget::class as KClass<Action> to updateCurrentTarget
         )
     }
 
@@ -68,6 +68,16 @@ class MapMiddleware : SpawningMiddleware<State>() {
         mapControl.zoomBy(value)
     }
 
+    private val enableLocation: ActionHandler<State> = handler@ { _, getState ->
+        val mapControl = getState()?.currentControl ?: return@handler
+        mapControl.enableLocation()
+    }
+
+    private val disableLocation: ActionHandler<State> = handler@ { _, getState ->
+        val mapControl = getState()?.currentControl ?: return@handler
+        mapControl.disableLocation()
+    }
+
     // Transformer
     private val updateCurrentTarget: ActionTransformer<State> = transformer@ { action, getState ->
         val updateTarget = action as? UpdateCurrentTarget ?: return@transformer Nothing()
@@ -78,18 +88,6 @@ class MapMiddleware : SpawningMiddleware<State>() {
             updateTarget
         } else
             Nothing()
-    }
-
-    private val enableLocation: ActionTransformer<State> = transformer@ { _, getState ->
-        val mapControl = getState()?.currentControl ?: return@transformer Nothing()
-        mapControl.enableLocation()
-        return@transformer DidSwitchLocation(mapControl.locating)
-    }
-
-    private val disableLocation: ActionTransformer<State> = transformer@ { _, getState ->
-        val mapControl = getState()?.currentControl ?: return@transformer Nothing()
-        mapControl.disableLocation()
-        return@transformer DidSwitchLocation(mapControl.locating)
     }
 
     // Spawner

@@ -1,14 +1,13 @@
 package io.typebrook.fmmcore.projection
 
+import android.util.Log
 import io.realm.RealmObject
 import io.realm.annotations.Ignore
-import io.realm.annotations.PrimaryKey
 import io.realm.annotations.RealmClass
 import org.osgeo.proj4j.CRSFactory
 import org.osgeo.proj4j.CoordinateReferenceSystem
 import org.osgeo.proj4j.CoordinateTransformFactory
 import org.osgeo.proj4j.ProjCoordinate
-import java.util.*
 
 /**
  * Created by pham on 2017/11/13.
@@ -30,31 +29,26 @@ enum class ParameterType {
     BursaWolf
 }
 
+enum class Expression {
+    Int,
+    Degree,
+    DegMin,
+    DMS
+}
+
 @RealmClass
-open class Datum() : RealmObject() {
-
-    @PrimaryKey
-    private var id: String = UUID.randomUUID().toString()
-    var typeValue: Int = ParameterType.Code.ordinal
-    var parameter: String = ""
-    var displayName: String = ""
-    var isLonLat: Boolean = false
-
-    @Throws
-    constructor(parameterType: ParameterType,
-                parameter: String,
-                displayName: String,
-                isLonLat: Boolean? = null
-    ) : this() {
-        this.typeValue = parameterType.ordinal
-        this.parameter = parameter
-        this.displayName = displayName
-        this.isLonLat = isLonLat ?: {
-            val converter = generateConverter(WGS84, Datum(parameterType, parameter, "", false))
-            converter(179.0 to 89.0).let { (x, y) -> x < 180 && y < 90 }
-        }()
-        crs // throws error when parameter is invalid
-    }
+open class Datum @Throws constructor(
+        var typeValue: Int = ParameterType.Code.ordinal,
+        var parameter: String = "",
+        var displayName: String = "",
+        var isLonLat: Boolean = true
+//        {
+//            val testDatum = Datum(typeValue, parameter, "", false)
+//            val converter = generateConverter(WGS84, testDatum)
+//            converter(179.0 to 89.0).let { (x, y) -> x < 180 && y < 90 }
+//        }()
+) : RealmObject() {
+    @Ignore var expression: Expression = if (this.isLonLat) Expression.Degree else Expression.Int
 
     val crs: CoordinateReferenceSystem
         get() = when (ParameterType.values()[typeValue]) {
@@ -62,15 +56,10 @@ open class Datum() : RealmObject() {
             ParameterType.BursaWolf -> CRSFactory().createFromParameters(displayName, parameter)
         }
 
-    override fun hashCode(): Int = parameter.hashCode() shl typeValue
-    override fun equals(other: Any?): Boolean = other is Datum
-            && typeValue == other.typeValue
-            && parameter == other.parameter
-
     companion object {
 
         fun generateConverter(crs1: Datum, crs2: Datum): CoordConverter {
-            if (crs1 == crs2) return { xyPair -> xyPair }
+            if (crs1.parameter == crs2.parameter) return { xyPair -> xyPair }
 
             val trans = CoordinateTransformFactory().createTransform(crs1.crs, crs2.crs)
             return { (x, y): XYPair ->

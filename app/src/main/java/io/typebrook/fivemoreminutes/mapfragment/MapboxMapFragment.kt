@@ -3,7 +3,7 @@ package io.typebrook.fivemoreminutes.mapfragment
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.app.Fragment
 import android.content.pm.PackageManager.PERMISSION_GRANTED
-import android.graphics.Color
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,23 +13,25 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
-import android.widget.Spinner
-import android.widget.TextView
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.constants.Style
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
-import com.mapbox.mapboxsdk.location.LocationSource
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapView.*
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory.textField
+import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerMode
+import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.style.layers.RasterLayer
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
+import com.mapbox.services.android.telemetry.location.LocationEngine
+import com.mapbox.services.android.telemetry.location.LocationEngineListener
+import com.mapbox.services.android.telemetry.location.LocationEnginePriority
+import com.mapbox.services.android.telemetry.location.LostLocationEngine
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
@@ -41,17 +43,27 @@ import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
 
+
 /**
  * Created by pham on 2017/9/19.
  * this fragment defines Google Map interaction with user
  */
 
-class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
+class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEngineListener {
 
     private val mapView by lazy { MapView(activity, MapFragmentUtils.resolveArgs(activity, arguments)) }
     private lateinit var map: MapboxMap
+
+    private val locationPlugin by lazy { LocationLayerPlugin(mapView, map, locationEngine) }
+    private val locationEngine by lazy {
+        LostLocationEngine(ctx).apply {
+            priority = LocationEnginePriority.HIGH_ACCURACY
+            addLocationEngineListener(this@MapboxMapFragment)
+        }
+    }
+
     private lateinit var testButton: ImageView
-    private lateinit var indicator: ProgressBar
+    private lateinit var progressIndicator: ProgressBar
 
     override val cameraState: CameraState
         get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom.toFloat() + ZOOMOFFSET) }
@@ -71,8 +83,6 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
             "Mapbox 衛星混合" fromStyle Style.SATELLITE_STREETS
     )
 
-    override val locating get() = map.isMyLocationEnabled
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Mapbox.getInstance(activity.applicationContext, resources.getString(R.string.token_mapbox))
@@ -88,7 +98,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
                 testButton = imageView {
                     backgroundResource = R.drawable.mapbutton_background
                 }
-                indicator = progressBar().lparams { centerInParent() }
+                progressIndicator = progressBar().lparams { centerInParent() }
             }
         }.view
     }
@@ -147,14 +157,14 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         mainStore dispatch AddMap(this)
         animateCamera(cameraQueue.last(), 10)
 
-        map.setOnMapClickListener { mainStore dispatch FocusMap(this) }
+        map.addOnMapClickListener { mainStore dispatch FocusMap(this) }
 
-        map.setOnCameraMoveListener {
+        map.addOnCameraMoveListener {
             mainStore dispatch UpdateCurrentTarget(this, cameraState)
         }
 
-        map.setOnCameraIdleListener {
-            if (!mainStore.state.cameraSave) return@setOnCameraIdleListener
+        map.addOnCameraIdleListener {
+            if (!mainStore.state.cameraSave) return@addOnCameraIdleListener
             cameraStatePos += 1
             cameraQueue = cameraQueue.take(cameraStatePos) + cameraState
             mainStore dispatch UpdateCurrentTarget(this, cameraState)
@@ -164,15 +174,25 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
             Log.d("mapChange", change.toString())
             when (change) {
                 WILL_START_RENDERING_FRAME, WILL_START_RENDERING_MAP ->
-                    indicator.visibility = VISIBLE
+                    progressIndicator.visibility = VISIBLE
 
                 DID_FINISH_RENDERING_FRAME_FULLY_RENDERED, DID_FINISH_RENDERING_MAP_FULLY_RENDERED ->
-                    indicator.visibility = INVISIBLE
+                    progressIndicator.visibility = INVISIBLE
             }
         }
 
         testButton.onClick {
-            map.layers.forEach { it.setProperties(textField("{name_en}")) }
+            //            val list = listOf(
+//                    "Compass" to LocationLayerMode.COMPASS,
+//                    "Tracking" to LocationLayerMode.TRACKING,
+//                    "Navigation" to LocationLayerMode.NAVIGATION,
+//                    "None" to LocationLayerMode.NONE)
+//            selector("Location mode", list.map { it.first }) { _, index ->
+//                if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
+//                    locationPlugin.setLocationLayerEnabled(list[index].second)
+//                }
+//            }
+            toast(mainStore.state.crs.run { "$isLonLat ${expression.name}" })
         }
     }
 
@@ -231,23 +251,33 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
         map.addLayer(webMapLayer)
     }
 
+    // region User Location
     override fun enableLocation() {
-        if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
-            map.isMyLocationEnabled = true
-            val lastLocation = LocationSource(activity).lastLocation
-            lastLocation?.apply {
-                val zoom = if (cameraState.zoom < 16) 16f else cameraState.zoom
-                animateCamera(CameraState(latitude, longitude, zoom), 1000)
-            }
-        }
+        locationEngine.activate()
     }
 
     override fun disableLocation() {
-        map.isMyLocationEnabled = false
+        locationEngine.deactivate()
+        mainStore dispatch DidSwitchLocation(this, false)
+        if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
+            locationPlugin.setLocationLayerEnabled(LocationLayerMode.NONE)
+        }
     }
 
-//endregion
+    override fun onLocationChanged(location: Location?) {}
+    override fun onConnected() {
+        if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
+            mainStore dispatch DidSwitchLocation(this, true)
 
+            val lastLocation = locationEngine.lastLocation
+            val zoom = if (cameraState.zoom < 16) 16f else cameraState.zoom
+            lastLocation?.run { animateCamera(CameraState(latitude, longitude, zoom), 800) }
+
+            locationPlugin.setLocationLayerEnabled(LocationLayerMode.TRACKING)
+        }
+    }
+
+    // endregion
     companion object {
         val ID_WEBSOURCE_BASE = "web-map-source"
         val ID_WEBLAYER_BASE = "web-map-layer"

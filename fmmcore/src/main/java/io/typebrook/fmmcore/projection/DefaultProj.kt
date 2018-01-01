@@ -4,7 +4,6 @@ package io.typebrook.fmmcore.projection
  * Created by pham on 2017/11/5.
  */
 
-val defaultPrinter: CoordPrinter = { (x, y) -> "%.6f".format(x) to "%.6f".format(y) }
 
 val xy2DegreeString: CoordPrinter = { (lon, lat) ->
 
@@ -41,16 +40,11 @@ val xy2DMSString: CoordPrinter = { (lon, lat) ->
 }
 
 val xy2MeterString: CoordPrinter = { (x, y) ->
-
-    val xString = x.toInt().toString()
-            .run { dropLast(3) + "-" + takeLast(3) }
-
-    val yString = y.toInt().toString()
-            .run { dropLast(3) + "-" + takeLast(3) }
-
+    val xString = x.toInt().toString().run { dropLast(3) + "-" + takeLast(3) }
+    val yString = y.toInt().toString().run { dropLast(3) + "-" + takeLast(3) }
     xString to yString
 }
 
-val WGS84 = Datum(ParameterType.Code, "EPSG:4326", "WGS84", true)
-val TWD97 = Datum(ParameterType.Code, "EPSG:3826", "TWD97")
-val TWD67 = Datum(ParameterType.BursaWolf, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-752,-358,-179,-0.0000011698,0.0000018398,0.0000009822,0.00002329 +units=m +no_defs", "TWD67")
+val WGS84 = Datum(ParameterType.Code.ordinal, "EPSG:4326", "WGS84", true)
+val TWD97 = Datum(ParameterType.Code.ordinal, "EPSG:3826", "TWD97")
+val TWD67 = Datum(ParameterType.BursaWolf.ordinal, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-752,-358,-179,-0.0000011698,0.0000018398,0.0000009822,0.00002329 +units=m +no_defs", "TWD67")
