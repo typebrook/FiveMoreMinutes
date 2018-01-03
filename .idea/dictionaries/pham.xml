@@ -2,8 +2,10 @@
   <dictionary name="pham">
     <words>
       <w>coord</w>
+      <w>latº</w>
       <w>proj</w>
       <w>topo</w>
+      <w>unsubscribe</w>
     </words>
   </dictionary>
 </component>

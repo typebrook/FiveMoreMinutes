@@ -39,12 +39,18 @@ val xy2DMSString: CoordPrinter = { (lon, lat) ->
     "$lonPrefix ${degree2Dms(Math.abs(lon))}" to "$latPrefix ${degree2Dms(Math.abs(lat))}"
 }
 
-val xy2MeterString: CoordPrinter = { (x, y) ->
-    val xString = x.toInt().toString().run { dropLast(3) + "-" + takeLast(3) }
-    val yString = y.toInt().toString().run { dropLast(3) + "-" + takeLast(3) }
+val xy2IntString: CoordPrinter = { (x, y) ->
+    val xString = x.toInt().toString().run {
+        if (this.length <= 3) return@run this
+        dropLast(3) + "-" + takeLast(3)
+    }
+    val yString = y.toInt().toString().run {
+        if (this.length <= 3) return@run this
+        dropLast(3) + "-" + takeLast(3)
+    }
     xString to yString
 }
 
-val WGS84 = Datum(ParameterType.Code.ordinal, "EPSG:4326", "WGS84", true)
-val TWD97 = Datum(ParameterType.Code.ordinal, "EPSG:3826", "TWD97")
-val TWD67 = Datum(ParameterType.BursaWolf.ordinal, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-752,-358,-179,-0.0000011698,0.0000018398,0.0000009822,0.00002329 +units=m +no_defs", "TWD67")
+val WGS84 = CoordRefSys(ParameterType.Code, "EPSG:4326", "WGS84", true)
+val TWD97 = CoordRefSys(ParameterType.Code, "EPSG:3826", "TWD97", false)
+val TWD67 = CoordRefSys(ParameterType.BursaWolf, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-752,-358,-179,-0.0000011698,0.0000018398,0.0000009822,0.00002329 +units=m +no_defs", "TWD67", false)

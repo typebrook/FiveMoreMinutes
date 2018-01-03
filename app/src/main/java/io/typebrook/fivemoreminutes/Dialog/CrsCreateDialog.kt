@@ -9,9 +9,9 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import io.realm.Realm
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fmmcore.projection.Datum
+import io.typebrook.fmmcore.projection.CoordRefSys
 import io.typebrook.fmmcore.projection.ParameterType
-import io.typebrook.fmmcore.redux.SetProjection
+import io.typebrook.fmmcore.redux.SetCrsState
 import org.jetbrains.anko.*
 
 /**
@@ -30,7 +30,7 @@ class CrsCreateDialog : DialogFragment() {
             customView = createBox
             positiveButton("新增") {
                 val newDatum = try {
-                    Datum(parameterType.ordinal, parameterText.text.toString(), displayName.text.toString())
+                    CoordRefSys(parameterType, parameterText.text.toString(), displayName.text.toString())
                 } catch (e: Exception) {
                     activity.toast("Invalid Parameter")
                     CrsCreateDialog().show(fragmentManager, null)
@@ -41,7 +41,7 @@ class CrsCreateDialog : DialogFragment() {
                     realm.copyToRealm(newDatum)
                 }
                 toast(if (newDatum.isLonLat) "is LonLat" else "not LonLat")
-                mainStore.dispatch(SetProjection(newDatum))
+                mainStore.dispatch(SetCrsState(newDatum))
             }
             negativeButton("離開") {}
         }.build() as Dialog

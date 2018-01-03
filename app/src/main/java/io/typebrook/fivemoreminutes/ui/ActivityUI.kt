@@ -52,25 +52,30 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     private var isHide = false
     private val components by lazy { listOf(coordinate, zoomText, zoomIn, zoomOut) }
 
-    private val coordPrinter = object : StoreSubscriber<Datum> {
+    private val coordPrinter = object : StoreSubscriber<CrsState> {
         var coordConverter: CoordConverter = { xyPair -> xyPair }
-        var textPrinter: CoordPrinter = xy2MeterString
+        var textPrinter: CoordPrinter = xy2IntString
 
         operator fun invoke(xy: XYPair): String {
             val xyString = coordConverter(xy).let { textPrinter(it) }
-            val datum = mainStore.state.crs
-            return when (datum) {
+            val crs = mainStore.state.crsState.crs
+            return when (crs) {
                 WGS84 -> xyString.run { "$first\n$second" }
                 else -> xyString.run {
-                    if (datum.isLonLat) "${datum.displayName}:\n$first\n$second"
-                    else "${datum.displayName}: $first, $second"
+                    if (crs.isLonLat) "${crs.displayName}:\n$first\n$second"
+                    else "${crs.displayName}: $first, $second"
                 }
             }
         }
 
-        override fun newState(state: Datum) {
-            coordConverter = Datum.generateConverter(WGS84, state)
-            textPrinter = if (state.isLonLat) xy2DegreeString else xy2MeterString
+        override fun newState(state: CrsState) {
+            coordConverter = CoordRefSys.generateConverter(WGS84, state.crs)
+            textPrinter = when (state.coordExpr) {
+                Expression.Int -> xy2IntString
+                Expression.Degree -> xy2DegreeString
+                Expression.DegMin -> xy2DegMinString
+                Expression.DMS -> xy2DMSString
+            }
             this@ActivityUI.newState(mainStore.state.currentCamera)
         }
     }
@@ -239,7 +244,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             subscription.select { it.currentCamera }.skipRepeats()
         }
         mainStore.subscribe(coordPrinter) { subscription ->
-            subscription.select { it.crs }.skipRepeats()
+            subscription.select { it.crsState }.skipRepeats()
         }
         mainStore.subscribe(mapSubscriber) { subscription ->
             subscription.select { it.maps }.skipRepeats()

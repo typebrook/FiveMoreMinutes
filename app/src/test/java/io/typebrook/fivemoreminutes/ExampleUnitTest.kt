@@ -13,6 +13,19 @@ class ExampleUnitTest {
     @Test
     @Throws(Exception::class)
     fun wrongSubList() {
-        println(listOf<String>("at").subList(0, 1))
+        class blabla {
+            val name: String
+
+            constructor(name: String) {
+                this.name = name
+                println("in constructor")
+            }
+
+            init {
+                println("in init")
+            }
+        }
+
+        blabla("yes")
     }
 }

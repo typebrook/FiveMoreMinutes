@@ -3,6 +3,7 @@ package io.typebrook.fmmcore.redux
 import android.os.Handler
 import android.os.Looper
 import io.typebrook.fmmcore.map.Tile
+import io.typebrook.fmmcore.projection.Expression
 import tw.geothings.rekotlin.Action
 import kotlin.reflect.KClass
 
@@ -26,7 +27,8 @@ class MapMiddleware : SpawningMiddleware<State>() {
     @Suppress("UNCHECKED_CAST")
     override fun transformers(): List<Pair<KClass<Action>, ActionTransformer<State>>> {
         return listOf(
-                UpdateCurrentTarget::class as KClass<Action> to updateCurrentTarget
+                UpdateCurrentTarget::class as KClass<Action> to updateCurrentTarget,
+                SetCrsState::class as KClass<Action> to setCoordRefSys
         )
     }
 
@@ -80,14 +82,27 @@ class MapMiddleware : SpawningMiddleware<State>() {
 
     // Transformer
     private val updateCurrentTarget: ActionTransformer<State> = transformer@ { action, getState ->
-        val updateTarget = action as? UpdateCurrentTarget ?: return@transformer Nothing()
+        action as? UpdateCurrentTarget ?: return@transformer Nothing()
 
-        if (updateTarget.holder == getState()?.currentControl) {
-            val otherMaps = getState()?.maps?.map { it.mapControl }?.filter { it != updateTarget.holder }
-            otherMaps?.forEach { it.moveCamera(updateTarget.camera) }
-            updateTarget
+        if (action.holder == getState()?.currentControl) {
+            val otherMaps = getState()?.maps?.map { it.mapControl }?.filter { it != action.holder }
+            otherMaps?.forEach { it.moveCamera(action.camera) }
+            action
         } else
             Nothing()
+    }
+
+    private val setCoordRefSys: ActionTransformer<State> = transformers@ { action, getState ->
+        action as? SetCrsState ?: return@transformers action
+        val newCrs = action.crs
+        val oldCrs = getState()?.crsState?.crs ?: return@transformers action
+
+        if (newCrs.isLonLat != oldCrs.isLonLat) {
+            val expression = if (newCrs.isLonLat) Expression.Degree else Expression.Int
+            return@transformers SetCrsState(newCrs, expression)
+        }
+
+        action
     }
 
     // Spawner

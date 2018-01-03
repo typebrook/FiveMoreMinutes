@@ -192,7 +192,6 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 //                    locationPlugin.setLocationLayerEnabled(list[index].second)
 //                }
 //            }
-            toast(mainStore.state.crs.run { "$isLonLat ${expression.name}" })
         }
     }
 

@@ -1,6 +1,5 @@
 package io.typebrook.fmmcore.projection
 
-import android.util.Log
 import io.realm.RealmObject
 import io.realm.annotations.Ignore
 import io.realm.annotations.RealmClass
@@ -37,18 +36,24 @@ enum class Expression {
 }
 
 @RealmClass
-open class Datum @Throws constructor(
-        var typeValue: Int = ParameterType.Code.ordinal,
-        var parameter: String = "",
-        var displayName: String = "",
-        var isLonLat: Boolean = true
-//        {
-//            val testDatum = Datum(typeValue, parameter, "", false)
-//            val converter = generateConverter(WGS84, testDatum)
-//            converter(179.0 to 89.0).let { (x, y) -> x < 180 && y < 90 }
-//        }()
-) : RealmObject() {
-    @Ignore var expression: Expression = if (this.isLonLat) Expression.Degree else Expression.Int
+open class CoordRefSys() : RealmObject() {
+
+    var typeValue: Int = ParameterType.Code.ordinal
+    var parameter: String = ""
+    var displayName: String = ""
+    var isLonLat = true
+
+    constructor(
+            type: ParameterType,
+            parameter: String,
+            displayName: String,
+            isLonLatº: Boolean? = null
+    ) : this() {
+        this.typeValue = type.ordinal
+        this.parameter = parameter
+        this.displayName = displayName
+        this.isLonLat = isLonLatº ?: checkIsLonLat()
+    }
 
     val crs: CoordinateReferenceSystem
         get() = when (ParameterType.values()[typeValue]) {
@@ -56,9 +61,15 @@ open class Datum @Throws constructor(
             ParameterType.BursaWolf -> CRSFactory().createFromParameters(displayName, parameter)
         }
 
+    private fun checkIsLonLat(): Boolean {
+        val testCrs = CoordRefSys(ParameterType.values()[typeValue], parameter, "", false)
+        val converter = generateConverter(WGS84, testCrs)
+        return converter(179.0 to 89.0).let { (x, y) -> x < 180 && y < 90 }
+    }
+
     companion object {
 
-        fun generateConverter(crs1: Datum, crs2: Datum): CoordConverter {
+        fun generateConverter(crs1: CoordRefSys, crs2: CoordRefSys): CoordConverter {
             if (crs1.parameter == crs2.parameter) return { xyPair -> xyPair }
 
             val trans = CoordinateTransformFactory().createTransform(crs1.crs, crs2.crs)

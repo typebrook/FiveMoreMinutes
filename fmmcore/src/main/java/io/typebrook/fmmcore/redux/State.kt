@@ -4,7 +4,8 @@ import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.SimpleMap
 import io.typebrook.fmmcore.map.Tile
-import io.typebrook.fmmcore.projection.Datum
+import io.typebrook.fmmcore.projection.CoordRefSys
+import io.typebrook.fmmcore.projection.Expression
 import io.typebrook.fmmcore.projection.WGS84
 import tw.geothings.rekotlin.StateType
 
@@ -20,8 +21,8 @@ data class State(
 
         val display: Display = Display.MapBox,
 
-        val crs: Datum = WGS84
-) : StateType {
+        val crsState: CrsState = CrsState()
+        ) : StateType {
     val currentMap: MapInfo
         get() = if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else MapInfo(SimpleMap())
 
@@ -44,4 +45,9 @@ data class CameraState(
         val lat: Double = 23.76,
         val lon: Double = 120.96,
         val zoom: Float = 7f
+) : StateType
+
+data class CrsState(
+        val crs: CoordRefSys = WGS84,
+        val coordExpr: Expression = Expression.Degree
 ) : StateType
