@@ -1,4 +1,4 @@
-package io.typebrook.fivemoreminutes.Dialog
+package io.typebrook.fivemoreminutes.dialog
 
 import android.app.AlertDialog
 import android.app.Dialog

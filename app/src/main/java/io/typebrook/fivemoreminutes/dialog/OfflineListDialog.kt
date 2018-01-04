@@ -11,7 +11,7 @@ import android.widget.Toast
 import com.mapbox.mapboxsdk.offline.OfflineManager
 import com.mapbox.mapboxsdk.offline.OfflineRegion
 import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition
-import io.typebrook.fivemoreminutes.Dialog.DownloadDialog
+import io.typebrook.fivemoreminutes.dialog.DownloadDialog
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.redux.CameraState
 import org.jetbrains.anko.*

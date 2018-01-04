@@ -17,7 +17,7 @@ import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton
 import com.nightonke.boommenu.BoomMenuButton
 import com.nightonke.boommenu.ButtonEnum
 import com.nightonke.boommenu.Piece.PiecePlaceEnum
-import io.typebrook.fivemoreminutes.Dialog.CoordInputDialog
+import io.typebrook.fivemoreminutes.dialog.CoordInputDialog
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
