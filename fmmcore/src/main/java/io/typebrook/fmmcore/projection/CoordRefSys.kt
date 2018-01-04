@@ -25,7 +25,7 @@ fun isValidInWGS84(xy: XYPair): Boolean {
 
 enum class ParameterType {
     Code,
-    BursaWolf
+    Proj4
 }
 
 enum class Expression {
@@ -36,33 +36,25 @@ enum class Expression {
 }
 
 @RealmClass
-open class CoordRefSys() : RealmObject() {
+open class CoordRefSys(
+        var displayName: String = "", // data stored in Realm
+        @Ignore val type: ParameterType = ParameterType.Code,
+        var parameter: String = "", // data stored in Realm
+        isLonLatº: Boolean? = null
+) : RealmObject() {
 
-    var typeValue: Int = ParameterType.Code.ordinal
-    var parameter: String = ""
-    var displayName: String = ""
-    var isLonLat = true
+    var typeValue = type.ordinal // data stored in Realm
 
-    constructor(
-            type: ParameterType,
-            parameter: String,
-            displayName: String,
-            isLonLatº: Boolean? = null
-    ) : this() {
-        this.typeValue = type.ordinal
-        this.parameter = parameter
-        this.displayName = displayName
-        this.isLonLat = isLonLatº ?: checkIsLonLat()
-    }
+    @Ignore val isLonLat = isLonLatº ?: checkIsLonLat()
 
     val crs: CoordinateReferenceSystem
-        get() = when (ParameterType.values()[typeValue]) {
+        get() = when (type) {
             ParameterType.Code -> CRSFactory().createFromName(parameter)
-            ParameterType.BursaWolf -> CRSFactory().createFromParameters(displayName, parameter)
+            ParameterType.Proj4 -> CRSFactory().createFromParameters(displayName, parameter)
         }
 
     private fun checkIsLonLat(): Boolean {
-        val testCrs = CoordRefSys(ParameterType.values()[typeValue], parameter, "", false)
+        val testCrs = CoordRefSys("", type, parameter, false)
         val converter = generateConverter(WGS84, testCrs)
         return converter(179.0 to 89.0).let { (x, y) -> x < 180 && y < 90 }
     }

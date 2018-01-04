@@ -24,13 +24,12 @@ class CrsCreateDialog : DialogFragment() {
     lateinit var displayName: EditText
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         return alert {
             title = "創建新的座標參照系統"
             customView = createBox
             positiveButton("新增") {
                 val newDatum = try {
-                    CoordRefSys(parameterType, parameterText.text.toString(), displayName.text.toString())
+                    CoordRefSys(displayName.text.toString(), parameterType, parameterText.text.toString())
                 } catch (e: Exception) {
                     activity.toast("Invalid Parameter")
                     CrsCreateDialog().show(fragmentManager, null)

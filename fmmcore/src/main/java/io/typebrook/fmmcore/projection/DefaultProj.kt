@@ -51,6 +51,6 @@ val xy2IntString: CoordPrinter = { (x, y) ->
     xString to yString
 }
 
-val WGS84 = CoordRefSys(ParameterType.Code, "EPSG:4326", "WGS84", true)
-val TWD97 = CoordRefSys(ParameterType.Code, "EPSG:3826", "TWD97", false)
-val TWD67 = CoordRefSys(ParameterType.BursaWolf, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-752,-358,-179,-0.0000011698,0.0000018398,0.0000009822,0.00002329 +units=m +no_defs", "TWD67", false)
+val WGS84 = CoordRefSys("WGS84", ParameterType.Code, "EPSG:4326", true)
+val TWD97 = CoordRefSys("TWD97", ParameterType.Code, "EPSG:3826", false)
+val TWD67 = CoordRefSys("TWD67", ParameterType.Proj4, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +units=m +no_defs", false)
