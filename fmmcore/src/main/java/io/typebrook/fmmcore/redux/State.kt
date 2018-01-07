@@ -22,9 +22,8 @@ data class State(
         val display: Display = Display.MapBox,
 
         val crsState: CrsState = CrsState()
-        ) : StateType {
-    val currentMap: MapInfo
-        get() = if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else MapInfo(SimpleMap())
+) : StateType {
+    val currentMap get() = if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else MapInfo(SimpleMap())
 
     val currentControl: MapControl
         get() = currentMap.mapControl

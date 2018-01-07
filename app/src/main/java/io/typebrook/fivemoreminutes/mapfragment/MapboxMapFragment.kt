@@ -52,7 +52,7 @@ import org.jetbrains.anko.sdk25.coroutines.onClick
 class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEngineListener {
 
     private val mapView by lazy { MapView(activity, MapFragmentUtils.resolveArgs(activity, arguments)) }
-    private lateinit var map: MapboxMap
+    lateinit var map: MapboxMap
 
     private val locationPlugin by lazy { LocationLayerPlugin(mapView, map, locationEngine) }
     private val locationEngine by lazy {
@@ -226,8 +226,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         map.removeSource(ID_WEBSOURCE_BASE)
         if (tile == null) return
 
-        if (map.styleUrl != "asset://None.json") {
-            map.setStyle("asset://None.json") {
+        if (map.styleUrl != "asset://Single_Web_Tile.json") {
+            map.setStyle("asset://Single_Web_Tile.json"){
                 setWebTile(tile)
             }
             return

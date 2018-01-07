@@ -1,15 +1,15 @@
 package io.typebrook.fivemoreminutes.dialog
 
-import android.app.AlertDialog
 import android.app.Dialog
 import android.app.DialogFragment
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
+import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
 import com.mapbox.mapboxsdk.offline.*
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fmmcore.map.Tile
+import io.typebrook.fivemoreminutes.mapfragment.MapboxMapFragment
 import org.jetbrains.anko.*
 import org.json.JSONObject
 
@@ -60,7 +60,7 @@ class DownloadDialog constructor() : DialogFragment() {
     }
 
     private fun downloadRegion(regionName: String) {
-        val styleUrl = "mapbox://styles/typebrook/cjb2gaiwv59ay2so0ofmzfzji"
+        val styleUrl = (mapControl as? MapboxMapFragment)?.map?.styleUrl ?: return
         val bounds = mapControl.screenBound.run {
             LatLngBounds.from(first.first, first.second, second.first, second.second)
         }

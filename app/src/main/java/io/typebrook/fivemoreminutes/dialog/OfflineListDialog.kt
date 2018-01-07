@@ -4,16 +4,11 @@ import android.app.*
 import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.Toast
-import com.mapbox.mapboxsdk.offline.OfflineManager
 import com.mapbox.mapboxsdk.offline.OfflineRegion
 import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition
 import io.typebrook.fivemoreminutes.dialog.DownloadDialog
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fmmcore.redux.CameraState
 import org.jetbrains.anko.*
 import org.json.JSONObject
 
