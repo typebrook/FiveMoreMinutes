@@ -7,36 +7,61 @@ package io.typebrook.fmmcore.projection
 
 val xy2DegreeString: CoordPrinter = { (lon, lat) ->
 
-    val lonPrefix = if (lon >= 0) "東經" else "西經"
-    val latPrefix = if (lat >= 0) "北緯  " else "南緯  "
+    val lonPrefix = if (lon >= 0) "東經 " else "西經 "
+    val latPrefix = if (lat >= 0) "北緯 " else "南緯 "
 
     val lonString = lon
-            .let { Math.abs(it) }
+            .let(Math::abs)
             .let { "%.6f".format(it) }
             .run { dropLast(3) + "-" + takeLast(3) }
     val latString = lat
-            .let { Math.abs(it) }
+            .let(Math::abs)
             .let { "%.6f".format(it) }
             .run { dropLast(3) + "-" + takeLast(3) }
 
     "$lonPrefix $lonString 度" to "$latPrefix $latString 度"
 }
 
-val xy2DMSString: CoordPrinter = { (lon, lat) ->
+typealias dmValue = Pair<Int, Double>
+val degree2DM: (Double) -> dmValue = { degree ->
+    val dValue = degree.toInt()
+    val mValue = (degree - dValue) * 60
+    dValue to mValue
+}
+val xy2DegMinString: CoordPrinter = { (lon, lat) ->
 
-    val lonPrefix = if (lon >= 0) "東經" else "西經"
-    val latPrefix = if (lat >= 0) "北緯" else "南緯"
+    val lonPrefix = if (lon >= 0) "東經 " else "西經 "
+    val latPrefix = if (lat >= 0) "北緯 " else "南緯 "
 
-    val degree2Dms = { degree: Double ->
-        val dValue = degree.toInt()
-        val mValue = ((degree - dValue) * 60).toInt()
-        val minute2Degree = mValue.toFloat() / 60
-        val sValue = (degree - dValue - minute2Degree) * 3600
-
-        "${dValue}度${mValue}分${"%.1f".format(sValue)} 秒"
+    val dm2String = { (d, m): dmValue ->
+        "${d}度 ${"%.3f".format(m)}分"
     }
 
-    "$lonPrefix ${degree2Dms(Math.abs(lon))}" to "$latPrefix ${degree2Dms(Math.abs(lat))}"
+    val xString = "$lonPrefix ${lon.let(Math::abs).let(degree2DM).let(dm2String)}"
+    val yString = "$latPrefix ${lat.let(Math::abs).let(degree2DM).let(dm2String)}"
+    xString to yString
+}
+
+typealias dmsValue = Triple<Int, Int, Double>
+val degree2DMS: (Double) -> dmsValue = { degree ->
+    val dValue = degree.toInt()
+    val mValue = ((degree - dValue) * 60).toInt()
+    val minute2Degree = mValue.toFloat() / 60
+    val sValue = (degree - dValue - minute2Degree) * 3600
+    Triple(dValue, mValue, sValue)
+}
+val xy2DMSString: CoordPrinter = { (lon, lat) ->
+
+    val lonPrefix = if (lon >= 0) "東經 " else "西經 "
+    val latPrefix = if (lat >= 0) "北緯 " else "南緯 "
+
+    val dms2String = { (d, m, s): dmsValue ->
+        "${d}度 ${m}分 ${"%.1f".format(s)} 秒"
+    }
+
+    val xString = "$lonPrefix ${lon.let(Math::abs).let(degree2DMS).let(dms2String)}"
+    val yString = "$latPrefix ${lat.let(Math::abs).let(degree2DMS).let(dms2String)}"
+    xString to yString
 }
 
 val xy2IntString: CoordPrinter = { (x, y) ->

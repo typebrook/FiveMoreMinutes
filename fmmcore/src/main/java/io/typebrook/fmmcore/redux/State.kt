@@ -25,8 +25,9 @@ data class State(
 ) : StateType {
     val currentMap get() = if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else MapInfo(SimpleMap())
 
-    val currentControl: MapControl
-        get() = currentMap.mapControl
+    val currentControl get() = currentMap.mapControl
+
+    val currentXY get() = currentCamera.run { lon to lat }
 
     fun indexOf(mapControl: MapControl): Int {
         maps.mapIndexed { index, mapInfo -> if (mapInfo.mapControl == mapControl) return index }

@@ -14,6 +14,7 @@ import org.osgeo.proj4j.ProjCoordinate
  */
 
 typealias XYPair = Pair<Double, Double>
+fun XYPair.convert(from: CoordRefSys, to: CoordRefSys) = CoordRefSys.generateConverter(from, to)(this)
 typealias XYString = Pair<String, String>
 typealias CoordConverter = (XYPair) -> (XYPair)
 typealias CoordPrinter = (XYPair) -> XYString
@@ -45,7 +46,8 @@ open class CoordRefSys(
 
     var typeValue = type.ordinal // data stored in Realm
 
-    @Ignore val isLonLat = isLonLatº ?: checkIsLonLat()
+    @Ignore
+    val isLonLat = isLonLatº ?: checkIsLonLat()
 
     val crs: CoordinateReferenceSystem
         get() = when (type) {
