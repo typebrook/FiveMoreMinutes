@@ -1,6 +1,20 @@
 <resources>
     <string name="app_name">FiveMoreMinutes</string>
 
-    <string name="token_mapbox">pk.eyJ1IjoidHlwZWJyb29rIiwiYSI6ImNqN3VseHdrbTRyN3kycXFtbzA5dHJya3EifQ.adfZ5K4hF7fx-zv4j0q6Dw</string>
-    <string name="api_key_googlemap">AIzaSyAvZlCHW-YBaYAyYM4tkaOs8iFmXCuEo2o</string>
+    <string name="token_mapbox" translatable="false">pk.eyJ1IjoidHlwZWJyb29rIiwiYSI6ImNqN3VseHdrbTRyN3kycXFtbzA5dHJya3EifQ.adfZ5K4hF7fx-zv4j0q6Dw</string>
+    <string name="api_key_googlemap" translatable="false">AIzaSyAvZlCHW-YBaYAyYM4tkaOs8iFmXCuEo2o</string>
+
+    <!--words for coordinates-->
+    <string name="degree">°</string>
+    <string name="minute">\'</string>
+    <string name="second">\'\'</string>
+    <string name="latNorth">N</string>
+    <string name="latSouth">S</string>
+    <string name="lonEast">E</string>
+    <string name="lonWest">W</string>
+    <string name="option_deg_min">Deg/Min</string>
+    <string name="option_degree">Degree</string>
+    <string name="option_dms">D/M/S</string>
+    <string name="spinner_coordsys">Coordinate System</string>
+    <string name="spinner_coordinate_expression">Expression</string>
 </resources>

@@ -25,7 +25,7 @@ fun reducer(action: Action, oldState: State?): State {
         is UpdateCurrentTarget -> state.copy(currentCamera = action.camera)
 
         is SetDisplay -> state.copy(display = action.display)
-        is SetCrsState -> state.copy(crsState = CrsState(action.crs, action.expression ?: state.crsState.coordExpr))
+        is SetCrsState -> state.copy(crsState = CrsState(action.crs, action.crs.run { isLonLatº ?: checkIsLonLat() }, action.expression ?: state.crsState.coordExpr))
         is SetCoordExpr -> state.copy(crsState = state.crsState.copy(coordExpr = action.expression))
 
         else -> state

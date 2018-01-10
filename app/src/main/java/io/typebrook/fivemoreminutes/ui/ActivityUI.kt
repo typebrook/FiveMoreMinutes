@@ -17,16 +17,15 @@ import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton
 import com.nightonke.boommenu.BoomMenuButton
 import com.nightonke.boommenu.ButtonEnum
 import com.nightonke.boommenu.Piece.PiecePlaceEnum
-import io.typebrook.fivemoreminutes.dialog.CoordInputDialog
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.R
+import io.typebrook.fivemoreminutes.dialog.CoordInputDialog
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fmmcore.map.Display
-import io.typebrook.fmmcore.map.Tile
-import io.typebrook.fmmcore.map.fromRoughWebTile
-import io.typebrook.fmmcore.map.fromWebTile
+import io.typebrook.fivemoreminutes.utils.*
+import io.typebrook.fmmcore.map.*
 import io.typebrook.fmmcore.projection.*
+import io.typebrook.fmmcore.projection.CoordRefSys.Companion.WGS84
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
@@ -50,7 +49,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     private lateinit var zoomOut: ImageView
 
     private var isHide = false
-    private val components by lazy { listOf(coordinate, zoomText, zoomIn, zoomOut) }
+    private val components by lazy { listOf(coordinate, gpsOn, gpsOff, zoomText, zoomIn, zoomOut) }
 
     private val coordPrinter = object : StoreSubscriber<CrsState> {
         var coordConverter: CoordConverter = { xyPair -> xyPair }
@@ -58,12 +57,12 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
         operator fun invoke(xy: XYPair): String {
             val xyString = coordConverter(xy).let { textPrinter(it) }
-            val crs = mainStore.state.crsState.crs
-            return when (crs) {
+            val crsState = mainStore.state.crsState
+            return when (crsState.crs) {
                 WGS84 -> xyString.run { "$first\n$second" }
                 else -> xyString.run {
-                    if (crs.isLonLat) "${crs.displayName}:\n$first\n$second"
-                    else "${crs.displayName}: $first, $second"
+                    if (crsState.isLonLat) "${crsState.crs.displayName}:\n$first\n$second"
+                    else "${crsState.crs.displayName}: $first, $second"
                 }
             }
         }
@@ -255,7 +254,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         val (lat, lon, zoom) = state
         coordinate.text = coordPrinter(lon to lat)
 //        zoomText.text = "${zoom.toInt()}"
-        zoomText.text = "%.1f".format(zoom)
+        zoomText.text = zoom.with("%.1f")
     }
 
     private inline fun ViewManager.boomMenuButton(init: BoomMenuButton.() -> Unit): BoomMenuButton =

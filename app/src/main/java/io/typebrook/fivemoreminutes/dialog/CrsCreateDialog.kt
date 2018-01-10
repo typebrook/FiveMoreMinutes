@@ -39,7 +39,6 @@ class CrsCreateDialog : DialogFragment() {
                 realm.executeTransaction {
                     realm.copyToRealm(newDatum)
                 }
-                toast(if (newDatum.isLonLat) "is LonLat" else "not LonLat")
                 mainStore.dispatch(SetCrsState(newDatum))
             }
             negativeButton("離開") {}

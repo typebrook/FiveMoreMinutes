@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="degree">度</string>
+    <string name="second">秒</string>
+    <string name="minute">分</string>
+    <string name="option_degree">度</string>
+    <string name="option_deg_min">度分</string>
+    <string name="option_dms">度分秒</string>
+    <string name="latNorth">北緯</string>
+    <string name="latSouth">南緯</string>
+    <string name="lonWest">西經</string>
+    <string name="lonEast">東經</string>
+    <string name="app_name">再五分鐘</string>
+    <string name="spinner_coordsys">"座標系統: "</string>
+    <string name="spinner_coordinate_expression">"表示方式: "</string>
+</resources>

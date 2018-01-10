@@ -94,12 +94,12 @@ class MapMiddleware : SpawningMiddleware<State>() {
 
     private val setCoordRefSys: ActionTransformer<State> = transformers@ { action, getState ->
         action as? SetCrsState ?: return@transformers action
-        val newCrs = action.crs
-        val oldCrs = getState()?.crsState?.crs ?: return@transformers action
+        val newType = action.crs.run { isLonLatº ?: checkIsLonLat() }
+        val oldType = getState()?.crsState?.isLonLat ?: return@transformers action
 
-        if (newCrs.isLonLat != oldCrs.isLonLat) {
-            val expression = if (newCrs.isLonLat) Expression.Degree else Expression.Int
-            return@transformers SetCrsState(newCrs, expression)
+        if (newType != oldType) {
+            val expression = if (newType) Expression.Degree else Expression.Int
+            return@transformers SetCrsState(action.crs, expression)
         }
 
         action

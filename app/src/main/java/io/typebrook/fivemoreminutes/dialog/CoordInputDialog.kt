@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.text.InputFilter
 import android.text.InputType.TYPE_CLASS_NUMBER
 import android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.View.INVISIBLE
@@ -16,15 +15,23 @@ import android.view.View.VISIBLE
 import android.widget.*
 import io.realm.Realm
 import io.realm.kotlin.where
+import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
+import io.typebrook.fivemoreminutes.utils.degree2DM
+import io.typebrook.fivemoreminutes.utils.degree2DMS
+import io.typebrook.fivemoreminutes.utils.with
 import io.typebrook.fmmcore.projection.*
+import io.typebrook.fmmcore.projection.CoordRefSys.Companion.TWD67
+import io.typebrook.fmmcore.projection.CoordRefSys.Companion.TWD97
+import io.typebrook.fmmcore.projection.CoordRefSys.Companion.WGS84
 import io.typebrook.fmmcore.redux.CameraState
 import io.typebrook.fmmcore.redux.CrsState
 import io.typebrook.fmmcore.redux.SetCoordExpr
 import io.typebrook.fmmcore.redux.SetCrsState
 import org.jetbrains.anko.*
 import tw.geothings.rekotlin.StoreSubscriber
+import kotlin.math.abs
 import kotlin.math.pow
 
 /**
@@ -34,6 +41,7 @@ import kotlin.math.pow
 class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
 
     private val crs: CoordRefSys get() = mainStore.state.crsState.crs
+    private val isLonLat: Boolean get() = mainStore.state.crsState.isLonLat
     private var lastCrs: CoordRefSys = crs
     private val coordExpr: Expression get() = mainStore.state.crsState.coordExpr
     private val originalXY: XYPair get() = mainStore.state.currentXY.convert(WGS84, crs)
@@ -42,21 +50,29 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
     private lateinit var inputLayoutContainer: FrameLayout
     private lateinit var xyInput: XYInput
     private lateinit var dmsOptionLayout: LinearLayout
-    private val dmsChoices = listOf(
-            "度" to Expression.Degree,
-            "度分" to Expression.DegMin,
-            "度分秒" to Expression.DMS)
+    private lateinit var dmsOption: Spinner
+    private val dmsChoices by lazy {
+        listOf(
+                getString(R.string.option_degree) to Expression.Degree,
+                getString(R.string.option_deg_min) to Expression.DegMin,
+                getString(R.string.option_dms) to Expression.DMS)
+    }
 
     // reaction when coordinate reference system or
     // expression[Int|Degree|DegreeMinute|DegMinSec] changes
     override fun newState(state: CrsState) {
+        if (dmsOptionLayout.visibility == INVISIBLE && isLonLat) {
+            val lastDmsExpr = dmsChoices[dmsOption.selectedItemPosition].second
+            mainStore dispatch SetCoordExpr(lastDmsExpr)
+        }
+
+        dmsOptionLayout.visibility = if (isLonLat) VISIBLE else INVISIBLE
+
         if (::xyInput.isInitialized && xyInput.isFilled) {
-            val converter = CoordRefSys.generateConverter(lastCrs, crs)
-            typedXY = converter(xyInput.xyValues)
+            val lastXY = xyInput.xyValues
+            if (lastXY.isValid(lastCrs)) typedXY = lastXY.convert(lastCrs, crs)
         }
         lastCrs = crs
-
-        dmsOptionLayout.visibility = if (crs.isLonLat) VISIBLE else INVISIBLE
 
         val negativeButton = (this.dialog as? AlertDialog)?.getButton(AlertDialog.BUTTON_NEUTRAL)
         negativeButton?.visibility = if (crs.isManaged) VISIBLE else INVISIBLE
@@ -85,15 +101,16 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
     private val actionGoto = action@ { _: DialogInterface ->
         val xy = try {
             val (rawX, rawY) = xyInput.xyValues
-            if (crs.isLonLat && !isValidInWGS84(rawX to rawY)) throw Error()
-            (rawX to rawY).convert(crs, WGS84)
+            val convertedXY = (rawX to rawY).convert(crs, WGS84)
+            if (!isValidInWGS84(convertedXY)) throw Error()
+            convertedXY
         } catch (e: Throwable) {
             toast("Invalid Number")
             return@action
         }
 
         val target = CameraState(xy.second, xy.first, mainStore.state.currentCamera.zoom)
-        mainStore.state.currentMap.mapControl.animateCamera(target, 600)
+        mainStore.state.currentControl.animateCamera(target, 600)
     }
 
     // neutral action that delete selected coordinate reference system from realm,
@@ -103,7 +120,7 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
         val realm = Realm.getDefaultInstance()
         realm.executeTransaction {
             val throwableCrs = crs
-            mainStore.dispatch(SetCrsState(WGS84))
+            mainStore dispatch SetCrsState(WGS84)
             throwableCrs.deleteFromRealm()
         }
     }
@@ -141,11 +158,9 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
         override fun onNothingSelected(p0: AdapterView<*>?) {}
         override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
             if (pos <= crsList.lastIndex) {
-                Log.d("onItemSelected", "$pos-${crsList[pos].displayName}")
                 val selectedCrs = crsList[pos]
-                mainStore.dispatch(SetCrsState(selectedCrs))
+                mainStore dispatch SetCrsState(selectedCrs)
             } else {
-                Log.d("onItemSelected", "$pos")
                 CrsCreateDialog().show(fragmentManager, null)
                 dismiss()
             }
@@ -156,7 +171,7 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
     private val exprSelectedListener = object : AdapterView.OnItemSelectedListener {
         override fun onNothingSelected(p0: AdapterView<*>?) {}
         override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
-            if (!crs.isLonLat) return
+            if (!isLonLat) return
             mainStore dispatch SetCoordExpr(dmsChoices[pos].second)
         }
     }
@@ -172,7 +187,7 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
 
             linearLayout {
                 leftPadding = 8
-                textView("座標系統: ")
+                textView(getString(R.string.spinner_coordsys))
                 spinner {
                     adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item,
                             crsList.map { it.displayName } + "+ Add New")
@@ -185,8 +200,8 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
             }
             dmsOptionLayout = linearLayout {
                 leftPadding = 8
-                textView("表示方式: ")
-                spinner {
+                textView(getString(R.string.spinner_coordinate_expression))
+                dmsOption = spinner {
                     adapter = ArrayAdapter(ctx,
                             android.R.layout.simple_spinner_dropdown_item,
                             dmsChoices.map { it.first })
@@ -241,19 +256,27 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
             override lateinit var yInputs: List<EditText>
             override val layout = this
 
+            override val xyValues: XYPair
+                get() {
+                    xIsPositive = xInputs[0].run { if (text.isBlank()) hint.toString().toDouble() >= 0 else text.toString().toDouble() >= 0 }
+                    yIsPositive = yInputs[0].run { if (text.isBlank()) hint.toString().toDouble() >= 0 else text.toString().toDouble() >= 0 }
+                    return super.xyValues
+                }
         }.apply {
             orientation = LinearLayout.VERTICAL
             val hintXY = originalXY
             val xField = editText {
                 inputType = TYPE_CLASS_NUMBER
                 hint = hintXY.first.toInt().toString()
-                typedXY?.let { text.append(it.first.toInt().toString()) }
+                text.append(typedXY?.first?.toInt()?.toString() ?: "")
+                gravity = Gravity.CENTER_HORIZONTAL
             }
             xInputs = listOf(xField)
             val yField = editText {
                 inputType = TYPE_CLASS_NUMBER
                 hint = hintXY.second.toInt().toString()
-                typedXY?.let { text.append(it.second.toInt().toString()) }
+                text.append(typedXY?.second?.toInt()?.toString() ?: "")
+                gravity = Gravity.CENTER_HORIZONTAL
             }
             yInputs = listOf(yField)
         }
@@ -267,12 +290,11 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
             override val layout = this
         }.apply {
             orientation = LinearLayout.VERTICAL
-            val hintXY = originalXY
+            val hintXY = originalXY.run { abs(first) to abs(second) }
             linearLayout {
                 spinner {
-                    adapter = ArrayAdapter(ctx,
-                            android.R.layout.simple_spinner_dropdown_item,
-                            listOf("東經(+)", "西經(-)"))
+                    adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item,
+                            listOf(getString(R.string.lonEast), getString(R.string.lonWest)))
 
                     onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                         override fun onNothingSelected(p0: AdapterView<*>?) {}
@@ -280,38 +302,39 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
                             xIsPositive = pos == 0
                         }
                     }
+                    setSelection(if (originalXY.first > 0) 0 else 1)
                 }
                 val xField = editText {
                     inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL
                     filters = arrayOf(InputFilter.LengthFilter(10))
-                    hint = hintXY.first.let { "%.6f".format(it) }
-                    text.append(typedXY?.first?.let { "%.6f".format(it) } ?: "")
-                    gravity = Gravity.END
+                    hint = hintXY.first.with("%.6f")
+                    text.append(typedXY?.first?.with("%.6f") ?: "")
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 5f)
-                textView("度").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.degree)).lparams(width = 0, weight = 1f)
                 xInputs = listOf(xField)
             }
             linearLayout {
                 spinner {
-                    adapter = ArrayAdapter(ctx,
-                            android.R.layout.simple_spinner_dropdown_item,
-                            listOf("北緯(+)", "南緯(-)"))
+                    adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item,
+                            listOf(getString(R.string.latNorth), getString(R.string.latSouth)))
 
                     onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                         override fun onNothingSelected(p0: AdapterView<*>?) {}
                         override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
-                            xIsPositive = pos == 0
+                            yIsPositive = pos == 0
                         }
                     }
+                    setSelection(if (originalXY.second > 0) 0 else 1)
                 }
                 val yField = editText {
                     inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL
                     filters = arrayOf(InputFilter.LengthFilter(9))
-                    hint = hintXY.second.let { "%.6f".format(it) }
-                    text.append(typedXY?.second?.let { "%.6f".format(it) } ?: "")
-                    gravity = Gravity.END
+                    hint = hintXY.second.with("%.6f")
+                    text.append(typedXY?.second?.with("%.6f") ?: "")
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 5f)
-                textView("度").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.degree)).lparams(width = 0, weight = 1f)
                 yInputs = listOf(yField)
             }
         }
@@ -325,12 +348,11 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
             override val layout = this
         }.apply {
             orientation = LinearLayout.VERTICAL
-            val hintXY = originalXY
+            val hintXY = originalXY.run { abs(first) to abs(second) }
             linearLayout {
                 spinner {
-                    adapter = ArrayAdapter(ctx,
-                            android.R.layout.simple_spinner_dropdown_item,
-                            listOf("東經(+)", "西經(-)"))
+                    adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item,
+                            listOf(getString(R.string.lonEast), getString(R.string.lonWest)))
 
                     onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                         override fun onNothingSelected(p0: AdapterView<*>?) {}
@@ -338,6 +360,7 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
                             xIsPositive = pos == 0
                         }
                     }
+                    setSelection(if (originalXY.first > 0) 0 else 1)
                 }
                 val xInDM = hintXY.first.let(Math::abs).let(degree2DM)
                 val typedXInDM = typedXY?.first?.let(Math::abs)?.let(degree2DM)
@@ -346,31 +369,31 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
                     filters = arrayOf(InputFilter.LengthFilter(3))
                     hint = xInDM.first.toString()
                     text.append(typedXInDM?.first?.toString() ?: "")
-                    gravity = Gravity.END
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 2f)
-                textView("度").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.degree)).lparams(width = 0, weight = 1f)
                 val xmField = editText {
                     inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL
                     filters = arrayOf(InputFilter.LengthFilter(6))
-                    hint = xInDM.second.let { "%.3f".format(it) }
-                    text.append(typedXInDM?.second?.let { "%.3f".format(it) } ?: "")
-                    gravity = Gravity.END
+                    hint = xInDM.second.with("%.3f")
+                    text.append(typedXInDM?.second?.with("%.3f") ?: "")
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 4f)
-                textView("分").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.minute)).lparams(width = 0, weight = 1f)
                 xInputs = listOf(xdField, xmField)
             }
             linearLayout {
                 spinner {
-                    adapter = ArrayAdapter(ctx,
-                            android.R.layout.simple_spinner_dropdown_item,
-                            listOf("北緯(+)", "南緯(-)"))
+                    adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item,
+                            listOf(getString(R.string.latNorth), getString(R.string.latSouth)))
 
                     onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                         override fun onNothingSelected(p0: AdapterView<*>?) {}
                         override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
-                            xIsPositive = pos == 0
+                            yIsPositive = pos == 0
                         }
                     }
+                    setSelection(if (originalXY.second > 0) 0 else 1)
                 }
                 val yInDM = hintXY.second.let(Math::abs).let(degree2DM)
                 val typedYInDM = typedXY?.second?.let(Math::abs)?.let(degree2DM)
@@ -378,19 +401,18 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
                     inputType = TYPE_CLASS_NUMBER
                     filters = arrayOf(InputFilter.LengthFilter(2))
                     hint = yInDM.first.toString()
-                    typedXY?.let { text.append("%.6f".format(it.second)) }
                     text.append(typedYInDM?.first?.toString() ?: "")
-                    gravity = Gravity.END
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 2f)
-                textView("度").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.degree)).lparams(width = 0, weight = 1f)
                 val ymField = editText {
                     inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL
                     filters = arrayOf(InputFilter.LengthFilter(6))
-                    hint = yInDM.second.let { "%.3f".format(it) }
-                    text.append(typedYInDM?.second?.let { "%.3f".format(it) } ?: "")
-                    gravity = Gravity.END
+                    hint = yInDM.second.with("%.3f")
+                    text.append(typedYInDM?.second?.with("%.3f") ?: "")
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 4f)
-                textView("分").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.minute)).lparams(width = 0, weight = 1f)
                 yInputs = listOf(ydField, ymField)
             }
         }
@@ -404,11 +426,10 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
             override val layout = this
         }.apply {
             orientation = LinearLayout.VERTICAL
-            val hintXY = originalXY
+            val hintXY = originalXY.run { abs(first) to abs(second) }
             spinner {
-                adapter = ArrayAdapter(ctx,
-                        android.R.layout.simple_spinner_dropdown_item,
-                        listOf("東經(+)", "西經(-)"))
+                adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item,
+                        listOf(getString(R.string.lonEast), getString(R.string.lonWest)))
 
                 onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                     override fun onNothingSelected(p0: AdapterView<*>?) {}
@@ -416,7 +437,8 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
                         xIsPositive = pos == 0
                     }
                 }
-            }
+                setSelection(if (originalXY.first > 0) 0 else 1)
+            }.layoutParams.width = 300
             linearLayout {
                 val xInDMS = hintXY.first.let(Math::abs).let(degree2DMS)
                 val typedXInDMS = typedXY?.first?.let(Math::abs)?.let(degree2DMS)
@@ -425,39 +447,39 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
                     filters = arrayOf(InputFilter.LengthFilter(3))
                     hint = xInDMS.first.toString()
                     text.append(typedXInDMS?.first?.toString() ?: "")
-                    gravity = Gravity.END
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 3f)
-                textView("度").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.degree)).lparams(width = 0, weight = 1f)
                 val xmField = editText {
                     inputType = TYPE_CLASS_NUMBER
                     filters = arrayOf(InputFilter.LengthFilter(2))
                     hint = xInDMS.second.toString()
                     text.append(typedXInDMS?.second?.toString() ?: "")
-                    gravity = Gravity.END
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 2f)
-                textView("分").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.minute)).lparams(width = 0, weight = 1f)
                 val xsField = editText {
                     inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL
                     filters = arrayOf(InputFilter.LengthFilter(4))
-                    hint = xInDMS.third.let { "%.1f".format(it) }
-                    text.append(typedXInDMS?.third?.let { "%.1f".format(it) } ?: "")
-                    gravity = Gravity.END
+                    hint = xInDMS.third.with("%.1f")
+                    text.append(typedXInDMS?.third?.with("%.1f") ?: "")
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 4f)
-                textView("秒").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.second)).lparams(width = 0, weight = 1f)
                 xInputs = listOf(xdField, xmField, xsField)
             }
             spinner {
-                adapter = ArrayAdapter(ctx,
-                        android.R.layout.simple_spinner_dropdown_item,
-                        listOf("北緯(+)", "南緯(-)"))
+                adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item,
+                        listOf(getString(R.string.latNorth), getString(R.string.latSouth)))
 
                 onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                     override fun onNothingSelected(p0: AdapterView<*>?) {}
                     override fun onItemSelected(p0: AdapterView<*>?, p1: View?, pos: Int, p3: Long) {
-                        xIsPositive = pos == 0
+                        yIsPositive = pos == 0
                     }
                 }
-            }
+                setSelection(if (originalXY.second > 0) 0 else 1)
+            }.layoutParams.width = 300
             linearLayout {
                 val yInDMS = hintXY.second.let(Math::abs).let(degree2DMS)
                 val typedYInDMS = typedXY?.second?.let(Math::abs)?.let(degree2DMS)
@@ -466,25 +488,25 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
                     filters = arrayOf(InputFilter.LengthFilter(2))
                     hint = yInDMS.first.toString()
                     text.append(typedYInDMS?.first?.toString() ?: "")
-                    gravity = Gravity.END
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 3f)
-                textView("度").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.degree)).lparams(width = 0, weight = 1f)
                 val ymField = editText {
                     inputType = TYPE_CLASS_NUMBER
                     filters = arrayOf(InputFilter.LengthFilter(2))
                     hint = yInDMS.second.toString()
                     text.append(typedYInDMS?.second?.toString() ?: "")
-                    gravity = Gravity.END
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 2f)
-                textView("分").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.minute)).lparams(width = 0, weight = 1f)
                 val ysField = editText {
                     inputType = TYPE_CLASS_NUMBER or TYPE_NUMBER_FLAG_DECIMAL
                     filters = arrayOf(InputFilter.LengthFilter(4))
-                    hint = yInDMS.third.let { "%.1f".format(it) }
-                    text.append(typedYInDMS?.third?.let { "%.1f".format(it) } ?: "")
-                    gravity = Gravity.END
+                    hint = yInDMS.third.with("%.1f")
+                    text.append(typedYInDMS?.third?.with("%.1f") ?: "")
+                    gravity = Gravity.CENTER_HORIZONTAL
                 }.lparams(width = 0, weight = 4f)
-                textView("秒").lparams(width = 0, weight = 1f)
+                textView(getString(R.string.second)).lparams(width = 0, weight = 1f)
                 yInputs = listOf(ydField, ymField, ysField)
             }
         }

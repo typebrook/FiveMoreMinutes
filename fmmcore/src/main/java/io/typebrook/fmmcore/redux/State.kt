@@ -6,7 +6,6 @@ import io.typebrook.fmmcore.map.SimpleMap
 import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.projection.CoordRefSys
 import io.typebrook.fmmcore.projection.Expression
-import io.typebrook.fmmcore.projection.WGS84
 import tw.geothings.rekotlin.StateType
 
 /**
@@ -48,6 +47,7 @@ data class CameraState(
 ) : StateType
 
 data class CrsState(
-        val crs: CoordRefSys = WGS84,
+        val crs: CoordRefSys = CoordRefSys.WGS84,
+        val isLonLat: Boolean = true,
         val coordExpr: Expression = Expression.Degree
 ) : StateType

@@ -14,15 +14,17 @@ import org.osgeo.proj4j.ProjCoordinate
  */
 
 typealias XYPair = Pair<Double, Double>
-fun XYPair.convert(from: CoordRefSys, to: CoordRefSys) = CoordRefSys.generateConverter(from, to)(this)
 typealias XYString = Pair<String, String>
 typealias CoordConverter = (XYPair) -> (XYPair)
 typealias CoordPrinter = (XYPair) -> XYString
 
 fun isValidInWGS84(xy: XYPair): Boolean {
     val (lon, lat) = xy
-    return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
+    return lat > -90 && lat < 90 && lon > -180 && lon < 180
 }
+
+fun XYPair.convert(from: CoordRefSys, to: CoordRefSys) = CoordRefSys.generateConverter(from, to)(this)
+fun XYPair.isValid(crs: CoordRefSys) = isValidInWGS84(this.convert(CoordRefSys.WGS84, crs))
 
 enum class ParameterType {
     Code,
@@ -41,13 +43,10 @@ open class CoordRefSys(
         var displayName: String = "", // data stored in Realm
         @Ignore val type: ParameterType = ParameterType.Code,
         var parameter: String = "", // data stored in Realm
-        isLonLatº: Boolean? = null
+        @Ignore val isLonLatº: Boolean? = null
 ) : RealmObject() {
 
-    var typeValue = type.ordinal // data stored in Realm
-
-    @Ignore
-    val isLonLat = isLonLatº ?: checkIsLonLat()
+    var typeValue: Int = type.ordinal // data stored in Realm
 
     val crs: CoordinateReferenceSystem
         get() = when (type) {
@@ -55,9 +54,8 @@ open class CoordRefSys(
             ParameterType.Proj4 -> CRSFactory().createFromParameters(displayName, parameter)
         }
 
-    private fun checkIsLonLat(): Boolean {
-        val testCrs = CoordRefSys("", type, parameter, false)
-        val converter = generateConverter(WGS84, testCrs)
+    fun checkIsLonLat(): Boolean {
+        val converter = generateConverter(WGS84, this)
         return converter(179.0 to 89.0).let { (x, y) -> x < 180 && y < 90 }
     }
 
@@ -75,5 +73,9 @@ open class CoordRefSys(
                 p2.x to p2.y
             }
         }
+
+        val WGS84 = CoordRefSys("WGS84", ParameterType.Code, "EPSG:4326", true)
+        val TWD97 = CoordRefSys("TWD97", ParameterType.Code, "EPSG:3826", false)
+        val TWD67 = CoordRefSys("TWD67", ParameterType.Proj4, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +units=m +no_defs", false)
     }
 }
