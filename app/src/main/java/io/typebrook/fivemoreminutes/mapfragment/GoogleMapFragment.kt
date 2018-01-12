@@ -154,6 +154,8 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
         tileOverlays += map.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
     }
 
+    override fun addWebImage(tile: Tile.WebImage){}
+
     override fun enableLocation() {
         if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
             map.isMyLocationEnabled = true

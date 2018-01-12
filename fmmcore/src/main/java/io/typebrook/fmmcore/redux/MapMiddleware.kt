@@ -60,7 +60,10 @@ class MapMiddleware : SpawningMiddleware<State>() {
         val mapControl = getState()?.currentControl ?: return@handler
 
         val tile = (action as? AddWebTile)?.tile ?: return@handler
-        mapControl.addWebTile(tile)
+        when (tile) {
+            is Tile.WebTile -> mapControl.addWebTile(tile)
+            is Tile.WebImage -> mapControl.addWebImage(tile)
+        }
     }
 
     private val zoomMap: ActionHandler<State> = handler@ { action, getState ->

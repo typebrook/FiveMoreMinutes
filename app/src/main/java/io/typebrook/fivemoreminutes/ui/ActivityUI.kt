@@ -270,14 +270,16 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         )
 
         val styleList: List<Tile>
-            get() = mainStore.state.currentMap.mapControl.styles + listOf(
+            get() = mainStore.state.currentControl.styles + listOf(
                     "魯地圖" fromRoughWebTile "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
                     "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
-                    "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}"
+                    "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}",
+                    "Local-host" fromWebTile "https://localhost:7579/x={x}&y={y}&z={z}"
             )
 
-        val tileList: List<Tile.WebTile> = listOf(
-                "地圖產生器航跡" fromRoughWebTile "http://rs.happyman.idv.tw/map/gpxtrack/{z}/{x}/{y}.png"
+        val tileList: List<Tile> = listOf(
+                "地圖產生器航跡" fromRoughWebTile "http://rs.happyman.idv.tw/map/gpxtrack/{z}/{x}/{y}.png",
+                "雷達回波圖" fromWebImage "http://opendata.cwb.gov.tw/opendata/MSC/O-A0058-003.png" at ((118.0 to 26.4663) to (124.0 to 20.4663))
         )
     }
 }

@@ -30,7 +30,7 @@ class BlockCameraSave : Action
 
 data class SetDisplay(val display: Display) : Action
 data class SetTile(val tile: Tile?) : Action
-data class AddWebTile(val tile: Tile.WebTile?) : Action
+data class AddWebTile(val tile: Tile) : Action
 data class SetCrsState(val crs: CoordRefSys, val expression: Expression? = null) : Action
 data class SetCoordExpr(val expression: Expression) : Action
 

@@ -58,14 +58,14 @@ dependencies {
 
     // Boom menu
     compile "com.nightonke:boommenu:2.1.1"
+
+    // exposed
+    compile 'org.jetbrains.exposed:exposed:0.9.1'
 }
 
 repositories {
     mavenCentral()
-    maven {
-        url 'https://rekotlin.s3-ap-southeast-1.amazonaws.com/snapshots'
-    }
-    maven {
-        url 'https://github.com/uPhyca/stetho-realm/raw/master/maven-repo'
-    }
+    maven { url 'https://rekotlin.s3-ap-southeast-1.amazonaws.com/snapshots' }
+    maven { url 'https://github.com/uPhyca/stetho-realm/raw/master/maven-repo' }
+    maven { url "https://dl.bintray.com/kotlin/exposed" }
 }

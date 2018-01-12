@@ -18,6 +18,7 @@ import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.constants.Style
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
+import com.mapbox.mapboxsdk.geometry.LatLngQuad
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapView.*
 import com.mapbox.mapboxsdk.maps.MapboxMap
@@ -25,15 +26,16 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.style.layers.RasterLayer
+import com.mapbox.mapboxsdk.style.sources.ImageSource
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
-import com.mapbox.services.android.telemetry.location.LocationEngine
 import com.mapbox.services.android.telemetry.location.LocationEngineListener
 import com.mapbox.services.android.telemetry.location.LocationEnginePriority
 import com.mapbox.services.android.telemetry.location.LostLocationEngine
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
+import io.typebrook.fivemoreminutes.localServer.MbtilesServer
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
@@ -42,6 +44,7 @@ import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
+import java.net.URL
 
 
 /**
@@ -64,6 +67,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 
     private lateinit var testButton: ImageView
     private lateinit var progressIndicator: ProgressBar
+
+    private val server by lazy { MbtilesServer(ctx, null) }
 
     override val cameraState: CameraState
         get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom.toFloat() + ZOOMOFFSET) }
@@ -182,6 +187,11 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         }
 
         testButton.onClick {
+            if (server.socket == null) server.run()
+            else server.stop()
+
+
+//            readDb(ctx)
             //            val list = listOf(
 //                    "Compass" to LocationLayerMode.COMPASS,
 //                    "Tracking" to LocationLayerMode.TRACKING,
@@ -227,7 +237,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         if (tile == null) return
 
         if (map.styleUrl != "asset://Single_Web_Tile.json") {
-            map.setStyle("asset://Single_Web_Tile.json"){
+            map.setStyle("asset://Single_Web_Tile.json") {
                 setWebTile(tile)
             }
             return
@@ -249,6 +259,23 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         val webMapLayer = RasterLayer(tile.name, tile.url)
         map.addLayer(webMapLayer)
     }
+
+    override fun addWebImage(tile: Tile.WebImage) {
+        val (topLeft, bottomRight) = tile.bound ?: return
+        val bound = LatLngQuad(
+                LatLng(topLeft.second, topLeft.first),
+                LatLng(topLeft.second, bottomRight.first),
+                LatLng(bottomRight.second, bottomRight.first),
+                LatLng(bottomRight.second, topLeft.first)
+        )
+        val webImageSource = ImageSource(tile.url, bound, URL(tile.url))
+        map.addSource(webImageSource)
+
+        // Add the web map source to the map.
+        val webImageLayer = RasterLayer(tile.name, tile.url)
+        map.addLayer(webImageLayer)
+    }
+
 
     // region User Location
     override fun enableLocation() {

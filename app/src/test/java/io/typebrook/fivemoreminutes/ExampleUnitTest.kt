@@ -1,8 +1,11 @@
 package io.typebrook.fivemoreminutes
 
+import io.typebrook.fivemoreminutes.localServer.MBTilesSource
+import org.jetbrains.exposed.sql.Database
 import org.junit.Test
 
 import org.junit.Assert.*
+import javax.net.ServerSocketFactory
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -13,19 +16,7 @@ class ExampleUnitTest {
     @Test
     @Throws(Exception::class)
     fun wrongSubList() {
-        class blabla {
-            val name: String
-
-            constructor(name: String) {
-                this.name = name
-                println("in constructor")
-            }
-
-            init {
-                println("in init")
-            }
-        }
-
-        blabla("yes")
+//        MBTilesSource("asset://test.mbtiles")
     }
+
 }
