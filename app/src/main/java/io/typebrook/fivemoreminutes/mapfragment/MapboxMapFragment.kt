@@ -187,7 +187,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         }
 
         testButton.onClick {
-            if (server.socket == null) server.run()
+            if (!server.isRunning) server.start()
             else server.stop()
 
 

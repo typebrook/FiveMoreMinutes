@@ -1,10 +1,7 @@
 package io.typebrook.fivemoreminutes.localServer
 
 import android.content.Context
-import android.content.res.AssetManager
 import android.util.Log
-import org.jetbrains.anko.coroutines.experimental.bg
-import org.jetbrains.anko.runOnUiThread
 import org.jetbrains.anko.toast
 import java.io.*
 import java.net.ServerSocket
@@ -17,32 +14,39 @@ import java.net.Socket
 
 open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) : ServerSocket(7579), Runnable {
 
-    var socket: Socket? = null
+    var isRunning = false
 
-    override fun run() {
-        bg {
-            socket = accept()
-            ctx.runOnUiThread { ctx.toast(this@MbtilesServer.localSocketAddress.toString()) }
-            handle()
-        }
+    fun start() {
+        isRunning = true
+        Thread(this).start()
     }
 
     fun stop() {
         ctx.toast("stop")
-        socket?.close()
-        socket = null
+        isRunning = false
+        close()
+    }
+
+    override fun run() {
+        while (true) {
+            handle()
+        }
     }
 
     @Throws
     private fun handle() {
-        val reader by lazy { BufferedReader(InputStreamReader(socket?.getInputStream())) }
+        var reader: BufferedReader? = null
         var output: PrintStream? = null
+        Log.d("simpleSeerver", "handling")
+
         try {
-            var route: String? = null
+            var route: String? = ""
+            reader = BufferedReader(InputStreamReader(accept().getInputStream()))
 
             // Read HTTP headers and parse out the route.
             do {
-                val line = reader.readLine()
+                val line = reader.readLine() ?: ""
+                Log.d("simpleSeerver", "line: $line")
                 if (line.startsWith("GET /")) {
                     route = line.substringAfter("GET /")
                     break
@@ -50,14 +54,14 @@ open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) :
             } while (!line.isEmpty())
 
             // Output stream that we send the response to
-            output = PrintStream(socket?.getOutputStream())
+            output = PrintStream(accept().getOutputStream())
 
             // Prepare the content to send.
             if (null == route) {
                 writeServerError(output)
                 return
             }
-            val bytes = loadContent(route)
+            val bytes = loadContent()
             if (null == bytes) {
                 writeServerError(output)
                 return
@@ -66,7 +70,7 @@ open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) :
             // Send out the content.
             output.apply {
                 println("HTTP/1.0 200 OK")
-                println("Content-Type: " + detectMimeType(route))
+                println("Content-Type: " + "image/jpeg")
                 println("Content-Length: " + bytes.size)
                 println()
                 write(bytes)
@@ -74,7 +78,7 @@ open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) :
             }
         } finally {
             if (null != output) output.close()
-            reader.close()
+            reader?.close()
         }
     }
 
@@ -89,7 +93,7 @@ open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) :
             return output.toByteArray()
         } catch (e: FileNotFoundException) {
         } finally {
-            input?.run { close() }
+            input?.close()
         }
         return null
     }
@@ -101,7 +105,7 @@ open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) :
 
     private fun detectMimeType(fileName: String): String? = when {
         fileName.isEmpty() -> null
-        fileName.endsWith(".jpg") -> "image/jpg"
+        fileName.endsWith(".jpg") -> "image/jpeg"
         fileName.endsWith(".png") -> "image/png"
         else -> "application/octet-stream"
     }
