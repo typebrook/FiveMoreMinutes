@@ -24,7 +24,7 @@ fun isValidInWGS84(xy: XYPair): Boolean {
 }
 
 fun XYPair.convert(from: CoordRefSys, to: CoordRefSys) = CoordRefSys.generateConverter(from, to)(this)
-fun XYPair.isValid(crs: CoordRefSys) = isValidInWGS84(this.convert(CoordRefSys.WGS84, crs))
+fun XYPair.isValid(crs: CoordRefSys) = isValidInWGS84(this.convert(crs, CoordRefSys.WGS84))
 
 enum class ParameterType {
     Code,

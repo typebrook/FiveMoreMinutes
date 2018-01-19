@@ -1,5 +1,6 @@
 package io.typebrook.fivemoreminutes.ui
 
+import android.app.AlertDialog
 import android.graphics.Color
 import android.view.Gravity
 import android.view.View
@@ -274,7 +275,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                     "魯地圖" fromRoughWebTile "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
                     "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
                     "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}",
-                    "Local-host" fromWebTile "https://localhost:7579/x={x}&y={y}&z={z}"
+                    "Local-host" fromWebTile "http://localhost:7579/{z}/{x}/{y}.jpg"
             )
 
         val tileList: List<Tile> = listOf(

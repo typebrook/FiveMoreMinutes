@@ -1,10 +1,16 @@
 package io.typebrook.fivemoreminutes.mapfragment
 
+import android.Manifest
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.app.Activity
 import android.app.Fragment
+import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.location.Location
 import android.os.Bundle
+import android.os.Environment
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +19,8 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
+import com.github.angads25.filepicker.model.DialogConfigs
+import com.github.angads25.filepicker.view.FilePickerDialog
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.constants.Style
@@ -35,7 +43,8 @@ import com.mapbox.services.android.telemetry.location.LocationEnginePriority
 import com.mapbox.services.android.telemetry.location.LostLocationEngine
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
-import io.typebrook.fivemoreminutes.localServer.MbtilesServer
+import io.typebrook.fivemoreminutes.localServer.MBTilesSource
+import io.typebrook.fivemoreminutes.localServer.add
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
@@ -44,6 +53,7 @@ import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
+import java.io.File
 import java.net.URL
 
 
@@ -66,9 +76,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
     }
 
     private lateinit var testButton: ImageView
+    private lateinit var testButton2: ImageView
     private lateinit var progressIndicator: ProgressBar
-
-    private val server by lazy { MbtilesServer(ctx, null) }
 
     override val cameraState: CameraState
         get() = map.cameraPosition.run { CameraState(target.latitude, target.longitude, zoom.toFloat() + ZOOMOFFSET) }
@@ -103,6 +112,9 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
                 testButton = imageView {
                     backgroundResource = R.drawable.mapbutton_background
                 }
+                testButton2 = imageView {
+                    backgroundResource = R.drawable.mapbutton_background
+                }.lparams { topMargin = 150 }
                 progressIndicator = progressBar().lparams { centerInParent() }
             }
         }.view
@@ -186,12 +198,35 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
             }
         }
 
+        testButton2.onClick {
+        }
+
         testButton.onClick {
-            if (!server.isRunning) server.start()
-            else server.stop()
+            val permission = ContextCompat.checkSelfPermission(ctx,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
+            if (permission != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(ctx as Activity,
+                        arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 101)
+                return@onClick
+            }
+            FilePickerDialog(ctx).apply {
+                setTitle("Select Mbtiles")
+                properties.selection_mode = DialogConfigs.SINGLE_MODE
+                properties.selection_type = DialogConfigs.FILE_SELECT
+                properties.extensions = arrayOf("mbtiles")
+                properties.root = File(Environment.getExternalStorageDirectory().path + "/Download")
+                properties.error_dir = File(DialogConfigs.DEFAULT_DIR)
+                setDialogSelectionListener { files ->
+//                    toast(files[0])
+                    val ms = MBTilesSource(files[0])
+                    mapView.add(ctx, ms)
+                }
+                show()
+            }
+//            if (!server.isRunning) server.start()
+//            else server.stop()
 
-//            readDb(ctx)
             //            val list = listOf(
 //                    "Compass" to LocationLayerMode.COMPASS,
 //                    "Tracking" to LocationLayerMode.TRACKING,

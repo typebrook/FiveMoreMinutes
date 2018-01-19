@@ -2,21 +2,30 @@ package io.typebrook.fivemoreminutes.localServer
 
 import android.content.Context
 import android.util.Log
+import org.jetbrains.anko.longToast
+import org.jetbrains.anko.runOnUiThread
 import org.jetbrains.anko.toast
-import java.io.*
+import java.io.BufferedReader
+import java.io.ByteArrayOutputStream
+import java.io.FileNotFoundException
+import java.io.PrintStream
 import java.net.ServerSocket
 import java.net.Socket
+import kotlin.math.pow
 
 
 /**
  * Created by pham on 2018/1/7.
  */
 
-open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) : ServerSocket(7579), Runnable {
+open class MbtilesServer(private val ctx: Context) : Runnable {
 
+    var serverSocket: ServerSocket? = null
     var isRunning = false
+    val sources: MutableList<MBTilesSource> = mutableListOf()
 
     fun start() {
+        ctx.toast("start")
         isRunning = true
         Thread(this).start()
     }
@@ -24,44 +33,60 @@ open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) :
     fun stop() {
         ctx.toast("stop")
         isRunning = false
-        close()
+        serverSocket?.close()
+        serverSocket = null
     }
 
     override fun run() {
-        while (true) {
-            handle()
+        try {
+            serverSocket = ServerSocket(7579)
+            while (isRunning) {
+                val socket = serverSocket?.accept() ?: throw Error()
+                handle(socket)
+                socket.close()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.d("simpleServer", e.localizedMessage)
+            ctx.runOnUiThread {
+                toast("Localhost crashed")
+                longToast(e.localizedMessage)
+            }
         }
     }
 
     @Throws
-    private fun handle() {
+    private fun handle(socket: Socket) {
         var reader: BufferedReader? = null
         var output: PrintStream? = null
-        Log.d("simpleSeerver", "handling")
 
         try {
-            var route: String? = ""
-            reader = BufferedReader(InputStreamReader(accept().getInputStream()))
+            var route: String? = null
+            reader = socket.getInputStream().bufferedReader()
 
             // Read HTTP headers and parse out the route.
             do {
                 val line = reader.readLine() ?: ""
-                Log.d("simpleSeerver", "line: $line")
-                if (line.startsWith("GET /")) {
-                    route = line.substringAfter("GET /")
+                if (line.startsWith("GET")) {
+                    route = line.substringAfter("GET /").substringBefore(".")
+                    Log.d("simpleServer", "line = $line")
+                    Log.d("simpleServer", "route = $route")
+//                    ctx.runOnUiThread {
+//                        toast(route)
+//                    }
                     break
                 }
             } while (!line.isEmpty())
 
             // Output stream that we send the response to
-            output = PrintStream(accept().getOutputStream())
+            output = PrintStream(socket.getOutputStream())
 
             // Prepare the content to send.
             if (null == route) {
                 writeServerError(output)
                 return
             }
-            val bytes = loadContent()
+            val bytes = loadContent(route)
             if (null == bytes) {
                 writeServerError(output)
                 return
@@ -70,7 +95,7 @@ open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) :
             // Send out the content.
             output.apply {
                 println("HTTP/1.0 200 OK")
-                println("Content-Type: " + "image/jpeg")
+                println("Content-Type: " + detectMimeType(".jpg"))
                 println("Content-Length: " + bytes.size)
                 println()
                 write(bytes)
@@ -82,18 +107,25 @@ open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) :
         }
     }
 
-
     @Throws
-    private fun loadContent(fileName: String = "test.jpg"): ByteArray? {
-        val input = ctx.assets.open(fileName)
+    private fun loadContent(route: String): ByteArray? {
+        val (z, x, y) = route.split("/").subList(0, 3).map { it.toInt() }
+//        ctx.runOnUiThread { toast("z, x, y = $z, $x, $y") }
+        Log.d("simpleServer", "z, x, y = $z, $x, $y")
+
+//        val input = ctx.assets.open(route)
+
         try {
             val output = ByteArrayOutputStream()
-            output.write(input.readBytes())
+//            output.write(input.readBytes())
+            val content = sources[0].getTile(z, x, (2.0.pow(z)).toInt() - 1 - y) ?: return null
+            Log.d("simpleServer", "content exist")
+            output.write(content)
             output.flush()
             return output.toByteArray()
         } catch (e: FileNotFoundException) {
         } finally {
-            input?.close()
+//            input?.close()
         }
         return null
     }
@@ -109,5 +141,4 @@ open class MbtilesServer(private val ctx: Context, val source: MBTilesSource?) :
         fileName.endsWith(".png") -> "image/png"
         else -> "application/octet-stream"
     }
-
 }
