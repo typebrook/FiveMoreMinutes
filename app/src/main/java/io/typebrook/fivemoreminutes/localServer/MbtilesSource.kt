@@ -2,18 +2,21 @@ package io.typebrook.fivemoreminutes.localServer
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.support.v4.content.ContextCompat
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
 import com.mapbox.mapboxsdk.maps.MapView
-import org.jetbrains.anko.ctx
+import com.mapbox.mapboxsdk.maps.MapboxMap
+import com.mapbox.mapboxsdk.style.sources.RasterSource
+import com.mapbox.mapboxsdk.style.sources.TileSet
+import com.mapbox.mapboxsdk.style.sources.VectorSource
+import io.typebrook.fivemoreminutes.dispatch
+import io.typebrook.fivemoreminutes.mainStore
+import io.typebrook.fmmcore.map.fromWebTile
+import io.typebrook.fmmcore.redux.SetTile
 import org.jetbrains.anko.db.MapRowParser
-import org.jetbrains.anko.db.RowParser
 import org.jetbrains.anko.db.select
+import org.jetbrains.anko.toast
 import java.io.File
 import java.io.FileOutputStream
-import java.sql.Blob
 
 
 /**
@@ -26,22 +29,21 @@ sealed class MBTilesSourceError : Error() {
     class UnsupportedFormatError : MBTilesSourceError()
 }
 
-class MetadataParser : MapRowParser<Pair<String, String>> {
-    override fun parseRow(columns: Map<String, Any?>): Pair<String, String> {
-        return columns["name"] as String to columns["value"] as String
-    }
+object MetadataParser : MapRowParser<Pair<String, String>> {
+    override fun parseRow(columns: Map<String, Any?>): Pair<String, String> =
+            columns["name"] as String to columns["value"] as String
 }
 
-class TilesParser : MapRowParser<ByteArray> {
-    override fun parseRow(columns: Map<String, Any?>): ByteArray {
-        return columns["tile_data"] as ByteArray
-    }
+object TilesParser : MapRowParser<ByteArray> {
+    override fun parseRow(columns: Map<String, Any?>): ByteArray = columns["tile_data"] as ByteArray
 }
 
-class MBTilesSource(val fileName: String) {
+class MBTilesSource(val filePath: String) {
 
-    val db: SQLiteDatabase = SQLiteDatabase.openOrCreateDatabase(fileName, null)
+    val id = filePath.substringAfterLast("/").substringBefore(".")
+    private val db: SQLiteDatabase = SQLiteDatabase.openOrCreateDatabase(filePath, null)
     var isVector = false
+    var format = ""
     var tileSize: Int? = null
     var layersJson: String? = ""
     var attributions: String? = ""
@@ -51,11 +53,11 @@ class MBTilesSource(val fileName: String) {
 
     init {
         try {
-            val format = db.select("metadata")
+            format = db.select("metadata")
                     .whereSimple("name = ?", "format")
-                    .parseSingle(MetadataParser()).second
+                    .parseSingle(MetadataParser).second
 
-            when (format){
+            when (format) {
                 in validVectorFormats -> isVector = true
                 in validRasterFormats -> isVector = false
                 else -> throw MBTilesSourceError.UnknownFormatError()
@@ -69,18 +71,14 @@ class MBTilesSource(val fileName: String) {
     fun getTile(z: Int, x: Int, y: Int): ByteArray? {
         return db.select("tiles")
                 .whereArgs("(zoom_level = {z}) and (tile_column = {x}) and (tile_row = {y})", "z" to z, "x" to x, "y" to y)
-                .parseList(TilesParser())
-                .run {if (!isEmpty()) get(0) else null}
+                .parseList(TilesParser)
+                .run { if (!isEmpty()) get(0) else null }
     }
 
     companion object {
         val validRasterFormats = listOf("jpg", "png")
         val validVectorFormats = listOf("pbf", "mvt")
     }
-
-    // MARK: Functions
-
-
 }
 
 fun getDBFromAsset(ctx: Context, fileName: String): SQLiteDatabase {
@@ -108,9 +106,21 @@ fun getDBFromAsset(ctx: Context, fileName: String): SQLiteDatabase {
     return SQLiteDatabase.openOrCreateDatabase(DB_PATH + fileName, null)
 }
 
-fun MapView.add(ctx: Context, source: MBTilesSource){
-    val server = MbtilesServer(ctx).apply {
-        sources.add(source)
+fun MapboxMap.add(ctx: Context, source: MBTilesSource) {
+    if (source.id in this@add.sources.map { it.id }) {
+        ctx.toast("source exists")
+        return
+    }
+    
+    MbtilesServer(ctx).apply {
+        sources[source.id] = source
         start()
+    }
+
+    val requestUrl = "http://localhost:7579/${source.id}/{z}/{x}/{y}.${source.format}"
+    if (source.isVector) {
+        this@add.addSource(VectorSource(source.id, TileSet(null, requestUrl)))
+    } else {
+        this@add.addSource(RasterSource(source.id, TileSet(null, requestUrl), 126))
     }
 }

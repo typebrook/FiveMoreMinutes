@@ -21,39 +21,46 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.view.FilePickerDialog
+import com.google.maps.android.data.geojson.GeoJsonLineString
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
+import com.mapbox.mapboxsdk.constants.MapboxConstants
 import com.mapbox.mapboxsdk.constants.Style
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
 import com.mapbox.mapboxsdk.geometry.LatLngQuad
+import com.mapbox.mapboxsdk.http.HttpRequestUtil
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapView.*
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
+import com.mapbox.mapboxsdk.style.layers.FillLayer
 import com.mapbox.mapboxsdk.style.layers.RasterLayer
-import com.mapbox.mapboxsdk.style.sources.ImageSource
-import com.mapbox.mapboxsdk.style.sources.RasterSource
-import com.mapbox.mapboxsdk.style.sources.TileSet
+import com.mapbox.mapboxsdk.style.sources.*
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import com.mapbox.services.android.telemetry.location.LocationEngineListener
 import com.mapbox.services.android.telemetry.location.LocationEnginePriority
 import com.mapbox.services.android.telemetry.location.LostLocationEngine
+import com.mapbox.services.commons.geojson.FeatureCollection
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.localServer.MBTilesSource
 import io.typebrook.fivemoreminutes.localServer.add
 import io.typebrook.fivemoreminutes.mainStore
+import io.typebrook.fivemoreminutes.utils.checkWriteExternal
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
+import io.typebrook.fmmcore.map.fromWebTile
 import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
+import okhttp3.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import java.io.File
+import java.io.IOException
 import java.net.URL
 
 
@@ -199,17 +206,30 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         }
 
         testButton2.onClick {
+            val request = Request.Builder()
+                    .url("http://localhost:7579/TaiwanEmap/15/27430/14146.jpg")
+                    .get()
+                    .build()
+
+            toast(request.url().toString())
+            OkHttpClient().newCall(request).enqueue(object : Callback {
+
+                override fun onFailure(call: Call?, e: IOException?) {
+                    runOnUiThread { longToast("fail on ${e.toString()}") }
+                }
+
+                override fun onResponse(call: Call?, response: Response?) {
+                    runOnUiThread {
+                        toast("success")
+                        toast(response?.header("Content-Type").toString())
+                    }
+                }
+            })
         }
 
         testButton.onClick {
-            val permission = ContextCompat.checkSelfPermission(ctx,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            if (!checkWriteExternal(ctx)) return@onClick
 
-            if (permission != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(ctx as Activity,
-                        arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 101)
-                return@onClick
-            }
             FilePickerDialog(ctx).apply {
                 setTitle("Select Mbtiles")
                 properties.selection_mode = DialogConfigs.SINGLE_MODE
@@ -218,14 +238,25 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
                 properties.root = File(Environment.getExternalStorageDirectory().path + "/Download")
                 properties.error_dir = File(DialogConfigs.DEFAULT_DIR)
                 setDialogSelectionListener { files ->
-//                    toast(files[0])
+                    //                    toast(files[0])
                     val ms = MBTilesSource(files[0])
-                    mapView.add(ctx, ms)
+                    map.add(ctx, ms)
+                    if (!ms.isVector) {
+                        map.removeLayer(ID_WEBLAYER_BASE)
+                        val rasterLayer = RasterLayer(ID_WEBLAYER_BASE, ms.id)
+                        map.addLayer(rasterLayer)
+                    } else {
+                        map.removeLayer("building")
+                        val buildingLayer = FillLayer("building_mbtiles", ms.id).apply {
+                            this.sourceLayer = "building"
+                            this.minZoom = 10f
+                            this.maxZoom = 20f
+                        }
+                        map.addLayer(buildingLayer)
+                    }
                 }
                 show()
             }
-//            if (!server.isRunning) server.start()
-//            else server.stop()
 
             //            val list = listOf(
 //                    "Compass" to LocationLayerMode.COMPASS,
@@ -238,6 +269,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 //                }
 //            }
         }
+        HttpRequestUtil.setPrintRequestUrlOnFaillure(true)
     }
 
     override fun moveCamera(target: CameraState) {

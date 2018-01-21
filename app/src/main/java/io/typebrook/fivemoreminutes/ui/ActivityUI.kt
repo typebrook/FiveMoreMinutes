@@ -130,7 +130,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                         .listener {
                             selector("線上地圖", styleList.map { it.name }) { _, index ->
                                 val selectedTile = styleList[index]
-                                mainStore.dispatch(SetTile(selectedTile))
+                                mainStore dispatch SetTile(selectedTile)
                             }
                         })
                 addBuilder(TextOutsideCircleButton.Builder()
@@ -274,8 +274,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             get() = mainStore.state.currentControl.styles + listOf(
                     "魯地圖" fromRoughWebTile "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
                     "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
-                    "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}",
-                    "Local-host" fromWebTile "http://localhost:7579/{z}/{x}/{y}.jpg"
+                    "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}"
             )
 
         val tileList: List<Tile> = listOf(

@@ -22,7 +22,7 @@ open class MbtilesServer(private val ctx: Context) : Runnable {
 
     var serverSocket: ServerSocket? = null
     var isRunning = false
-    val sources: MutableList<MBTilesSource> = mutableListOf()
+    val sources: MutableMap<String, MBTilesSource> = mutableMapOf()
 
     fun start() {
         ctx.toast("start")
@@ -69,14 +69,12 @@ open class MbtilesServer(private val ctx: Context) : Runnable {
                 val line = reader.readLine() ?: ""
                 if (line.startsWith("GET")) {
                     route = line.substringAfter("GET /").substringBefore(".")
-                    Log.d("simpleServer", "line = $line")
-                    Log.d("simpleServer", "route = $route")
-//                    ctx.runOnUiThread {
-//                        toast(route)
-//                    }
                     break
                 }
             } while (!line.isEmpty())
+
+            // the source which this request target to
+            val source = sources[route?.substringBefore("/")] ?: return
 
             // Output stream that we send the response to
             output = PrintStream(socket.getOutputStream())
@@ -86,7 +84,7 @@ open class MbtilesServer(private val ctx: Context) : Runnable {
                 writeServerError(output)
                 return
             }
-            val bytes = loadContent(route)
+            val bytes = loadContent(source, route)
             if (null == bytes) {
                 writeServerError(output)
                 return
@@ -95,8 +93,9 @@ open class MbtilesServer(private val ctx: Context) : Runnable {
             // Send out the content.
             output.apply {
                 println("HTTP/1.0 200 OK")
-                println("Content-Type: " + detectMimeType(".jpg"))
+                println("Content-Type: " + detectMimeType(source.format))
                 println("Content-Length: " + bytes.size)
+                if (source.isVector) println("Content-Encoding: gzip")
                 println()
                 write(bytes)
                 flush()
@@ -108,26 +107,19 @@ open class MbtilesServer(private val ctx: Context) : Runnable {
     }
 
     @Throws
-    private fun loadContent(route: String): ByteArray? {
-        val (z, x, y) = route.split("/").subList(0, 3).map { it.toInt() }
-//        ctx.runOnUiThread { toast("z, x, y = $z, $x, $y") }
-        Log.d("simpleServer", "z, x, y = $z, $x, $y")
-
-//        val input = ctx.assets.open(route)
+    private fun loadContent(source: MBTilesSource, route: String): ByteArray? {
+        val (z, x, y) = route.split("/").subList(1, 4).map { it.toInt() }
 
         try {
             val output = ByteArrayOutputStream()
-//            output.write(input.readBytes())
-            val content = sources[0].getTile(z, x, (2.0.pow(z)).toInt() - 1 - y) ?: return null
-            Log.d("simpleServer", "content exist")
+            val content = source.getTile(z, x, (2.0.pow(z)).toInt() - 1 - y) ?: return null
             output.write(content)
             output.flush()
             return output.toByteArray()
         } catch (e: FileNotFoundException) {
-        } finally {
-//            input?.close()
+            e.printStackTrace()
+            return null
         }
-        return null
     }
 
     private fun writeServerError(output: PrintStream) {
@@ -135,10 +127,11 @@ open class MbtilesServer(private val ctx: Context) : Runnable {
         output.flush()
     }
 
-    private fun detectMimeType(fileName: String): String? = when {
-        fileName.isEmpty() -> null
-        fileName.endsWith(".jpg") -> "image/jpeg"
-        fileName.endsWith(".png") -> "image/png"
+    private fun detectMimeType(format: String): String? = when (format) {
+        "jpg" -> "image/jpeg"
+        "png" -> "image/png"
+        "mvt" -> "application/x-protobuf"
+        "pbf" -> "application/x-protobuf"
         else -> "application/octet-stream"
     }
 }
