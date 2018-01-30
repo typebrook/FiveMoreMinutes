@@ -1,21 +1,23 @@
 package io.typebrook.fivemoreminutes.ui
 
-import android.app.AlertDialog
 import android.graphics.Color
+import android.support.design.widget.AppBarLayout
+import android.support.design.widget.BottomSheetBehavior
+import android.support.design.widget.CollapsingToolbarLayout
+import android.support.v4.view.ViewCompat
 import android.view.Gravity
 import android.view.View
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
-import android.view.ViewManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import com.github.pengrad.mapscaleview.MapScaleView
 import com.mapbox.mapboxsdk.offline.OfflineManager
 import com.mapbox.mapboxsdk.offline.OfflineRegion
 import com.mapbox.services.android.telemetry.permissions.PermissionsManager
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum
 import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton
-import com.nightonke.boommenu.BoomMenuButton
 import com.nightonke.boommenu.ButtonEnum
 import com.nightonke.boommenu.Piece.PiecePlaceEnum
 import io.typebrook.fivemoreminutes.MainActivity
@@ -29,7 +31,7 @@ import io.typebrook.fmmcore.projection.*
 import io.typebrook.fmmcore.projection.CoordRefSys.Companion.WGS84
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
-import org.jetbrains.anko.custom.ankoView
+import org.jetbrains.anko.design.coordinatorLayout
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import tw.geothings.geomaptool.offline_map.OfflineListDialog
 import tw.geothings.rekotlin.StoreSubscriber
@@ -42,8 +44,10 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
     lateinit var mapContainer: FrameLayout
     private lateinit var coordinate: TextView
+    private lateinit var scaleBar: MapScaleView
     private lateinit var gpsOn: ImageView
     private lateinit var gpsOff: ImageView
+
     private lateinit var layers: ImageView
     private lateinit var zoomText: TextView
     private lateinit var zoomIn: ImageView
@@ -94,19 +98,46 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     }
 
     override fun createView(ui: AnkoContext<MainActivity>) = with(ui) {
+        coordinatorLayout {
 
-        relativeLayout {
+            mapContainer = frameLayout { id = ID_MAP_CONTAINER }.lparams {
+                behavior = CollapseBehavior<FrameLayout>()
+                anchorId = bla
+                anchorGravity = Gravity.TOP
+            }
 
-            mapContainer = frameLayout { id = ID_MAP_CONTAINER }
+            val sheet = verticalLayout {
+                id = bla
+                backgroundColor = Color.parseColor("#80FFFFFF")
+                frameLayout {
+                    backgroundColor = Color.parseColor("#80FFFF00")
+                    onClick {
+                        val behavior = BottomSheetBehavior.from(this@verticalLayout)
+                        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+                    }
+                }.lparams(height = 150, width = matchParent)
+            }.lparams(width = matchParent, height = 700) {
+                behavior = BottomSheetBehavior<View>().apply {
+                    this.peekHeight = 150
+                    this.isHideable = false
+                    state = BottomSheetBehavior.STATE_COLLAPSED
+                }
+            }
 
             coordinate = textView {
                 padding = dip(5)
-                backgroundColor = Color.parseColor("#80FFFFFF")
+                backgroundColor = R.color.transparentOnMap
                 onClick { CoordInputDialog().show(owner.fragmentManager, null) }
             }.lparams(wrapContent) {
-                alignParentBottom()
-                centerHorizontally()
+                gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
                 bottomMargin = dip(10)
+            }
+
+            scaleBar = mapScaleBar {
+                metersOnly()
+            }.lparams(wrapContent) {
+                gravity = Gravity.CENTER_HORIZONTAL
+                topMargin = dip(10)
             }
 
             boomMenuButton {
@@ -141,9 +172,13 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                             owner.window.decorView.systemUiVisibility = if (isHide) View.SYSTEM_UI_FLAG_FULLSCREEN else View.VISIBLE
 
                         })
+                onClick {
+                    val behavior = BottomSheetBehavior.from(sheet)
+                    behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+                }
             }.lparams {
-                alignParentBottom()
-                alignParentLeft()
+                anchorId = bla
+                anchorGravity = Gravity.TOP
             }
 
             gpsOn = imageView {
@@ -158,7 +193,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                     }
                 }
             }.lparams {
-                alignParentRight()
+                gravity = Gravity.END
                 rightMargin = dip(9.8f)
                 topMargin = dip(9.8f)
             }
@@ -171,73 +206,90 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                     mainStore dispatch DisableLocation()
                 }
             }.lparams {
-                alignParentRight()
+                gravity = Gravity.END
                 rightMargin = dip(9.8f)
                 topMargin = dip(53f)
             }
 
-            layers = imageView {
-                imageResource = R.drawable.ic_layers_black_24dp
-                backgroundResource = R.drawable.mapbutton_background
-                padding = 20
-                onClick {
-                    selector("圖層", tileList.map { it.name }) { _, index ->
-                        val selectedTile = tileList[index]
-                        mainStore.dispatch(AddWebTile(selectedTile))
+            verticalLayout {
+                bottomPadding = dip(9.8f)
+                layers = imageView {
+                    imageResource = R.drawable.ic_layers_black_24dp
+                    backgroundResource = R.drawable.mapbutton_background
+                    padding = 20
+                    onClick {
+                        selector("圖層", tileList.map { it.name }) { _, index ->
+                            val selectedTile = tileList[index]
+                            mainStore.dispatch(AddWebTile(selectedTile))
+                        }
                     }
                 }
-            }.lparams {
-                alignParentRight()
-                alignParentBottom()
-                rightMargin = dip(9.8f)
-                bottomMargin = dip(129f)
-            }
-            zoomText = textView {
-                backgroundResource = R.drawable.mapbutton_background
-                gravity = Gravity.CENTER
-                textSize = 20f
-                onClick {
-                    OfflineManager.getInstance(owner).listOfflineRegions(object : OfflineManager.ListOfflineRegionsCallback {
-                        override fun onList(offlineRegions: Array<OfflineRegion>?) {
-                            // Check result. If no regions have been
-                            // downloaded yet, return empty array
-                            OfflineListDialog().run {
-                                this.offlineRegionsResult = offlineRegions ?: emptyArray()
-                                show(owner.fragmentManager, null)
+                zoomText = textView {
+                    backgroundResource = R.drawable.mapbutton_background
+                    gravity = Gravity.CENTER
+                    textSize = 20f
+                    onClick {
+                        OfflineManager.getInstance(owner).listOfflineRegions(object : OfflineManager.ListOfflineRegionsCallback {
+                            override fun onList(offlineRegions: Array<OfflineRegion>?) {
+                                // Check result. If no regions have been
+                                // downloaded yet, return empty array
+                                OfflineListDialog().run {
+                                    this.offlineRegionsResult = offlineRegions ?: emptyArray()
+                                    show(owner.fragmentManager, null)
+                                }
                             }
-                        }
 
-                        override fun onError(error: String) {}
-                    })
+                            override fun onError(error: String) {}
+                        })
+                    }
                 }
-            }.lparams {
-                alignParentRight()
-                alignParentBottom()
+                zoomIn = imageView {
+                    imageResource = R.drawable.ic_zoom_in_black_24dp
+                    backgroundResource = R.drawable.mapbutton_background
+                    padding = 20
+                    onClick { mainStore dispatch ZoomBy(1f) }
+                }
+                zoomOut = imageView {
+                    imageResource = R.drawable.ic_zoom_out_black_24dp
+                    backgroundResource = R.drawable.mapbutton_background
+                    padding = 15
+                    onClick { mainStore dispatch ZoomBy(-1f) }
+                }
+            }.lparams(width = wrapContent, height = wrapContent) {
+                anchorId = bla
+                anchorGravity = Gravity.END
+                gravity = Gravity.TOP
                 rightMargin = dip(9.8f)
-                bottomMargin = dip(91f)
             }
-            zoomIn = imageView {
-                imageResource = R.drawable.ic_zoom_in_black_24dp
-                backgroundResource = R.drawable.mapbutton_background
-                padding = 20
-                onClick { mainStore dispatch ZoomBy(1f) }
-            }.lparams {
-                alignParentRight()
-                alignParentBottom()
-                rightMargin = dip(9.8f)
-                bottomMargin = dip(53f)
-            }
-            zoomOut = imageView {
-                imageResource = R.drawable.ic_zoom_out_black_24dp
-                backgroundResource = R.drawable.mapbutton_background
-                padding = 15
-                onClick { mainStore dispatch ZoomBy(-1f) }
-            }.lparams {
-                alignParentRight()
-                alignParentBottom()
-                rightMargin = dip(9.8f)
-                bottomMargin = dip(15f)
-            }
+
+//            cameraScroller = bottomSheet {
+//                backgroundColor = Color.DKGRAY
+//                this.toggle()
+//                linearLayout {
+//                    textView {
+//                        text = "previous"
+//                        textSize = 16f
+//                        textColor = Color.WHITE
+//                        leftPadding = 25
+//                        gravity = Gravity.CENTER_VERTICAL or Gravity.START
+//                        onClick {
+//                            mainStore dispatch TargetBackward()
+//                        }
+//                    }.lparams(width = 0, height = matchParent, weight = 1f)
+//                    textView {
+//                        text = "next"
+//                        textSize = 16f
+//                        textColor = Color.WHITE
+//                        rightPadding = 25
+//                        gravity = Gravity.CENTER_VERTICAL or Gravity.END
+//                        onClick {
+//                            mainStore dispatch TargetForward()
+//                        }
+//                    }.lparams(width = 0, height = matchParent, weight = 1f)
+//                }
+//            }.lparams(width = matchParent, height = 150) {
+//                gravity = Gravity.BOTTOM
+//            }
         }
     }.apply {
         mainStore.subscribe(this@ActivityUI) { subscription ->
@@ -256,13 +308,13 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         coordinate.text = coordPrinter(lon to lat)
 //        zoomText.text = "${zoom.toInt()}"
         zoomText.text = zoom.with("%.1f")
-    }
 
-    private inline fun ViewManager.boomMenuButton(init: BoomMenuButton.() -> Unit): BoomMenuButton =
-            ankoView({ BoomMenuButton(it, null) }, theme = 0, init = init)
+        scaleBar.update(state.zoom, state.lat)
+    }
 
     companion object {
         val ID_MAP_CONTAINER = "ID_MAP_CONTAINER".hashCode()
+        val bla = "bla".hashCode()
 
         val displayList = listOf(
                 "Google" to Display.Google,

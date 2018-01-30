@@ -25,6 +25,7 @@ data class UpdateCurrentTarget(val holder: MapControl, val camera: CameraState) 
 
 data class ZoomBy(val value: Float) : Action
 class TargetBackward : Action
+class TargetForward : Action
 class GrantCameraSave : Action
 class BlockCameraSave : Action
 

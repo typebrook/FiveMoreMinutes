@@ -9,11 +9,10 @@ import io.typebrook.fivemoreminutes.mapfragment.DualMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.MapboxMapFragment
 import io.typebrook.fivemoreminutes.ui.ActivityUI
+import io.typebrook.fivemoreminutes.ui.ActivityUI.Companion.ID_MAP_CONTAINER
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.redux.EnableLocation
 import io.typebrook.fmmcore.redux.TargetBackward
-import org.jetbrains.anko.contentView
-import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.setContentView
 import org.jetbrains.anko.toast
 import tw.geothings.rekotlin.StoreSubscriber
@@ -31,9 +30,6 @@ class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
 
     override fun onBackPressed() {
         mainStore dispatch TargetBackward()
-        contentView?.let {
-            snackbar(it, mainStore.state.currentMap.mapControl.cameraStatePos.toString(), "leave", { super.onBackPressed() })
-        }
     }
 
     override fun onDestroy() {
@@ -43,22 +39,21 @@ class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
 
     // newState for mapView layout
     override fun newState(state: Display) {
-        val mapContainer = ui.mapContainer
 
         when (state) {
             Display.Google -> {
                 fragmentManager.beginTransaction()
-                        .replace(mapContainer.id, GoogleMapFragment())
+                        .replace(ID_MAP_CONTAINER, GoogleMapFragment())
                         .commit()
             }
             Display.MapBox -> {
                 fragmentManager.beginTransaction()
-                        .replace(mapContainer.id, MapboxMapFragment())
+                        .replace(ID_MAP_CONTAINER, MapboxMapFragment())
                         .commit()
             }
             Display.Dual -> {
                 fragmentManager.beginTransaction()
-                        .replace(mapContainer.id, DualMapFragment().apply { insertMap(MapboxMapFragment(), GoogleMapFragment()) })
+                        .replace(ID_MAP_CONTAINER, DualMapFragment().apply { insertMap(MapboxMapFragment(), GoogleMapFragment()) })
                         .commit()
             }
         }

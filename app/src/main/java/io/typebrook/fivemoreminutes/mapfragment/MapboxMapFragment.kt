@@ -1,16 +1,12 @@
 package io.typebrook.fivemoreminutes.mapfragment
 
-import android.Manifest
 import android.Manifest.permission.ACCESS_FINE_LOCATION
-import android.app.Activity
 import android.app.Fragment
-import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.os.Environment
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -21,10 +17,8 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.view.FilePickerDialog
-import com.google.maps.android.data.geojson.GeoJsonLineString
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
-import com.mapbox.mapboxsdk.constants.MapboxConstants
 import com.mapbox.mapboxsdk.constants.Style
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
@@ -36,7 +30,6 @@ import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerMode
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
-import com.mapbox.mapboxsdk.style.layers.FillLayer
 import com.mapbox.mapboxsdk.style.layers.RasterLayer
 import com.mapbox.mapboxsdk.style.sources.*
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
@@ -47,20 +40,17 @@ import com.mapbox.services.commons.geojson.FeatureCollection
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.localServer.MBTilesSource
-import io.typebrook.fivemoreminutes.localServer.add
+import io.typebrook.fivemoreminutes.localServer.MbtilesServer
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.utils.checkWriteExternal
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
-import io.typebrook.fmmcore.map.fromWebTile
 import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
-import okhttp3.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import java.io.File
-import java.io.IOException
 import java.net.URL
 
 
@@ -101,7 +91,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
             "Taiwan Topo" fromStyle "asset://Taiwan_Topo.json",
             "Mapbox 戶外" fromStyle Style.OUTDOORS,
             "Mapbox 街道" fromStyle Style.MAPBOX_STREETS,
-            "Mapbox 衛星混合" fromStyle Style.SATELLITE_STREETS
+            "Mapbox 衛星混合" fromStyle Style.SATELLITE_STREETS,
+            "OpenMapTile" fromStyle "https://openmaptiles.github.io/osm-bright-gl-style/style-cdn.json"
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,6 +111,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
                     backgroundResource = R.drawable.mapbutton_background
                 }
                 testButton2 = imageView {
+                    backgroundColor = Color.CYAN
                     backgroundResource = R.drawable.mapbutton_background
                 }.lparams { topMargin = 150 }
                 progressIndicator = progressBar().lparams { centerInParent() }
@@ -206,25 +198,10 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         }
 
         testButton2.onClick {
-            val request = Request.Builder()
-                    .url("http://localhost:7579/TaiwanEmap/15/27430/14146.jpg")
-                    .get()
-                    .build()
-
-            toast(request.url().toString())
-            OkHttpClient().newCall(request).enqueue(object : Callback {
-
-                override fun onFailure(call: Call?, e: IOException?) {
-                    runOnUiThread { longToast("fail on ${e.toString()}") }
-                }
-
-                override fun onResponse(call: Call?, response: Response?) {
-                    runOnUiThread {
-                        toast("success")
-                        toast(response?.header("Content-Type").toString())
-                    }
-                }
-            })
+            val params = mapView.layoutParams
+            params.height = 1500
+            mapView.layoutParams = params
+            toast("button2")
         }
 
         testButton.onClick {
