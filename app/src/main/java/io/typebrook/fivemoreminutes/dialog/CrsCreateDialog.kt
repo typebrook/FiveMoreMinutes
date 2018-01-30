@@ -29,7 +29,10 @@ class CrsCreateDialog : DialogFragment() {
             customView = createBox
             positiveButton("新增") {
                 val newDatum = try {
-                    CoordRefSys(displayName.text.toString(), parameterType, parameterText.text.toString())
+                    CoordRefSys(displayName.text.toString(), parameterType, parameterText.text.toString()).apply {
+                        // Try if input parameter is valid or not, throws UnknownAuthorityCodeException
+                        crs
+                    }
                 } catch (e: Exception) {
                     activity.toast("Invalid Parameter")
                     CrsCreateDialog().show(fragmentManager, null)

@@ -23,6 +23,7 @@ import io.typebrook.fivemoreminutes.utils.degree2DMS
 import io.typebrook.fivemoreminutes.utils.with
 import io.typebrook.fmmcore.projection.*
 import io.typebrook.fmmcore.projection.CoordRefSys.Companion.TWD67
+import io.typebrook.fmmcore.projection.CoordRefSys.Companion.TWD67_latLng
 import io.typebrook.fmmcore.projection.CoordRefSys.Companion.TWD97
 import io.typebrook.fmmcore.projection.CoordRefSys.Companion.WGS84
 import io.typebrook.fmmcore.redux.CameraState
@@ -94,7 +95,7 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
         get() {
             val realm = Realm.getDefaultInstance()
             val crsInRealm = realm.where<CoordRefSys>().findAll().toList()
-            return listOf(WGS84, TWD97, TWD67) + crsInRealm
+            return listOf(WGS84, TWD97, TWD67, TWD67_latLng) + crsInRealm
         }
 
     // positive action that animate map to the coordinates which user just filled

@@ -3,17 +3,15 @@ package io.typebrook.fmmcore.projection
 import io.realm.RealmObject
 import io.realm.annotations.Ignore
 import io.realm.annotations.RealmClass
-import org.osgeo.proj4j.CRSFactory
-import org.osgeo.proj4j.CoordinateReferenceSystem
-import org.osgeo.proj4j.CoordinateTransformFactory
-import org.osgeo.proj4j.ProjCoordinate
+import org.osgeo.proj4j.*
 
-/**
- * Created by pham on 2017/11/13.
- * func to provide a coordinate converter for different system
- */
+        /**
+         * Created by pham on 2017/11/13.
+         * func to provide a coordinate converter for different system
+         */
 
 typealias XYPair = Pair<Double, Double>
+
 typealias XYString = Pair<String, String>
 typealias CoordConverter = (XYPair) -> (XYPair)
 typealias CoordPrinter = (XYPair) -> XYString
@@ -39,9 +37,9 @@ enum class Expression {
 }
 
 @RealmClass
-open class CoordRefSys(
+open class CoordRefSys (
         var displayName: String = "", // data stored in Realm
-        @Ignore val type: ParameterType = ParameterType.Code,
+        type: ParameterType = ParameterType.Code,
         var parameter: String = "", // data stored in Realm
         @Ignore val isLonLatº: Boolean? = null
 ) : RealmObject() {
@@ -49,7 +47,8 @@ open class CoordRefSys(
     var typeValue: Int = type.ordinal // data stored in Realm
 
     val crs: CoordinateReferenceSystem
-        get() = when (type) {
+        @Throws(UnknownAuthorityCodeException::class)
+        get() = when (ParameterType.values()[typeValue]) {
             ParameterType.Code -> CRSFactory().createFromName(parameter)
             ParameterType.Proj4 -> CRSFactory().createFromParameters(displayName, parameter)
         }
@@ -76,6 +75,7 @@ open class CoordRefSys(
 
         val WGS84 = CoordRefSys("WGS84", ParameterType.Code, "EPSG:4326", true)
         val TWD97 = CoordRefSys("TWD97", ParameterType.Code, "EPSG:3826", false)
-        val TWD67 = CoordRefSys("TWD67", ParameterType.Proj4, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +units=m +no_defs", false)
+        val TWD67 = CoordRefSys("TWD67", ParameterType.Proj4, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA  +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +units=m +no_defs", false)
+        val TWD67_latLng = CoordRefSys("TWD67(LatLng)", ParameterType.Proj4, "+proj=longlat +ellps=aust_SA  +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +units=m +no_defs")
     }
 }
