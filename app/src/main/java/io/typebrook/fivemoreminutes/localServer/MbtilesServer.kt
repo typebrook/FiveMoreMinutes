@@ -12,26 +12,27 @@ import java.io.PrintStream
 import java.net.ServerSocket
 import java.net.Socket
 import kotlin.math.pow
+import kotlin.system.measureTimeMillis
 
 
 /**
  * Created by pham on 2018/1/7.
  */
 
-open class MbtilesServer(private val ctx: Context) : Runnable {
+object MbtilesServer : Runnable {
 
-    var serverSocket: ServerSocket? = null
+    private var serverSocket: ServerSocket? = null
     var isRunning = false
     val sources: MutableMap<String, MBTilesSource> = mutableMapOf()
 
     fun start() {
-        ctx.toast("start")
+//        ctx.toast("start")
         isRunning = true
         Thread(this).start()
     }
 
     fun stop() {
-        ctx.toast("stop")
+//        ctx.toast("stop")
         isRunning = false
         serverSocket?.close()
         serverSocket = null
@@ -39,19 +40,23 @@ open class MbtilesServer(private val ctx: Context) : Runnable {
 
     override fun run() {
         try {
-            serverSocket = ServerSocket(7579)
+            serverSocket = ServerSocket(8888)
             while (isRunning) {
                 val socket = serverSocket?.accept() ?: throw Error()
+                Log.d("simpleServer", "request handled start")
                 handle(socket)
                 socket.close()
+                Log.d("simpleServer", "request handled in while")
             }
         } catch (e: Exception) {
             e.printStackTrace()
             Log.d("simpleServer", e.localizedMessage)
-            ctx.runOnUiThread {
-                toast("Localhost crashed")
-                longToast(e.localizedMessage)
-            }
+//            ctx.runOnUiThread {
+//                toast("Localhost crashed")
+//                longToast(e.localizedMessage)
+//            }
+        } finally {
+            Log.d("simpleServer", "request handled")
         }
     }
 
@@ -62,12 +67,13 @@ open class MbtilesServer(private val ctx: Context) : Runnable {
 
         try {
             var route: String? = null
-            reader = socket.getInputStream().bufferedReader()
+            reader = socket.getInputStream().reader().buffered()
 
             // Read HTTP headers and parse out the route.
             do {
                 val line = reader.readLine() ?: ""
                 if (line.startsWith("GET")) {
+                    // the format for route should be {source}/{z}/{x}/{y}
                     route = line.substringAfter("GET /").substringBefore(".")
                     break
                 }
@@ -84,8 +90,8 @@ open class MbtilesServer(private val ctx: Context) : Runnable {
                 writeServerError(output)
                 return
             }
-            val bytes = loadContent(source, route)
-            if (null == bytes) {
+
+            val bytes = loadContent(source, route) ?: run {
                 writeServerError(output)
                 return
             }

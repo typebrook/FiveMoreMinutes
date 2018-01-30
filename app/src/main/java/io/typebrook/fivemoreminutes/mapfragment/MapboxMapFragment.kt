@@ -230,33 +230,37 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         testButton.onClick {
             if (!checkWriteExternal(ctx)) return@onClick
 
+            if (MbtilesServer.isRunning) {
+                MbtilesServer.stop()
+                toast("stop")
+                return@onClick
+            }
+
             FilePickerDialog(ctx).apply {
                 setTitle("Select Mbtiles")
                 properties.selection_mode = DialogConfigs.SINGLE_MODE
                 properties.selection_type = DialogConfigs.FILE_SELECT
                 properties.extensions = arrayOf("mbtiles")
-                properties.root = File(Environment.getExternalStorageDirectory().path + "/Download")
+                properties.root = File(Environment.getExternalStorageDirectory().path)
+                properties.offset = File(properties.root.path + "/Download")
                 properties.error_dir = File(DialogConfigs.DEFAULT_DIR)
                 setDialogSelectionListener { files ->
-                    //                    toast(files[0])
-                    val ms = MBTilesSource(files[0])
-                    map.add(ctx, ms)
+                    val ms = MBTilesSource(files[0], "openmaptiles")
                     if (!ms.isVector) {
+                        ms.activate()
+                        map.addSource(RasterSource(ms.id, TileSet(null, ms.url), 126))
                         map.removeLayer(ID_WEBLAYER_BASE)
                         val rasterLayer = RasterLayer(ID_WEBLAYER_BASE, ms.id)
                         map.addLayer(rasterLayer)
                     } else {
-                        map.removeLayer("building")
-                        val buildingLayer = FillLayer("building_mbtiles", ms.id).apply {
-                            this.sourceLayer = "building"
-                            this.minZoom = 10f
-                            this.maxZoom = 20f
-                        }
-                        map.addLayer(buildingLayer)
+                        ms.activate()
+                        map.setStyleUrl("asset://mbtiles.json")
                     }
                 }
                 show()
             }
+
+            map.layers.forEach { it.also { } }
 
             //            val list = listOf(
 //                    "Compass" to LocationLayerMode.COMPASS,
@@ -295,7 +299,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
     override fun setStyle(style: Tile.PrivateStyle?) {
         setWebTile(null)
         val newStyle = style?.value?.takeIf { styles.contains(style) } ?: styles[0].value
-        map.setStyle(newStyle as String)
+        map.setStyleUrl(newStyle as String)
     }
 
     override fun setWebTile(tile: Tile.WebTile?) {

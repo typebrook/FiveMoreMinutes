@@ -3,15 +3,10 @@ package io.typebrook.fivemoreminutes.localServer
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
-import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.style.sources.VectorSource
-import io.typebrook.fivemoreminutes.dispatch
-import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fmmcore.map.fromWebTile
-import io.typebrook.fmmcore.redux.SetTile
 import org.jetbrains.anko.db.MapRowParser
 import org.jetbrains.anko.db.select
 import org.jetbrains.anko.toast
@@ -25,7 +20,6 @@ import java.io.FileOutputStream
 
 sealed class MBTilesSourceError : Error() {
     class CouldNotReadFileError : MBTilesSourceError()
-    class UnknownFormatError : MBTilesSourceError()
     class UnsupportedFormatError : MBTilesSourceError()
 }
 
@@ -38,10 +32,12 @@ object TilesParser : MapRowParser<ByteArray> {
     override fun parseRow(columns: Map<String, Any?>): ByteArray = columns["tile_data"] as ByteArray
 }
 
-class MBTilesSource(val filePath: String) {
+class MBTilesSource(filePath: String, id: String? = null) {
 
-    val id = filePath.substringAfterLast("/").substringBefore(".")
+    var id = id ?: filePath.substringAfterLast("/").substringBefore(".")
+    val url get() = "http://localhost:8888/$id/{z}/{x}/{y}.$format"
     private val db: SQLiteDatabase = SQLiteDatabase.openOrCreateDatabase(filePath, null)
+
     var isVector = false
     var format = ""
     var tileSize: Int? = null
@@ -57,10 +53,10 @@ class MBTilesSource(val filePath: String) {
                     .whereSimple("name = ?", "format")
                     .parseSingle(MetadataParser).second
 
-            when (format) {
-                in validVectorFormats -> isVector = true
-                in validRasterFormats -> isVector = false
-                else -> throw MBTilesSourceError.UnknownFormatError()
+            isVector = when (format) {
+                in validVectorFormats -> true
+                in validRasterFormats -> false
+                else -> throw MBTilesSourceError.UnsupportedFormatError()
             }
 
         } catch (error: MBTilesSourceError) {
@@ -70,9 +66,18 @@ class MBTilesSource(val filePath: String) {
 
     fun getTile(z: Int, x: Int, y: Int): ByteArray? {
         return db.select("tiles")
-                .whereArgs("(zoom_level = {z}) and (tile_column = {x}) and (tile_row = {y})", "z" to z, "x" to x, "y" to y)
+                .whereArgs("(zoom_level = {z}) and (tile_column = {x}) and (tile_row = {y})",
+                        "z" to z, "x" to x, "y" to y)
                 .parseList(TilesParser)
                 .run { if (!isEmpty()) get(0) else null }
+    }
+
+    fun activate() {
+        val source = this
+        MbtilesServer.apply {
+            sources[source.id] = source
+            if (!isRunning) start()
+        }
     }
 
     companion object {
@@ -104,23 +109,4 @@ fun getDBFromAsset(ctx: Context, fileName: String): SQLiteDatabase {
     }
 
     return SQLiteDatabase.openOrCreateDatabase(DB_PATH + fileName, null)
-}
-
-fun MapboxMap.add(ctx: Context, source: MBTilesSource) {
-    if (source.id in this@add.sources.map { it.id }) {
-        ctx.toast("source exists")
-        return
-    }
-    
-    MbtilesServer(ctx).apply {
-        sources[source.id] = source
-        start()
-    }
-
-    val requestUrl = "http://localhost:7579/${source.id}/{z}/{x}/{y}.${source.format}"
-    if (source.isVector) {
-        this@add.addSource(VectorSource(source.id, TileSet(null, requestUrl)))
-    } else {
-        this@add.addSource(RasterSource(source.id, TileSet(null, requestUrl), 126))
-    }
 }
