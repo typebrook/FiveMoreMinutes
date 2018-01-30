@@ -105,7 +105,7 @@ class OfflineListDialog : DialogFragment() {
     }
 
     private fun getRegionName(offlineRegion: OfflineRegion): String {
-        // Get the region name from the offline region metadata
+        // Get the region id from the offline region metadata
         return try {
             val metadata = offlineRegion.metadata
             val json = String(metadata)

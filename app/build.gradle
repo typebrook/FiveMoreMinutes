@@ -5,9 +5,14 @@ apply plugin: 'kotlin-android-extensions'
 android {
     compileSdkVersion 26
     buildToolsVersion '26.0.2'
+    // config for java8 (android-O API26)
+//    compileOptions {
+//        sourceCompatibility JavaVersion.VERSION_1_8
+//        targetCompatibility JavaVersion.VERSION_1_8
+//    }
     defaultConfig {
         applicationId "io.typebrook.fivemoreminutes"
-        minSdkVersion 21
+        minSdkVersion 19
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
@@ -38,7 +43,7 @@ dependencies {
     compile project(path: ':fmmcore')
 
     // kotlin
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     compile "org.jetbrains.anko:anko:$anko_version"
     compile "org.jetbrains.anko:anko-design:$anko_version"
     compile "org.jetbrains.anko:anko-sqlite:$anko_version"
@@ -53,7 +58,10 @@ dependencies {
     compile "com.google.android.gms:play-services-location:11.8.0"
 
     // MapBox Map
-    compile "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapboxMapSdk"
+//    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:6.0.0-SNAPSHOT@arr') {
+//        transitive = true
+//    }
+    implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapboxMapSdk"
     compile "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.2.0"
     compile "com.mapzen.android:lost:3.0.4"
 
@@ -77,5 +85,4 @@ repositories {
     mavenCentral()
     maven { url 'https://rekotlin.s3-ap-southeast-1.amazonaws.com/snapshots' }
     maven { url 'https://github.com/uPhyca/stetho-realm/raw/master/maven-repo' }
-    maven { url "https://dl.bintray.com/kotlin/exposed" }
 }

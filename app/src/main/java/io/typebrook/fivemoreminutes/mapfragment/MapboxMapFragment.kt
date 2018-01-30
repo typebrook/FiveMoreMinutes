@@ -250,7 +250,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 //                }
 //            }
         }
-        HttpRequestUtil.setPrintRequestUrlOnFaillure(true)
+        HttpRequestUtil.setPrintRequestUrlOnFailure(true)
     }
 
     override fun moveCamera(target: CameraState) {
