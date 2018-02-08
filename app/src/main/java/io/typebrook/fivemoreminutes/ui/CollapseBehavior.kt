@@ -32,7 +32,7 @@ class CollapseBehavior<V : ViewGroup> : CoordinatorLayout.Behavior<V>() {
                 // view is between "hidden" and "collapsed" states
                 val dy = dependency.top - parent.height
                 child.translationY = dy.toFloat() + actualPeek
-                ViewCompat.setTranslationZ(child, dy.toFloat())
+//                ViewCompat.setTranslationZ(child, dy.toFloat())
 //                child.translationZ = dy.toFloat()
                 return true
             }

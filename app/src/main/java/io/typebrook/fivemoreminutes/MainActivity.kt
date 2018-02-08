@@ -9,7 +9,7 @@ import io.typebrook.fivemoreminutes.mapfragment.DualMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.MapboxMapFragment
 import io.typebrook.fivemoreminutes.ui.ActivityUI
-import io.typebrook.fivemoreminutes.ui.ActivityUI.Companion.ID_MAP_CONTAINER
+import io.typebrook.fivemoreminutes.ui.ActivityUI.Companion.id_map_container
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.redux.EnableLocation
 import io.typebrook.fmmcore.redux.TargetBackward
@@ -43,17 +43,17 @@ class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
         when (state) {
             Display.Google -> {
                 fragmentManager.beginTransaction()
-                        .replace(ID_MAP_CONTAINER, GoogleMapFragment())
+                        .replace(id_map_container, GoogleMapFragment())
                         .commit()
             }
             Display.MapBox -> {
                 fragmentManager.beginTransaction()
-                        .replace(ID_MAP_CONTAINER, MapboxMapFragment())
+                        .replace(id_map_container, MapboxMapFragment())
                         .commit()
             }
             Display.Dual -> {
                 fragmentManager.beginTransaction()
-                        .replace(ID_MAP_CONTAINER, DualMapFragment().apply { insertMap(MapboxMapFragment(), GoogleMapFragment()) })
+                        .replace(id_map_container, DualMapFragment().apply { insertMap(MapboxMapFragment(), GoogleMapFragment()) })
                         .commit()
             }
         }

@@ -3,9 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+    compileSdkVersion 27
+    buildToolsVersion '27.0.2'
     // config for java8 (android-O API26)
+    // 2018/02/08 fix the DexArchiveBuilderException when using mapbox 6.0.0-beta.1
 //    compileOptions {
 //        sourceCompatibility JavaVersion.VERSION_1_8
 //        targetCompatibility JavaVersion.VERSION_1_8
@@ -13,7 +14,7 @@ android {
     defaultConfig {
         applicationId "io.typebrook.fivemoreminutes"
         minSdkVersion 19
-        targetSdkVersion 26
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -58,11 +59,9 @@ dependencies {
     compile "com.google.android.gms:play-services-location:11.8.0"
 
     // MapBox Map
-//    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:6.0.0-SNAPSHOT@arr') {
-//        transitive = true
-//    }
     implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapboxMapSdk"
-    compile "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.2.0"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.2.0"
+    implementation 'com.mapbox.mapboxsdk:mapbox-android-plugin-places:0.1.0'
     compile "com.mapzen.android:lost:3.0.4"
 
     // Boom menu

@@ -1,6 +1,7 @@
 package io.typebrook.fivemoreminutes.mapfragment
 
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.app.Activity
 import android.app.Fragment
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.graphics.Color
@@ -8,6 +9,7 @@ import android.location.Location
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.INVISIBLE
@@ -33,6 +35,8 @@ import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.style.layers.RasterLayer
 import com.mapbox.mapboxsdk.style.sources.*
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
+import com.mapbox.plugins.places.autocomplete.PlaceAutocomplete
+import com.mapbox.plugins.places.autocomplete.model.PlaceOptions
 import com.mapbox.services.android.telemetry.location.LocationEngineListener
 import com.mapbox.services.android.telemetry.location.LocationEnginePriority
 import com.mapbox.services.android.telemetry.location.LostLocationEngine
@@ -49,6 +53,7 @@ import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
+import org.jetbrains.anko.design.coordinatorLayout
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import java.io.File
 import java.net.URL
@@ -102,19 +107,18 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 
     override fun onCreateView(p0: LayoutInflater?, p1: ViewGroup?, p2: Bundle?): View {
         return UI {
-            relativeLayout {
+            coordinatorLayout {
                 addView(mapView)
                 imageView {
                     backgroundResource = R.drawable.ic_cross_24dp
-                }.lparams { centerInParent() }
+                }.lparams { gravity = Gravity.CENTER }
+                progressIndicator = progressBar().lparams { gravity = Gravity.CENTER }
                 testButton = imageView {
                     backgroundResource = R.drawable.mapbutton_background
-                }
+                }.lparams { topMargin = 180 }
                 testButton2 = imageView {
-                    backgroundColor = Color.CYAN
                     backgroundResource = R.drawable.mapbutton_background
-                }.lparams { topMargin = 150 }
-                progressIndicator = progressBar().lparams { centerInParent() }
+                }.lparams { topMargin = 300 }
             }
         }.view
     }
@@ -198,10 +202,15 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         }
 
         testButton2.onClick {
-            val params = mapView.layoutParams
-            params.height = 1500
-            mapView.layoutParams = params
-            toast("button2")
+//            toast("Yahoo~")
+//            val intent = PlaceAutocomplete.IntentBuilder()
+//                    .accessToken(Mapbox.getAccessToken())
+//                    .placeOptions(PlaceOptions.builder()
+//                            .backgroundColor(Color.parseColor("#EEEEEE"))
+//                            .limit(10)
+//                            .build(PlaceOptions.MODE_CARDS))
+//                    .build(ctx as Activity)
+//            startActivityForResult(intent, 1)
         }
 
         testButton.onClick {
@@ -237,8 +246,6 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
                 show()
             }
 
-            map.layers.forEach { it.also { } }
-
             //            val list = listOf(
 //                    "Compass" to LocationLayerMode.COMPASS,
 //                    "Tracking" to LocationLayerMode.TRACKING,
@@ -250,7 +257,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 //                }
 //            }
         }
-        HttpRequestUtil.setPrintRequestUrlOnFailure(true)
+        
+        map.uiSettings.compassGravity = Gravity.START
     }
 
     override fun moveCamera(target: CameraState) {

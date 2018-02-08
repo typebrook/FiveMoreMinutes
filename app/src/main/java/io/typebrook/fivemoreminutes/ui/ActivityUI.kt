@@ -1,10 +1,9 @@
 package io.typebrook.fivemoreminutes.ui
 
 import android.graphics.Color
-import android.support.design.widget.AppBarLayout
 import android.support.design.widget.BottomSheetBehavior
-import android.support.design.widget.CollapsingToolbarLayout
-import android.support.v4.view.ViewCompat
+import android.support.design.widget.BottomSheetBehavior.STATE_COLLAPSED
+import android.support.design.widget.BottomSheetBehavior.STATE_EXPANDED
 import android.view.Gravity
 import android.view.View
 import android.view.View.INVISIBLE
@@ -100,20 +99,24 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     override fun createView(ui: AnkoContext<MainActivity>) = with(ui) {
         coordinatorLayout {
 
-            mapContainer = frameLayout { id = ID_MAP_CONTAINER }.lparams {
+            mapContainer = frameLayout { id = id_map_container }.lparams {
                 behavior = CollapseBehavior<FrameLayout>()
-                anchorId = bla
+                anchorId = id_sheet
                 anchorGravity = Gravity.TOP
             }
 
             val sheet = verticalLayout {
-                id = bla
+                id = id_sheet
                 backgroundColor = Color.parseColor("#80FFFFFF")
                 frameLayout {
                     backgroundColor = Color.parseColor("#80FFFF00")
                     onClick {
                         val behavior = BottomSheetBehavior.from(this@verticalLayout)
-                        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+                        if (behavior.state == STATE_EXPANDED) {
+                            behavior.state = STATE_COLLAPSED
+                        } else {
+                            behavior.state = STATE_EXPANDED
+                        }
                     }
                 }.lparams(height = 150, width = matchParent)
             }.lparams(width = matchParent, height = 700) {
@@ -126,7 +129,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 
             coordinate = textView {
                 padding = dip(5)
-                backgroundColor = R.color.transparentOnMap
+                backgroundColor = Color.parseColor("#80FFFFFF")
                 onClick { CoordInputDialog().show(owner.fragmentManager, null) }
             }.lparams(wrapContent) {
                 gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
@@ -177,7 +180,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                     behavior.state = BottomSheetBehavior.STATE_COLLAPSED
                 }
             }.lparams {
-                anchorId = bla
+                anchorId = id_sheet
                 anchorGravity = Gravity.TOP
             }
 
@@ -256,7 +259,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                     onClick { mainStore dispatch ZoomBy(-1f) }
                 }
             }.lparams(width = wrapContent, height = wrapContent) {
-                anchorId = bla
+                anchorId = id_sheet
                 anchorGravity = Gravity.END
                 gravity = Gravity.TOP
                 rightMargin = dip(9.8f)
@@ -292,14 +295,16 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
 //            }
         }
     }.apply {
-        mainStore.subscribe(this@ActivityUI) { subscription ->
-            subscription.select { it.currentCamera }.skipRepeats()
-        }
-        mainStore.subscribe(coordPrinter) { subscription ->
-            subscription.select { it.crsState }.skipRepeats()
-        }
-        mainStore.subscribe(mapSubscriber) { subscription ->
-            subscription.select { it.maps }.skipRepeats()
+        mainStore.run {
+            subscribe(this@ActivityUI) { subscription ->
+                subscription.select { it.currentCamera }.skipRepeats()
+            }
+            subscribe(coordPrinter) { subscription ->
+                subscription.select { it.crsState }.skipRepeats()
+            }
+            subscribe(mapSubscriber) { subscription ->
+                subscription.select { it.maps }.skipRepeats()
+            }
         }
     }
 
@@ -313,8 +318,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     }
 
     companion object {
-        val ID_MAP_CONTAINER = "ID_MAP_CONTAINER".hashCode()
-        val bla = "bla".hashCode()
+        val id_map_container = "id_map_container".hashCode()
+        val id_sheet = "id_sheet".hashCode()
 
         val displayList = listOf(
                 "Google" to Display.Google,
