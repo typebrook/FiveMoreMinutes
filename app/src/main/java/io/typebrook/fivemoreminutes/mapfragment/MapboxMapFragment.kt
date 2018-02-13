@@ -43,8 +43,9 @@ import com.mapbox.services.android.telemetry.location.LostLocationEngine
 import com.mapbox.services.commons.geojson.FeatureCollection
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
+import io.typebrook.fivemoreminutes.localServer.MBTilesServer
 import io.typebrook.fivemoreminutes.localServer.MBTilesSource
-import io.typebrook.fivemoreminutes.localServer.MbtilesServer
+import io.typebrook.fivemoreminutes.localServer.MBTilesSourceError
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.utils.checkWriteExternal
 import io.typebrook.fmmcore.map.MapControl
@@ -216,8 +217,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         testButton.onClick {
             if (!checkWriteExternal(ctx)) return@onClick
 
-            if (MbtilesServer.isRunning) {
-                MbtilesServer.stop()
+            if (MBTilesServer.isRunning) {
+                MBTilesServer.stop()
                 toast("stop")
                 return@onClick
             }
@@ -231,15 +232,18 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
                 properties.offset = File(properties.root.path + "/Download")
                 properties.error_dir = File(DialogConfigs.DEFAULT_DIR)
                 setDialogSelectionListener { files ->
-                    val ms = MBTilesSource(files[0], "openmaptiles")
+                    val ms = try {
+                        MBTilesSource(files[0], "openmaptiles").apply { activate() }
+                    } catch (e: MBTilesSourceError.CouldNotReadFileError) {
+                        toast("Could Not ReadFile")
+                        return@setDialogSelectionListener
+                    }
                     if (!ms.isVector) {
-                        ms.activate()
                         map.addSource(RasterSource(ms.id, TileSet(null, ms.url), 126))
                         map.removeLayer(ID_WEBLAYER_BASE)
                         val rasterLayer = RasterLayer(ID_WEBLAYER_BASE, ms.id)
                         map.addLayer(rasterLayer)
                     } else {
-                        ms.activate()
                         map.setStyleUrl("asset://mbtiles.json")
                     }
                 }

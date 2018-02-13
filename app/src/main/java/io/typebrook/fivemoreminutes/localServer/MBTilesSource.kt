@@ -1,18 +1,8 @@
 package io.typebrook.fivemoreminutes.localServer
 
-import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import com.mapbox.mapboxsdk.geometry.LatLngBounds
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.style.sources.RasterSource
-import com.mapbox.mapboxsdk.style.sources.TileSet
-import com.mapbox.mapboxsdk.style.sources.VectorSource
 import org.jetbrains.anko.db.MapRowParser
 import org.jetbrains.anko.db.select
-import org.jetbrains.anko.toast
-import java.io.File
-import java.io.FileOutputStream
-
 
 /**
  * Created by pham on 2018/1/7.
@@ -35,17 +25,21 @@ object TilesParser : MapRowParser<ByteArray> {
 class MBTilesSource(filePath: String, id: String? = null) {
 
     var id = id ?: filePath.substringAfterLast("/").substringBefore(".")
-    val url get() = "http://localhost:8888/$id/{z}/{x}/{y}.$format"
-    private val db: SQLiteDatabase = SQLiteDatabase.openOrCreateDatabase(filePath, null)
+    val url get() = "http://localhost:${MBTilesServer.port}/$id/{z}/{x}/{y}.$format"
+    private val db: SQLiteDatabase = try {
+        SQLiteDatabase.openOrCreateDatabase(filePath, null)
+    } catch (e: RuntimeException) {
+        throw MBTilesSourceError.CouldNotReadFileError()
+    }
 
     var isVector = false
-    var format = ""
-    var tileSize: Int? = null
-    var layersJson: String? = ""
-    var attributions: String? = ""
-    var minZoom: Float? = null
-    var maxZoom: Float? = null
-    var bounds: LatLngBounds? = null
+    var format = String()
+//    var tileSize: Int? = null
+//    var layersJson: String? = ""
+//    var attributions: String? = ""
+//    var minZoom: Float? = null
+//    var maxZoom: Float? = null
+//    var bounds: LatLngBounds? = null
 
     init {
         try {
@@ -74,9 +68,17 @@ class MBTilesSource(filePath: String, id: String? = null) {
 
     fun activate() {
         val source = this
-        MbtilesServer.apply {
+        MBTilesServer.apply {
             sources[source.id] = source
             if (!isRunning) start()
+        }
+    }
+
+    fun deactivate() {
+        val source = this
+        MBTilesServer.apply {
+            sources.remove(source.id)
+            if (isRunning && sources.isEmpty()) stop()
         }
     }
 
@@ -84,29 +86,4 @@ class MBTilesSource(filePath: String, id: String? = null) {
         val validRasterFormats = listOf("jpg", "png")
         val validVectorFormats = listOf("pbf", "mvt")
     }
-}
-
-fun getDBFromAsset(ctx: Context, fileName: String): SQLiteDatabase {
-    val DB_PATH = ctx.filesDir.path
-
-    //move the db to the designated path
-    if (!File(DB_PATH + fileName).exists()) {
-        val f = File(DB_PATH)
-        if (!f.exists()) f.mkdir()
-
-        try {
-            val dbInputStream = ctx.assets.open(fileName)
-            val dbOutputStream = FileOutputStream(DB_PATH + fileName)
-            dbOutputStream.write(dbInputStream.readBytes())
-
-            dbOutputStream.flush()
-            dbOutputStream.close()
-            dbInputStream.close()
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    return SQLiteDatabase.openOrCreateDatabase(DB_PATH + fileName, null)
 }

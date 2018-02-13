@@ -1,10 +1,6 @@
 package io.typebrook.fivemoreminutes.localServer
 
-import android.content.Context
 import android.util.Log
-import org.jetbrains.anko.longToast
-import org.jetbrains.anko.runOnUiThread
-import org.jetbrains.anko.toast
 import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
 import java.io.FileNotFoundException
@@ -12,27 +8,24 @@ import java.io.PrintStream
 import java.net.ServerSocket
 import java.net.Socket
 import kotlin.math.pow
-import kotlin.system.measureTimeMillis
-
 
 /**
  * Created by pham on 2018/1/7.
  */
 
-object MbtilesServer : Runnable {
+object MBTilesServer : Runnable {
 
     private var serverSocket: ServerSocket? = null
     var isRunning = false
     val sources: MutableMap<String, MBTilesSource> = mutableMapOf()
+    const val port = 8888
 
     fun start() {
-//        ctx.toast("start")
         isRunning = true
         Thread(this).start()
     }
 
     fun stop() {
-//        ctx.toast("stop")
         isRunning = false
         serverSocket?.close()
         serverSocket = null
@@ -40,23 +33,18 @@ object MbtilesServer : Runnable {
 
     override fun run() {
         try {
-            serverSocket = ServerSocket(8888)
+            serverSocket = ServerSocket(port)
             while (isRunning) {
                 val socket = serverSocket?.accept() ?: throw Error()
-                Log.d("simpleServer", "request handled start")
+                Log.d(javaClass.simpleName, "request handled start")
                 handle(socket)
                 socket.close()
-                Log.d("simpleServer", "request handled in while")
+                Log.d(javaClass.simpleName, "request handled in while")
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            Log.d("simpleServer", e.localizedMessage)
-//            ctx.runOnUiThread {
-//                toast("Localhost crashed")
-//                longToast(e.localizedMessage)
-//            }
+            Log.d(javaClass.simpleName, e.localizedMessage)
         } finally {
-            Log.d("simpleServer", "request handled")
+            Log.d(javaClass.simpleName, "request handled")
         }
     }
 
