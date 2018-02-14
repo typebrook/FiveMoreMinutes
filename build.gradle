@@ -4,9 +4,9 @@ buildscript {
     ext.android_support = "27.0.2"
     ext.kotlin_version = '1.2.21'
     ext.anko_version = '0.10.1'
-    ext.realm_version = '4.3.0'
+    ext.realm_version = '4.3.4'
 //    ext.mapboxMapSdk = '6.0.0-beta.1'
-    ext.mapboxMapSdk = '5.4.0'
+    ext.mapboxMapSdk = '5.4.1'
     repositories {
         jcenter()
         google()
