@@ -6,8 +6,7 @@ import android.app.DialogFragment
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.InputFilter
-import android.text.InputType.TYPE_CLASS_NUMBER
-import android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+import android.text.InputType.*
 import android.view.Gravity
 import android.view.View
 import android.view.View.INVISIBLE
@@ -76,15 +75,19 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
         lastCrs = crs
 
         val negativeButton = (this.dialog as? AlertDialog)?.getButton(AlertDialog.BUTTON_NEUTRAL)
-        negativeButton?.visibility = if (crs.isManaged) VISIBLE else INVISIBLE
+        negativeButton?.visibility = if (crs.associatedEntity != null) VISIBLE else INVISIBLE
 
         inputLayoutContainer.apply {
             removeAllViews()
-            xyInput = when (coordExpr) {
-                Expression.Int -> intInput
-                Expression.Degree -> degreeInput
-                Expression.DegMin -> degMinInput
-                Expression.DMS -> dmsInput
+            xyInput = if (crs == TaipowerCrs) {
+                taipowerInput
+            } else {
+                when (coordExpr) {
+                    Expression.Int -> intInput
+                    Expression.Degree -> degreeInput
+                    Expression.DegMin -> degMinInput
+                    Expression.DMS -> dmsInput
+                }
             }
 
             addView(xyInput.layout)
@@ -94,8 +97,8 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
     private val crsList: List<CoordRefSys>
         get() {
             val realm = Realm.getDefaultInstance()
-            val crsInRealm = realm.where<CoordRefSys>().findAll().toList()
-            return listOf(WGS84, TWD97, TWD67, TWD67_latLng) + crsInRealm
+            val crsInRealm = realm.where<rCRS>().findAll().toList().map { it.entity }
+            return listOf(WGS84, TWD97, TWD67, TWD67_latLng, TaipowerCrs) + crsInRealm
         }
 
     // positive action that animate map to the coordinates which user just filled
@@ -117,12 +120,12 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
     // neutral action that delete selected coordinate reference system from realm,
     // and set crs as WGS84
     private val actionDelete = action@ { _: DialogInterface ->
-        if (!crs.isManaged) return@action
+        if (crs.associatedEntity == null) return@action
         val realm = Realm.getDefaultInstance()
         realm.executeTransaction {
-            val throwableCrs = crs
+            val throwableCrs = crs.associatedEntity
             mainStore dispatch SetCrsState(WGS84)
-            throwableCrs.deleteFromRealm()
+            throwableCrs?.deleteFromRealm()
         }
     }
 
@@ -197,7 +200,7 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
 
                     val selectedPos = crsList.indexOf(crs)
                     setSelection(selectedPos)
-                }.lparams(height = 120, width = 400)
+                }.lparams(height = 120, width = 500)
             }
             dmsOptionLayout = linearLayout {
                 leftPadding = 8
@@ -509,6 +512,28 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
                 }.lparams(width = 0, weight = 4f)
                 textView(getString(R.string.second)).lparams(width = 0, weight = 1f)
                 yInputs = listOf(ydField, ymField, ysField)
+            }
+        }
+
+    private val taipowerInput: XYInput
+        get() = object : XYInput, LinearLayout(ctx) {
+            override val layout = this
+            lateinit var input: EditText
+
+            override val xyValues: XYPair
+                get() = input.run {
+                    if (text.isBlank()) TaipowerCrs.reverseMask(hint.toString())
+                    else TaipowerCrs.reverseMask(text.toString())
+                }
+            override val isFilled get() = !input.text.isNotBlank()
+        }.apply {
+            orientation = LinearLayout.VERTICAL
+            val hintString = TaipowerCrs.mask(originalXY)
+            input = editText {
+                inputType = TYPE_CLASS_TEXT
+                hint = hintString
+                text.append(typedXY?.first?.toInt()?.toString() ?: "")
+                gravity = Gravity.CENTER_HORIZONTAL
             }
         }
 // endregion

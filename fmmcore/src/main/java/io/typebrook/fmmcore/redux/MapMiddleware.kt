@@ -53,6 +53,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
         when (tile) {
             is Tile.WebTile -> mapControl.setWebTile(tile)
             is Tile.PrivateStyle -> mapControl.setStyle(tile)
+            else -> return@handler
         }
     }
 
@@ -63,6 +64,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
         when (tile) {
             is Tile.WebTile -> mapControl.addWebTile(tile)
             is Tile.WebImage -> mapControl.addWebImage(tile)
+            else -> return@handler
         }
     }
 
@@ -97,7 +99,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
 
     private val setCoordRefSys: ActionTransformer<State> = transformers@ { action, getState ->
         action as? SetCrsState ?: return@transformers action
-        val newType = action.crs.run { isLonLatº ?: checkIsLonLat() }
+        val newType = action.crs.isLonLat
         val oldType = getState()?.crsState?.isLonLat ?: return@transformers action
 
         if (newType != oldType) {

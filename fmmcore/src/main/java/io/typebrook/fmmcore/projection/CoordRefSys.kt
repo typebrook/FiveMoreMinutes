@@ -1,7 +1,6 @@
 package io.typebrook.fmmcore.projection
 
 import io.realm.RealmObject
-import io.realm.annotations.Ignore
 import io.realm.annotations.RealmClass
 import org.osgeo.proj4j.*
 
@@ -16,46 +15,45 @@ typealias XYString = Pair<String, String>
 typealias CoordConverter = (XYPair) -> (XYPair)
 typealias CoordPrinter = (XYPair) -> XYString
 
-fun isValidInWGS84(xy: XYPair): Boolean {
-    val (lon, lat) = xy
-    return lat > -90 && lat < 90 && lon > -180 && lon < 180
+val isValidInWGS84: (XYPair) -> Boolean = { (lon, lat) ->
+    lat > -90 && lat < 90 && lon > -180 && lon < 180
 }
 
 fun XYPair.convert(from: CoordRefSys, to: CoordRefSys) = CoordRefSys.generateConverter(from, to)(this)
 fun XYPair.isValid(crs: CoordRefSys) = isValidInWGS84(this.convert(crs, CoordRefSys.WGS84))
 
-enum class ParameterType {
-    Code,
-    Proj4
-}
-
-enum class Expression {
-    Int,
-    Degree,
-    DegMin,
-    DMS
-}
+enum class ParameterType { Code, Proj4 }
+enum class Expression { Int, Degree, DegMin, DMS }
 
 @RealmClass
-open class CoordRefSys (
-        var displayName: String = "", // data stored in Realm
-        type: ParameterType = ParameterType.Code,
-        var parameter: String = "", // data stored in Realm
-        @Ignore val isLonLatº: Boolean? = null
+open class rCRS(
+        var name: String = "",
+        var typeValue: Int = 0,
+        var proj4Param: String = ""
 ) : RealmObject() {
+    val entity get()= CoordRefSys(name, ParameterType.values()[typeValue], proj4Param, this)
+}
 
-    var typeValue: Int = type.ordinal // data stored in Realm
+open class CoordRefSys(
+        val displayName: String = "UnNamed", // data stored in Realm
+        private val type: ParameterType = ParameterType.Code,
+        val parameter: String, // data stored in Realm
+        val associatedEntity: rCRS? = null
+) {
 
-    val crs: CoordinateReferenceSystem
+    val persistentEntity get() = rCRS(displayName, type.ordinal, parameter)
+
+    val isLonLat: Boolean by lazy {
+        val converter = generateConverter(WGS84, this)
+        converter(179.0 to 89.0).let { (x, y) -> x < 180 && y < 90 }
+    }
+
+    val crs: CoordinateReferenceSystem by lazy {
         @Throws(UnknownAuthorityCodeException::class)
-        get() = when (ParameterType.values()[typeValue]) {
+        when (ParameterType.values()[type.ordinal]) {
             ParameterType.Code -> CRSFactory().createFromName(parameter)
             ParameterType.Proj4 -> CRSFactory().createFromParameters(displayName, parameter)
         }
-
-    fun checkIsLonLat(): Boolean {
-        val converter = generateConverter(WGS84, this)
-        return converter(179.0 to 89.0).let { (x, y) -> x < 180 && y < 90 }
     }
 
     companion object {
@@ -73,9 +71,9 @@ open class CoordRefSys (
             }
         }
 
-        val WGS84 = CoordRefSys("WGS84", ParameterType.Code, "EPSG:4326", true)
-        val TWD97 = CoordRefSys("TWD97", ParameterType.Code, "EPSG:3826", false)
-        val TWD67 = CoordRefSys("TWD67", ParameterType.Proj4, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA  +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +units=m +no_defs", false)
-        val TWD67_latLng = CoordRefSys("TWD67(LatLng)", ParameterType.Proj4, "+proj=longlat +ellps=aust_SA  +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +units=m +no_defs")
+        val WGS84 = CoordRefSys("WGS84", ParameterType.Code, "EPSG:4326")
+        val TWD97 = CoordRefSys("TWD97", ParameterType.Code, "EPSG:3826")
+        val TWD67 = CoordRefSys("TWD67", ParameterType.Proj4, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA  +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +units=m +no_defs")
+        val TWD67_latLng = CoordRefSys("TWD67(LatLng)", ParameterType.Proj4, "+proj=longlat +ellps=aust_SA  +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +no_defs")
     }
 }

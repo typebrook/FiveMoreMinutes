@@ -40,7 +40,7 @@ class CrsCreateDialog : DialogFragment() {
                 }
                 val realm = Realm.getDefaultInstance()
                 realm.executeTransaction {
-                    realm.copyToRealm(newDatum)
+                    realm.copyToRealm(newDatum.persistentEntity)
                 }
                 mainStore.dispatch(SetCrsState(newDatum))
             }

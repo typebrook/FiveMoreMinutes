@@ -60,10 +60,12 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
         var textPrinter: CoordPrinter = xy2IntString
 
         operator fun invoke(xy: XYPair): String {
-            val xyString = coordConverter(xy).let { textPrinter(it) }
+            val convertedXY = coordConverter(xy)
+            val xyString = textPrinter(convertedXY)
             val crsState = mainStore.state.crsState
             return when (crsState.crs) {
-                WGS84 -> xyString.run { "$first\n$second" }
+                WGS84 -> "${xyString.first}\n${xyString.second}"
+                TaipowerCrs -> "${TaipowerCrs.displayName}: ${TaipowerCrs.mask(convertedXY)}"
                 else -> xyString.run {
                     if (crsState.isLonLat) "${crsState.crs.displayName}:\n$first\n$second"
                     else "${crsState.crs.displayName}: $first, $second"
@@ -132,8 +134,9 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 backgroundColor = Color.parseColor("#80FFFFFF")
                 onClick { CoordInputDialog().show(owner.fragmentManager, null) }
             }.lparams(wrapContent) {
-                gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                bottomMargin = dip(10)
+                anchorId = id_sheet
+                anchorGravity = Gravity.CLIP_HORIZONTAL
+                gravity = Gravity.TOP
             }
 
             scaleBar = mapScaleBar {
