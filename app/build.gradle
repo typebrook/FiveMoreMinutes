@@ -60,7 +60,7 @@ dependencies {
 
     // MapBox Map
     implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapboxMapSdk"
-    implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.2.0"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.3.0"
     implementation 'com.mapbox.mapboxsdk:mapbox-android-plugin-places:0.1.0'
     compile "com.mapzen.android:lost:3.0.4"
 

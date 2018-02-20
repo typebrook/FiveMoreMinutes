@@ -17,6 +17,8 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.view.FilePickerDialog
+import com.mapbox.android.core.location.LocationEngineListener
+import com.mapbox.android.core.location.LocationEnginePriority
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.constants.Style
@@ -34,6 +36,7 @@ import com.mapbox.mapboxsdk.style.sources.ImageSource
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
+import com.mapbox.services.android.location.LostLocationEngine
 import com.mapbox.services.android.telemetry.location.LocationEngineListener
 import com.mapbox.services.android.telemetry.location.LocationEnginePriority
 import com.mapbox.services.android.telemetry.location.LostLocationEngine
