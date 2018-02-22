@@ -4,7 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Bundle
-import com.mapbox.services.android.telemetry.permissions.PermissionsListener
+import com.mapbox.android.core.permissions.PermissionsListener
 import io.typebrook.fivemoreminutes.mapfragment.DualMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.MapboxMapFragment

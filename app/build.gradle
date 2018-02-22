@@ -28,6 +28,12 @@ android {
     configurations.all {
         resolutionStrategy.force 'com.google.code.findbugs:jsr305:1.3.9'
     }
+    packagingOptions{
+        exclude 'com/mapbox/geojson/AutoValue_BoundingBox.java'
+        exclude 'com/mapbox/geojson/$AutoValue_MultiPoint.java'
+        exclude 'com/mapbox/geojson/$AutoValue_Polygon.java'
+        exclude 'com/mapbox/geojson/$AutoValue_MultilineString.java'
+    }
 }
 
 dependencies {
@@ -59,10 +65,19 @@ dependencies {
     compile "com.google.android.gms:play-services-location:11.8.0"
 
     // MapBox Map
-    implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapboxMapSdk"
+//    implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapboxMapSdk@arr"
     implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.3.0"
     implementation 'com.mapbox.mapboxsdk:mapbox-android-plugin-places:0.1.0'
-    compile "com.mapzen.android:lost:3.0.4"
+    implementation "com.mapzen.android:lost:3.0.4"
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:6.0.0-beta.2@aar'
+    implementation "com.mapbox.mapboxsdk:mapbox-android-telemetry:3.0.0-beta.1@aar"
+    implementation "com.mapbox.mapboxsdk:mapbox-java-geojson:2.2.9@jar"
+    implementation "com.mapbox.mapboxsdk:mapbox-java-core:2.2.9@jar"
+    implementation "com.squareup.okhttp3:okhttp:3.9.1"
+    implementation "com.google.code.gson:gson:2.8.2"
+    implementation "com.jakewharton.timber:timber:4.6.0"
 
     // Boom menu
     compile "com.nightonke:boommenu:2.1.1"

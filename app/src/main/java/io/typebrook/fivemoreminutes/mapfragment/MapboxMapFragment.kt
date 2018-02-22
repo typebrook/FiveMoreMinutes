@@ -36,10 +36,6 @@ import com.mapbox.mapboxsdk.style.sources.ImageSource
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
-import com.mapbox.services.android.location.LostLocationEngine
-import com.mapbox.services.android.telemetry.location.LocationEngineListener
-import com.mapbox.services.android.telemetry.location.LocationEnginePriority
-import com.mapbox.services.android.telemetry.location.LostLocationEngine
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.localServer.MBTilesServer
@@ -64,18 +60,18 @@ import java.net.URL
  * this fragment defines Google Map interaction with user
  */
 
-class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEngineListener {
+class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl {
 
     private val mapView by lazy { MapView(activity, MapFragmentUtils.resolveArgs(activity, arguments)) }
     lateinit var map: MapboxMap
 
-    private val locationPlugin by lazy { LocationLayerPlugin(mapView, map, locationEngine) }
-    private val locationEngine by lazy {
-        LostLocationEngine(ctx).apply {
-            priority = LocationEnginePriority.HIGH_ACCURACY
-            addLocationEngineListener(this@MapboxMapFragment)
-        }
-    }
+//    private val locationPlugin by lazy { LocationLayerPlugin(mapView, map, locationEngine) }
+//    private val locationEngine by lazy {
+//        LostLocationEngine(ctx).apply {
+//            priority = LocationEnginePriority.HIGH_ACCURACY
+//            addLocationEngineListener(this@MapboxMapFragment)
+//        }
+//    }
 
     private lateinit var testButton: ImageView
     private lateinit var testButton2: ImageView
@@ -338,29 +334,29 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 
     // region User Location
     override fun enableLocation() {
-        locationEngine.activate()
+//        locationEngine.activate()
     }
 
     override fun disableLocation() {
-        locationEngine.deactivate()
-        mainStore dispatch DidSwitchLocation(this, false)
-        if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
-            locationPlugin.setLocationLayerEnabled(LocationLayerMode.NONE)
-        }
+//        locationEngine.deactivate()
+//        mainStore dispatch DidSwitchLocation(this, false)
+//        if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
+//            locationPlugin.setLocationLayerEnabled(LocationLayerMode.NONE)
+//        }
     }
 
-    override fun onLocationChanged(location: Location?) {}
-    override fun onConnected() {
-        if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
-            mainStore dispatch DidSwitchLocation(this, true)
-
-            val lastLocation = locationEngine.lastLocation
-            val zoom = if (cameraState.zoom < 16) 16f else cameraState.zoom
-            lastLocation?.run { animateCamera(CameraState(latitude, longitude, zoom), 800) }
-
-            locationPlugin.setLocationLayerEnabled(LocationLayerMode.TRACKING)
-        }
-    }
+//    override fun onLocationChanged(location: Location?) {}
+//    override fun onConnected() {
+//        if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
+//            mainStore dispatch DidSwitchLocation(this, true)
+//
+//            val lastLocation = locationEngine.lastLocation
+//            val zoom = if (cameraState.zoom < 16) 16f else cameraState.zoom
+//            lastLocation?.run { animateCamera(CameraState(latitude, longitude, zoom), 800) }
+//
+//            locationPlugin.setLocationLayerEnabled(LocationLayerMode.TRACKING)
+//        }
+//    }
 
     // endregion
     companion object {
