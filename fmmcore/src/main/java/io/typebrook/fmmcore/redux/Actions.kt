@@ -36,3 +36,5 @@ data class SetCrsState(val crs: CoordRefSys, val expression: Expression? = null)
 data class SetCoordExpr(val expression: Expression) : Action
 
 class SwitchMap : Action // Not Valid for now
+
+class SwitchComponentVisibiliy : Action

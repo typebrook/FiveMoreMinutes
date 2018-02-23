@@ -39,7 +39,7 @@ import tw.geothings.rekotlin.StoreSubscriber
  * Created by pham on 2017/9/21.
  */
 
-class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
+class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
 
     lateinit var mapContainer: FrameLayout
     private lateinit var coordinate: TextView
@@ -53,7 +53,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     private lateinit var zoomOut: ImageView
 
     private var isHide = false
-    private val components by lazy { listOf(coordinate, gpsOn, gpsOff, zoomText, zoomIn, zoomOut) }
+    private val components by lazy { listOf(coordinate, gpsOn, gpsOff, layers, zoomText, zoomIn, zoomOut) }
 
     private val coordPrinter = object : StoreSubscriber<CrsState> {
         var coordConverter: CoordConverter = { xyPair -> xyPair }
@@ -81,8 +81,11 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 Expression.DegMin -> xy2DegMinString
                 Expression.DMS -> xy2DMSString
             }
-            this@ActivityUI.newState(mainStore.state.currentCamera)
+            updateCamera(mainStore.state.currentCamera)
         }
+    }
+
+    override fun newState(state: Boolean) {
     }
 
     private val mapSubscriber = object : StoreSubscriber<List<MapInfo>> {
@@ -96,6 +99,19 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                 gpsOff.visibility = INVISIBLE
             }
         }
+    }
+
+    private val cameraSubscriber = object : StoreSubscriber<CameraState> {
+        override fun newState(state: CameraState) {
+            val (lat, lon, zoom) = state
+            coordinate.text = coordPrinter(lon to lat)
+            zoomText.text = zoom.with("%.1f")
+            scaleBar.update(state.zoom, state.lat)
+        }
+    }
+
+    private fun updateCamera(camera: CameraState) {
+        cameraSubscriber.newState(camera)
     }
 
     override fun createView(ui: AnkoContext<MainActivity>) = with(ui) {
@@ -176,7 +192,6 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
                             isHide = !isHide
                             components.forEach { it.visibility = if (isHide) View.INVISIBLE else View.VISIBLE }
                             owner.window.decorView.systemUiVisibility = if (isHide) View.SYSTEM_UI_FLAG_FULLSCREEN else View.VISIBLE
-
                         })
                 onClick {
                     val behavior = BottomSheetBehavior.from(sheet)
@@ -300,7 +315,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
     }.apply {
         mainStore.run {
             subscribe(this@ActivityUI) { subscription ->
-                subscription.select { it.currentCamera }.skipRepeats()
+                subscription.select { it.hideComponent }.skipRepeats()
             }
             subscribe(coordPrinter) { subscription ->
                 subscription.select { it.crsState }.skipRepeats()
@@ -308,16 +323,10 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<CameraState> {
             subscribe(mapSubscriber) { subscription ->
                 subscription.select { it.maps }.skipRepeats()
             }
+            subscribe(cameraSubscriber) { subscription ->
+                subscription.select { it.currentCamera }.skipRepeats()
+            }
         }
-    }
-
-    override fun newState(state: CameraState) {
-        val (lat, lon, zoom) = state
-        coordinate.text = coordPrinter(lon to lat)
-//        zoomText.text = "${zoom.toInt()}"
-        zoomText.text = zoom.with("%.1f")
-
-        scaleBar.update(state.zoom, state.lat)
     }
 
     companion object {

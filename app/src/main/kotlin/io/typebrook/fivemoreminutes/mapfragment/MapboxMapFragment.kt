@@ -258,7 +258,11 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 //            }
         }
 
+        map.addOnMapClickListener { mainStore dispatch SwitchComponentVisibiliy() }
+
         map.uiSettings.compassGravity = Gravity.START
+        map.uiSettings.logoGravity = Gravity.TOP
+        map.uiSettings.attributionGravity = Gravity.TOP
     }
 
     override fun moveCamera(target: CameraState) {

@@ -19,6 +19,7 @@ data class State(
         val cameraSave: Boolean = true,
 
         val display: Display = Display.MapBox,
+        val hideComponent: Boolean = false,
 
         val crsState: CrsState = CrsState()
 ) : StateType {
