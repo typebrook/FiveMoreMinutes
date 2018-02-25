@@ -170,23 +170,31 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 // endregion
 
     override fun onMapReady(map: MapboxMap) {
+        if (this::map.isInitialized) return
+
         this.map = map
         mainStore dispatch AddMap(this)
-        animateCamera(cameraQueue.last(), 10)
+        moveCamera(cameraQueue.last())
 
-        map.addOnMapClickListener { mainStore dispatch FocusMap(this) }
+        map.run {
+            addOnMapClickListener {
+                mainStore dispatch FocusMap(this@MapboxMapFragment)
+                mainStore dispatch SwitchComponentVisibility()
+            }
 
-        map.addOnCameraMoveListener {
-            mainStore dispatch UpdateCurrentTarget(this, cameraState)
+            addOnCameraMoveListener {
+                mainStore dispatch UpdateCurrentTarget(this@MapboxMapFragment, cameraState)
+            }
+
+            addOnCameraIdleListener {
+                if (!mainStore.state.cameraSave) return@addOnCameraIdleListener
+                cameraStatePos += 1
+                cameraQueue = cameraQueue.take(cameraStatePos) + cameraState
+                mainStore dispatch UpdateCurrentTarget(this@MapboxMapFragment, cameraState)
+            }
+
+            uiSettings.compassGravity = Gravity.START
         }
-
-        map.addOnCameraIdleListener {
-            if (!mainStore.state.cameraSave) return@addOnCameraIdleListener
-            cameraStatePos += 1
-            cameraQueue = cameraQueue.take(cameraStatePos) + cameraState
-            mainStore dispatch UpdateCurrentTarget(this, cameraState)
-        }
-
         mapView.addOnMapChangedListener { change ->
             Log.d("mapChange", change.toString())
             when (change) {
@@ -257,12 +265,6 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 //                }
 //            }
         }
-
-        map.addOnMapClickListener { mainStore dispatch SwitchComponentVisibiliy() }
-
-        map.uiSettings.compassGravity = Gravity.START
-        map.uiSettings.logoGravity = Gravity.TOP
-        map.uiSettings.attributionGravity = Gravity.TOP
     }
 
     override fun moveCamera(target: CameraState) {

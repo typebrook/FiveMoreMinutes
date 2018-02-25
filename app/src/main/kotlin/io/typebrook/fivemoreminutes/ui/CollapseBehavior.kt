@@ -1,17 +1,9 @@
 package io.typebrook.fivemoreminutes.ui
 
-import android.content.Context
 import android.support.design.widget.BottomSheetBehavior
 import android.support.design.widget.CoordinatorLayout
-import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
-import android.R.attr.dependency
-import android.icu.lang.UCharacter.GraphemeClusterBreak.V
-import android.R.attr.dependency
-import android.icu.lang.UCharacter.GraphemeClusterBreak.V
-import android.support.v4.view.ViewCompat
-
 
 /**
  * Created by pham on 2018/1/29.

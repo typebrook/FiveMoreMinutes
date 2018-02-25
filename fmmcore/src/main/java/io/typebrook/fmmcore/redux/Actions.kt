@@ -1,5 +1,6 @@
 package io.typebrook.fmmcore.redux
 
+import android.app.Activity
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
@@ -12,6 +13,8 @@ import tw.geothings.rekotlin.Action
  */
 
 class Nothing : Action
+
+data class SetContext(val activity: Activity): Action
 
 data class AddMap(val map: MapControl) : Action
 data class RemoveMap(val map: MapControl) : Action
@@ -37,4 +40,4 @@ data class SetCoordExpr(val expression: Expression) : Action
 
 class SwitchMap : Action // Not Valid for now
 
-class SwitchComponentVisibiliy : Action
+class SwitchComponentVisibility : Action

@@ -1,15 +1,17 @@
 package io.typebrook.fivemoreminutes.ui
 
+import android.animation.LayoutTransition
+import android.app.Activity
 import android.graphics.Color
 import android.support.design.widget.BottomSheetBehavior
-import android.support.design.widget.BottomSheetBehavior.STATE_COLLAPSED
-import android.support.design.widget.BottomSheetBehavior.STATE_EXPANDED
+import android.support.design.widget.BottomSheetBehavior.*
 import android.view.Gravity
 import android.view.View
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.pengrad.mapscaleview.MapScaleView
 import com.mapbox.mapboxsdk.offline.OfflineManager
@@ -41,19 +43,28 @@ import tw.geothings.rekotlin.StoreSubscriber
 
 class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
 
+    private lateinit var activity: Activity
+
     lateinit var mapContainer: FrameLayout
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private lateinit var coordinate: TextView
     private lateinit var scaleBar: MapScaleView
     private lateinit var gpsOn: ImageView
     private lateinit var gpsOff: ImageView
-
-    private lateinit var layers: ImageView
+    private lateinit var buttonSet: LinearLayout
     private lateinit var zoomText: TextView
-    private lateinit var zoomIn: ImageView
-    private lateinit var zoomOut: ImageView
 
-    private var isHide = false
-    private val components by lazy { listOf(coordinate, gpsOn, gpsOff, layers, zoomText, zoomIn, zoomOut) }
+    private val components by lazy { listOf(coordinate, gpsOn, gpsOff, buttonSet) }
+
+    override fun newState(state: Boolean) {
+        bottomSheetBehavior.run {
+            isHideable = state
+            this.state = if (state) STATE_HIDDEN else STATE_COLLAPSED
+        }
+        components.forEach {
+            it.visibility = if (state) View.INVISIBLE else View.VISIBLE
+        }
+    }
 
     private val coordPrinter = object : StoreSubscriber<CrsState> {
         var coordConverter: CoordConverter = { xyPair -> xyPair }
@@ -85,9 +96,6 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
         }
     }
 
-    override fun newState(state: Boolean) {
-    }
-
     private val mapSubscriber = object : StoreSubscriber<List<MapInfo>> {
         override fun newState(state: List<MapInfo>) {
             val currentMap = mainStore.state.currentMap
@@ -115,15 +123,16 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
     }
 
     override fun createView(ui: AnkoContext<MainActivity>) = with(ui) {
+        activity = owner
         coordinatorLayout {
-
             mapContainer = frameLayout { id = id_map_container }.lparams {
-                behavior = CollapseBehavior<FrameLayout>()
+                //                behavior = CollapseBehavior<FrameLayout>()
                 anchorId = id_sheet
                 anchorGravity = Gravity.TOP
+                gravity = Gravity.TOP
             }
 
-            val sheet = verticalLayout {
+            val bottomSheet = verticalLayout {
                 id = id_sheet
                 backgroundColor = Color.parseColor("#80FFFFFF")
                 frameLayout {
@@ -142,6 +151,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                     this.peekHeight = 150
                     this.isHideable = false
                     state = BottomSheetBehavior.STATE_COLLAPSED
+                    bottomSheetBehavior = this
                 }
             }
 
@@ -153,19 +163,20 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 anchorId = id_sheet
                 anchorGravity = Gravity.CLIP_HORIZONTAL
                 gravity = Gravity.TOP
+                layoutTransition = LayoutTransition()
             }
 
             scaleBar = mapScaleBar {
                 metersOnly()
             }.lparams(wrapContent) {
                 gravity = Gravity.CENTER_HORIZONTAL
-                topMargin = dip(10)
+                topMargin = dip(35)
             }
 
             boomMenuButton {
                 buttonEnum = ButtonEnum.TextOutsideCircle
-                piecePlaceEnum = PiecePlaceEnum.DOT_3_3
-                buttonPlaceEnum = ButtonPlaceEnum.SC_3_3
+                piecePlaceEnum = PiecePlaceEnum.DOT_2_2
+                buttonPlaceEnum = ButtonPlaceEnum.SC_2_2
                 isDraggable = true
 
                 addBuilder(TextOutsideCircleButton.Builder()
@@ -186,15 +197,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                                 mainStore dispatch SetTile(selectedTile)
                             }
                         })
-                addBuilder(TextOutsideCircleButton.Builder()
-                        .normalText("切換工具可見度")
-                        .listener {
-                            isHide = !isHide
-                            components.forEach { it.visibility = if (isHide) View.INVISIBLE else View.VISIBLE }
-                            owner.window.decorView.systemUiVisibility = if (isHide) View.SYSTEM_UI_FLAG_FULLSCREEN else View.VISIBLE
-                        })
                 onClick {
-                    val behavior = BottomSheetBehavior.from(sheet)
+                    val behavior = BottomSheetBehavior.from(bottomSheet)
                     behavior.state = BottomSheetBehavior.STATE_COLLAPSED
                 }
             }.lparams {
@@ -216,7 +220,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
             }.lparams {
                 gravity = Gravity.END
                 rightMargin = dip(9.8f)
-                topMargin = dip(9.8f)
+                topMargin = dip(29.8f)
             }
             gpsOff = imageView {
                 imageResource = R.drawable.ic_gps_off_black_24dp
@@ -229,12 +233,12 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
             }.lparams {
                 gravity = Gravity.END
                 rightMargin = dip(9.8f)
-                topMargin = dip(53f)
+                topMargin = dip(73f)
             }
 
-            verticalLayout {
+            buttonSet = verticalLayout {
                 bottomPadding = dip(9.8f)
-                layers = imageView {
+                imageView {
                     imageResource = R.drawable.ic_layers_black_24dp
                     backgroundResource = R.drawable.mapbutton_background
                     padding = 20
@@ -264,13 +268,13 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                         })
                     }
                 }
-                zoomIn = imageView {
+                imageView {
                     imageResource = R.drawable.ic_zoom_in_black_24dp
                     backgroundResource = R.drawable.mapbutton_background
                     padding = 20
                     onClick { mainStore dispatch ZoomBy(1f) }
                 }
-                zoomOut = imageView {
+                imageView {
                     imageResource = R.drawable.ic_zoom_out_black_24dp
                     backgroundResource = R.drawable.mapbutton_background
                     padding = 15
@@ -281,6 +285,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 anchorGravity = Gravity.END
                 gravity = Gravity.TOP
                 rightMargin = dip(9.8f)
+                layoutTransition = LayoutTransition()
             }
 
 //            cameraScroller = bottomSheet {
@@ -327,6 +332,10 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 subscription.select { it.currentCamera }.skipRepeats()
             }
         }
+
+        childrenSequence().forEach {
+            layoutTransition = LayoutTransition()
+        }
     }
 
     companion object {
@@ -343,7 +352,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
             get() = mainStore.state.currentControl.styles + listOf(
                     "魯地圖" fromRoughWebTile "http://rudy-daily.tile.basecamp.tw/{z}/{x}/{y}.png",
                     "經建三版" fromWebTile "http://gis.sinica.edu.tw/tileserver/file-exists.php?img=TM25K_2001-jpg-{z}-{x}-{y}",
-                    "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}"
+                    "Google Satellite" fromWebTile "https://khms1.googleapis.com/kh?v=746&hl=zh-TW&x={x}&y={y}&z={z}",
+                    "OSM" fromWebTile "http://c.tile.openstreetmap.org/{z}/{x}/{y}.png"
             )
 
         val tileList: List<Tile> = listOf(

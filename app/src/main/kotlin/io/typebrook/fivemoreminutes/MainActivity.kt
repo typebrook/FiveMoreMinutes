@@ -3,7 +3,9 @@ package io.typebrook.fivemoreminutes
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Bundle
+import android.view.View
 import com.mapbox.services.android.telemetry.permissions.PermissionsListener
 import io.typebrook.fivemoreminutes.mapfragment.DualMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
@@ -12,6 +14,7 @@ import io.typebrook.fivemoreminutes.ui.ActivityUI
 import io.typebrook.fivemoreminutes.ui.ActivityUI.Companion.id_map_container
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.redux.EnableLocation
+import io.typebrook.fmmcore.redux.SetContext
 import io.typebrook.fmmcore.redux.TargetBackward
 import org.jetbrains.anko.setContentView
 import org.jetbrains.anko.toast
@@ -24,7 +27,12 @@ class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ui = ActivityUI().apply { setContentView(this@MainActivity) }
-
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            window.statusBarColor = Color.parseColor("#50000000")
+        }
+        
+        mainStore dispatch SetContext(this)
         mainStore.subscribe(this) { subscription -> subscription.select { it.display }.skipRepeats() }
     }
 

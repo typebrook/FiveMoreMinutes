@@ -1,5 +1,6 @@
 package io.typebrook.fmmcore.redux
 
+import android.app.Activity
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.SimpleMap
@@ -12,16 +13,17 @@ import tw.geothings.rekotlin.StateType
  * Created by pham on 2017/9/20.
  */
 data class State(
+        val activity: Activity? = null,
+
         val maps: List<MapInfo> = emptyList(),
+        val display: Display = Display.MapBox,
         val currentMapNum: Int = 0,
+        val hideComponent: Boolean = false,
 
         val currentCamera: CameraState = CameraState(),
         val cameraSave: Boolean = true,
-
-        val display: Display = Display.MapBox,
-        val hideComponent: Boolean = false,
-
         val crsState: CrsState = CrsState()
+
 ) : StateType {
     val currentMap get() = if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else MapInfo(SimpleMap())
 

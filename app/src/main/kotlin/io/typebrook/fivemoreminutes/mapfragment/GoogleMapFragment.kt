@@ -20,10 +20,7 @@ import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
 import io.typebrook.fmmcore.projection.XYPair
 import io.typebrook.fmmcore.redux.*
-import org.jetbrains.anko.UI
-import org.jetbrains.anko.centerInParent
-import org.jetbrains.anko.imageView
-import org.jetbrains.anko.relativeLayout
+import org.jetbrains.anko.*
 import java.net.URL
 
 
@@ -51,7 +48,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
             "Google 街道" fromStyle GoogleMap.MAP_TYPE_NORMAL,
             "Google 地形" fromStyle GoogleMap.MAP_TYPE_TERRAIN
     )
-    
+
     private var baseTileOverlay: TileOverlay? = null
     private var tileOverlays: List<TileOverlay> = listOf()
 
@@ -61,7 +58,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
             relativeLayout {
                 addView(super.onCreateView(p0, p1, p2))
                 imageView {
-                    background = context.getDrawable(R.drawable.ic_cross_24dp)
+                    backgroundResource = R.drawable.ic_cross_24dp
                 }.lparams { centerInParent() }
             }
         }.view
@@ -73,25 +70,32 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
     }
 
     override fun onMapReady(map: GoogleMap) {
+        if (this::map.isInitialized) return
+
         this.map = map
         mainStore dispatch AddMap(this)
         moveCamera(cameraQueue.last())
 
-        map.setOnMapClickListener { mainStore dispatch FocusMap(this) }
+        map.run {
+            setOnMapClickListener {
+                mainStore dispatch FocusMap(this@GoogleMapFragment)
+                mainStore dispatch SwitchComponentVisibility()
+            }
 
-        map.setOnCameraMoveStartedListener {
-            mainStore dispatch UpdateCurrentTarget(this, cameraState)
-        }
+            setOnCameraMoveStartedListener {
+                mainStore dispatch UpdateCurrentTarget(this@GoogleMapFragment, cameraState)
+            }
 
-        map.setOnCameraMoveListener {
-            mainStore dispatch UpdateCurrentTarget(this, cameraState)
-        }
+            setOnCameraMoveListener {
+                mainStore dispatch UpdateCurrentTarget(this@GoogleMapFragment, cameraState)
+            }
 
-        map.setOnCameraIdleListener {
-            if (!mainStore.state.cameraSave) return@setOnCameraIdleListener
-            cameraStatePos += 1
-            cameraQueue = cameraQueue.take(cameraStatePos) + cameraState
-            mainStore dispatch UpdateCurrentTarget(this, cameraState)
+            setOnCameraIdleListener {
+                if (!mainStore.state.cameraSave) return@setOnCameraIdleListener
+                cameraStatePos += 1
+                cameraQueue = cameraQueue.take(cameraStatePos) + cameraState
+                mainStore dispatch UpdateCurrentTarget(this@GoogleMapFragment, cameraState)
+            }
         }
     }
 
@@ -154,7 +158,7 @@ class GoogleMapFragment : MapFragment(), OnMapReadyCallback, MapControl {
         tileOverlays += map.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
     }
 
-    override fun addWebImage(tile: Tile.WebImage){}
+    override fun addWebImage(tile: Tile.WebImage) {}
 
     override fun enableLocation() {
         if (activity.checkPermission(ACCESS_FINE_LOCATION, 0, 0) == PERMISSION_GRANTED) {
