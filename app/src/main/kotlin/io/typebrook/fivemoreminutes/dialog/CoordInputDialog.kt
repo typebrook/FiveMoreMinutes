@@ -20,11 +20,11 @@ import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.utils.degree2DM
 import io.typebrook.fivemoreminutes.utils.degree2DMS
 import io.typebrook.fivemoreminutes.utils.with
-import io.typebrook.fmmcore.projection.*
-import io.typebrook.fmmcore.projection.CoordRefSys.Companion.TWD67
-import io.typebrook.fmmcore.projection.CoordRefSys.Companion.TWD67_latLng
-import io.typebrook.fmmcore.projection.CoordRefSys.Companion.TWD97
-import io.typebrook.fmmcore.projection.CoordRefSys.Companion.WGS84
+import io.typebrook.fmmcore.realm.projection.*
+import io.typebrook.fmmcore.realm.projection.CoordRefSys.Companion.TWD67
+import io.typebrook.fmmcore.realm.projection.CoordRefSys.Companion.TWD67_latLng
+import io.typebrook.fmmcore.realm.projection.CoordRefSys.Companion.TWD97
+import io.typebrook.fmmcore.realm.projection.CoordRefSys.Companion.WGS84
 import io.typebrook.fmmcore.redux.CameraState
 import io.typebrook.fmmcore.redux.CrsState
 import io.typebrook.fmmcore.redux.SetCoordExpr

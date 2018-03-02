@@ -1,6 +1,6 @@
 package io.typebrook.fmmcore.map
 
-import io.typebrook.fmmcore.projection.XYPair
+import io.typebrook.fmmcore.realm.projection.XYPair
 import io.typebrook.fmmcore.redux.CameraState
 
 /**

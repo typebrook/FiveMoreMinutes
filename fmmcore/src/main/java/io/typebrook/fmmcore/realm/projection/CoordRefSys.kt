@@ -1,4 +1,4 @@
-package io.typebrook.fmmcore.projection
+package io.typebrook.fmmcore.realm.projection
 
 import io.realm.RealmObject
 import io.realm.annotations.RealmClass
@@ -40,7 +40,6 @@ open class CoordRefSys(
         val parameter: String, // data stored in Realm
         val associatedEntity: rCRS? = null
 ) {
-
     val persistentEntity get() = rCRS(displayName, type.ordinal, parameter)
 
     val isLonLat: Boolean by lazy {
@@ -74,6 +73,6 @@ open class CoordRefSys(
         val WGS84 = CoordRefSys("WGS84", ParameterType.Code, "EPSG:4326")
         val TWD97 = CoordRefSys("TWD97", ParameterType.Code, "EPSG:3826")
         val TWD67 = CoordRefSys("TWD67", ParameterType.Proj4, "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=aust_SA  +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +units=m +no_defs")
-        val TWD67_latLng = CoordRefSys("TWD67(LatLng)", ParameterType.Proj4, "+proj=longlat +ellps=aust_SA  +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +no_defs")
+        val TWD67_latLng = CoordRefSys("TWD67(經緯度)", ParameterType.Proj4, "+proj=longlat +ellps=aust_SA  +towgs84=-750.739,-359.515,-180.510,0.00003863,0.00001721,0.00000197,0.99998180 +no_defs")
     }
 }

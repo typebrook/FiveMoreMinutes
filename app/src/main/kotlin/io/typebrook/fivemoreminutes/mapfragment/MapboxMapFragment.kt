@@ -18,6 +18,7 @@ import android.widget.ProgressBar
 import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.view.FilePickerDialog
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.annotations.MarkerOptions
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.constants.Style
 import com.mapbox.mapboxsdk.geometry.LatLng
@@ -37,6 +38,7 @@ import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import com.mapbox.services.android.telemetry.location.LocationEngineListener
 import com.mapbox.services.android.telemetry.location.LocationEnginePriority
 import com.mapbox.services.android.telemetry.location.LostLocationEngine
+import io.realm.Realm
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.localServer.MBTilesServer
@@ -47,13 +49,17 @@ import io.typebrook.fivemoreminutes.utils.checkWriteExternal
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
-import io.typebrook.fmmcore.projection.XYPair
+import io.typebrook.fmmcore.realm.geometry.rMarker
+import io.typebrook.fmmcore.realm.projection.XYPair
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.coordinatorLayout
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import java.io.File
 import java.net.URL
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 
 /**
@@ -182,6 +188,15 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
                 mainStore dispatch SwitchComponentVisibility()
             }
 
+            addOnMapLongClickListener { latlong ->
+                // need to move to redux action
+                val realm = Realm.getDefaultInstance()
+                realm.executeTransaction {
+                    realm.copyToRealm(rMarker("Yes", latlong.latitude, latlong.longitude))
+                }
+                map.addMarker(MarkerOptions().position(latlong))
+            }
+
             addOnCameraMoveListener {
                 mainStore dispatch UpdateCurrentTarget(this@MapboxMapFragment, cameraState)
             }
@@ -207,7 +222,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         }
 
         testButton2.onClick {
-            //            toast("Yahoo~")
+            
 //            val intent = PlaceAutocomplete.IntentBuilder()
 //                    .accessToken(Mapbox.getAccessToken())
 //                    .placeOptions(PlaceOptions.builder()

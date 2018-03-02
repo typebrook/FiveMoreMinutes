@@ -1,4 +1,4 @@
-package io.typebrook.fmmcore.projection
+package io.typebrook.fmmcore.realm.projection
 
 /**
  * Created by pham on 2018/2/11.
@@ -67,7 +67,7 @@ object TaipowerCrs : CoordRefSys(
                 visionXY.first + visionXY.second
     }
 
-    @Throws()
+    @Throws
     fun reverseMask(coord: String): XYPair {
         val sectionXY = Section.values().firstOrNull { it.name == coord[0].toString() }?.xy
                 ?: throw UnknownError()

@@ -9,8 +9,8 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import io.realm.Realm
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fmmcore.projection.CoordRefSys
-import io.typebrook.fmmcore.projection.ParameterType
+import io.typebrook.fmmcore.realm.projection.CoordRefSys
+import io.typebrook.fmmcore.realm.projection.ParameterType
 import io.typebrook.fmmcore.redux.SetCrsState
 import org.jetbrains.anko.*
 

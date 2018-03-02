@@ -18,7 +18,7 @@ import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
-import io.typebrook.fmmcore.projection.XYPair
+import io.typebrook.fmmcore.realm.projection.XYPair
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import java.net.URL

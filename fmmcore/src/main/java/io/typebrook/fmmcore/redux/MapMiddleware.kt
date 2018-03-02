@@ -3,7 +3,7 @@ package io.typebrook.fmmcore.redux
 import android.os.Handler
 import android.os.Looper
 import io.typebrook.fmmcore.map.Tile
-import io.typebrook.fmmcore.projection.Expression
+import io.typebrook.fmmcore.realm.projection.Expression
 import tw.geothings.rekotlin.Action
 import kotlin.reflect.KClass
 

@@ -4,8 +4,8 @@ import android.app.Activity
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
-import io.typebrook.fmmcore.projection.CoordRefSys
-import io.typebrook.fmmcore.projection.Expression
+import io.typebrook.fmmcore.realm.projection.CoordRefSys
+import io.typebrook.fmmcore.realm.projection.Expression
 import tw.geothings.rekotlin.Action
 
 /**

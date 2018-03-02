@@ -1,6 +1,6 @@
 package io.typebrook.fivemoreminutes.utils
 
-import io.typebrook.fmmcore.projection.CoordPrinter
+import io.typebrook.fmmcore.realm.projection.CoordPrinter
 
 /**
  * Created by pham on 2017/11/5.
@@ -28,11 +28,11 @@ val xy2DegreeString: CoordPrinter = { (lon, lat) ->
     val lonString = lon
             .let(Math::abs)
             .with("%.6f")
-            .run { dropLast(3) + "-" + takeLast(3) }
+            .run { dropLast(3).padStart(7, '0') + "-" + takeLast(3) }
     val latString = lat
             .let(Math::abs)
             .with("%.6f")
-            .run { dropLast(3) + "-" + takeLast(3) }
+            .run { dropLast(3).padStart(7, '0') + "-" + takeLast(3) }
 
     "$lonPrefix $lonString 度" to "$latPrefix $latString 度"
 }

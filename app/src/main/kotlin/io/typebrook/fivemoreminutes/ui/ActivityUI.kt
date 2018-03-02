@@ -3,12 +3,14 @@ package io.typebrook.fivemoreminutes.ui
 import android.animation.LayoutTransition
 import android.app.Activity
 import android.graphics.Color
+import android.graphics.Outline
 import android.support.design.widget.BottomSheetBehavior
 import android.support.design.widget.BottomSheetBehavior.*
 import android.view.Gravity
 import android.view.View
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
+import android.view.ViewOutlineProvider
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -28,8 +30,8 @@ import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.utils.*
 import io.typebrook.fmmcore.map.*
-import io.typebrook.fmmcore.projection.*
-import io.typebrook.fmmcore.projection.CoordRefSys.Companion.WGS84
+import io.typebrook.fmmcore.realm.projection.*
+import io.typebrook.fmmcore.realm.projection.CoordRefSys.Companion.WGS84
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.coordinatorLayout
@@ -132,11 +134,11 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 gravity = Gravity.TOP
             }
 
+
             val bottomSheet = verticalLayout {
                 id = id_sheet
-                backgroundColor = Color.parseColor("#80FFFFFF")
+                backgroundColor = Color.parseColor("#F5F5F5")
                 frameLayout {
-                    backgroundColor = Color.parseColor("#80FFFF00")
                     onClick {
                         val behavior = BottomSheetBehavior.from(this@verticalLayout)
                         if (behavior.state == STATE_EXPANDED) {
@@ -164,6 +166,18 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 anchorGravity = Gravity.CLIP_HORIZONTAL
                 gravity = Gravity.TOP
                 layoutTransition = LayoutTransition()
+
+                if (android.os.Build.VERSION.SDK_INT >= 21) {
+                    elevation = 160f
+                    outlineProvider = object : ViewOutlineProvider() {
+                        override fun getOutline(view: View?, outline: Outline?) {
+                            if (android.os.Build.VERSION.SDK_INT >= 21) {
+                                outline?.setRect(0, 0, width + 20, height + 20)
+                                outline?.alpha = 0.5f
+                            }
+                        }
+                    }
+                }
             }
 
             scaleBar = mapScaleBar {
