@@ -20,7 +20,8 @@ class MapMiddleware : SpawningMiddleware<State>() {
                 AddWebTile::class as KClass<Action> to addWebTile,
                 ZoomBy::class as KClass<Action> to zoomMap,
                 EnableLocation::class as KClass<Action> to enableLocation,
-                DisableLocation::class as KClass<Action> to disableLocation
+                DisableLocation::class as KClass<Action> to disableLocation,
+                AddMarker::class as KClass<Action> to addMarker
         )
     }
 
@@ -40,13 +41,13 @@ class MapMiddleware : SpawningMiddleware<State>() {
     }
 
     // Handlers
-    private val addMap: ActionHandler<State> = handler@ { action, _ ->
+    private val addMap: ActionHandler<State> = handler@{ action, _ ->
         val map = (action as? AddMap)?.map ?: return@handler
 
         map.setStyle(null)
     }
 
-    private val setTile: ActionHandler<State> = handler@ { action, getState ->
+    private val setTile: ActionHandler<State> = handler@{ action, getState ->
         val mapControl = getState()?.currentControl ?: return@handler
 
         val tile = (action as? SetTile)?.tile ?: return@handler
@@ -57,7 +58,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
         }
     }
 
-    private val addWebTile: ActionHandler<State> = handler@ { action, getState ->
+    private val addWebTile: ActionHandler<State> = handler@{ action, getState ->
         val mapControl = getState()?.currentControl ?: return@handler
 
         val tile = (action as? AddWebTile)?.tile ?: return@handler
@@ -68,25 +69,31 @@ class MapMiddleware : SpawningMiddleware<State>() {
         }
     }
 
-    private val zoomMap: ActionHandler<State> = handler@ { action, getState ->
+    private val zoomMap: ActionHandler<State> = handler@{ action, getState ->
         val mapControl = getState()?.currentControl ?: return@handler
 
         val value = (action as? ZoomBy)?.value ?: return@handler
         mapControl.zoomBy(value)
     }
 
-    private val enableLocation: ActionHandler<State> = handler@ { _, getState ->
+    private val enableLocation: ActionHandler<State> = handler@{ _, getState ->
         val mapControl = getState()?.currentControl ?: return@handler
         mapControl.enableLocation()
     }
 
-    private val disableLocation: ActionHandler<State> = handler@ { _, getState ->
+    private val disableLocation: ActionHandler<State> = handler@{ _, getState ->
         val mapControl = getState()?.currentControl ?: return@handler
         mapControl.disableLocation()
     }
 
+    private val addMarker: ActionHandler<State> = handler@{ action, getState ->
+        val mapControl = getState()?.currentControl ?: return@handler
+        val target = (action as AddMarker).target
+        mapControl.addMarker(target)
+    }
+
     // Transformer
-    private val updateCurrentTarget: ActionTransformer<State> = transformer@ { action, getState ->
+    private val updateCurrentTarget: ActionTransformer<State> = transformer@{ action, getState ->
         action as? UpdateCurrentTarget ?: return@transformer Nothing()
 
         if (action.holder == getState()?.currentControl) {
@@ -97,7 +104,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
             Nothing()
     }
 
-    private val setCoordRefSys: ActionTransformer<State> = transformers@ { action, getState ->
+    private val setCoordRefSys: ActionTransformer<State> = transformers@{ action, getState ->
         action as? SetCrsState ?: return@transformers action
         val newType = action.crs.isLonLat
         val oldType = getState()?.crsState?.isLonLat ?: return@transformers action
@@ -111,7 +118,7 @@ class MapMiddleware : SpawningMiddleware<State>() {
     }
 
     // Spawner
-    private val cameraPositionBackward: ActionSpawner<State> = spawner@ { _, getState, callback ->
+    private val cameraPositionBackward: ActionSpawner<State> = spawner@{ _, getState, callback ->
         val mapControl = getState()?.currentControl ?: return@spawner Nothing()
 
         mapControl.run {

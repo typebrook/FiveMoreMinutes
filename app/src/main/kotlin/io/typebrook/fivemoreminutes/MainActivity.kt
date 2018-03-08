@@ -12,6 +12,7 @@ import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.MapboxMapFragment
 import io.typebrook.fivemoreminutes.ui.ActivityUI
 import io.typebrook.fivemoreminutes.ui.ActivityUI.Companion.id_map_container
+import io.typebrook.fivemoreminutes.utils.intentHandler
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.redux.EnableLocation
 import io.typebrook.fmmcore.redux.SetContext
@@ -26,14 +27,17 @@ class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         ui = ActivityUI().apply { setContentView(this@MainActivity) }
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             window.statusBarColor = Color.parseColor("#50000000")
         }
-        
+
         mainStore dispatch SetContext(this)
         mainStore.subscribe(this) { subscription -> subscription.select { it.display }.skipRepeats() }
+
+        intent?.let(intentHandler)
     }
 
     override fun onBackPressed() {

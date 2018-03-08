@@ -353,6 +353,11 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         map.addLayer(webImageLayer)
     }
 
+    override fun addMarker(target: XYPair) {
+        map.addMarker(MarkerOptions()
+                .position(LatLng(target.second, target.first))
+        )
+    }
 
     // region User Location
     override fun enableLocation() {
