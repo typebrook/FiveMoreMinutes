@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 27
-    buildToolsVersion '27.0.2'
+    buildToolsVersion '27.0.3'
     // config for java8 (android-O API26)
     // 2018/02/08 fix the DexArchiveBuilderException when using mapbox 6.0.0-beta.1
 //    compileOptions {
@@ -65,7 +65,7 @@ dependencies {
 
     // MapBox Map
     implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapboxMapSdk"
-    implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.2.0"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.3.0"
     implementation 'com.mapbox.mapboxsdk:mapbox-android-plugin-places:0.1.0'
     compile "com.mapzen.android:lost:3.0.4"
 
