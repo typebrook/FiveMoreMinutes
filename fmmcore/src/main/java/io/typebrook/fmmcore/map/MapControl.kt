@@ -10,26 +10,32 @@ import io.typebrook.fmmcore.redux.CameraState
 
 interface MapControl {
 
-    val cameraState: CameraState
-    val screenBound: Pair<XYPair, XYPair>
+    val cameraState: CameraState get() = CameraState()
+    val screenBound: Pair<XYPair, XYPair> get() = (0.0 to 0.0) to (0.0 to 0.0)
 
     var cameraQueue: List<CameraState>
+        get() = emptyList()
+        set(_) {}
     var cameraStatePos: Int
+        get() = 0
+        set(_) {}
 
-    val styles: List<Tile>
+    val styles: List<Tile> get() = emptyList()
 
-    fun moveCamera(target: CameraState)
-    fun animateCamera(target: CameraState, duration: Int)
-    fun animateToBound(ne: XYPair, sw: XYPair, duration: Int)
-    fun zoomBy(value: Float)
+    fun moveCamera(target: CameraState) {}
+    fun animateCamera(target: CameraState, duration: Int) {}
+    fun animateToBound(ne: XYPair, sw: XYPair, duration: Int) {}
+    fun zoomBy(value: Float) {}
 
-    fun setStyle(style: Tile.PrivateStyle?)
-    fun setWebTile(tile: Tile.WebTile?)
-    fun addWebTile(tile: Tile.WebTile)
-    fun addWebImage(tile: Tile.WebImage)
+    fun setStyle(style: Tile.PrivateStyle?) {}
+    fun setWebTile(tile: Tile.WebTile?) {}
+    fun addWebTile(tile: Tile.WebTile) {}
+    fun addWebImage(tile: Tile.WebImage) {}
 
-    fun enableLocation()
-    fun disableLocation()
+    fun addMarker(target: XYPair) {}
+
+    fun enableLocation() {}
+    fun disableLocation() {}
 }
 
 sealed class Tile(val name: String) {
@@ -45,26 +51,4 @@ infix fun Tile.WebImage.at(bound: Pair<XYPair, XYPair>) = this.apply { this.boun
 infix fun String.fromStyle(style: Any) = Tile.PrivateStyle(this, style)
 
 // Simple class fulfills interface to replace actual MapControl, used when onMapReady not yer done
-class SimpleMap : MapControl {
-
-    override val cameraState: CameraState = CameraState()
-    override val screenBound: Pair<XYPair, XYPair> = (0.0 to 0.0) to (0.0 to 0.0)
-
-    override var cameraQueue: List<CameraState> = emptyList()
-    override var cameraStatePos: Int = 0
-
-    override val styles: List<Tile> = emptyList()
-
-    override fun moveCamera(target: CameraState) {}
-    override fun animateCamera(target: CameraState, duration: Int) {}
-    override fun animateToBound(ne: XYPair, sw: XYPair, duration: Int) {}
-    override fun zoomBy(value: Float) {}
-
-    override fun setStyle(style: Tile.PrivateStyle?) {}
-    override fun setWebTile(tile: Tile.WebTile?) {}
-    override fun addWebTile(tile: Tile.WebTile) {}
-    override fun addWebImage(tile: Tile.WebImage) {}
-
-    override fun enableLocation() {}
-    override fun disableLocation() {}
-}
+class SimpleMap : MapControl
