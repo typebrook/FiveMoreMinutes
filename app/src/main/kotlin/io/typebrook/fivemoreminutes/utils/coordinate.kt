@@ -6,20 +6,18 @@ import io.typebrook.fmmcore.realm.projection.CoordPrinter
  * Created by pham on 2017/11/5.
  */
 
-// transform raw coordinates to integer string
+// transform raw coordinates to readable integer string
 val xy2IntString: CoordPrinter = { (x, y) ->
-    val xString = x.toInt().toString().run {
-        if (this.length <= 3) return@run this
-        dropLast(3) + "-" + takeLast(3)
+    val raw2IntString = { raw: Double ->
+        raw.toInt().toString().run {
+            if (this.length <= 3) return@run this
+            dropLast(3) + "-" + takeLast(3)
+        }
     }
-    val yString = y.toInt().toString().run {
-        if (this.length <= 3) return@run this
-        dropLast(3) + "-" + takeLast(3)
-    }
-    xString to yString
+    x.let(raw2IntString) to y.let(raw2IntString)
 }
 
-// transform raw coordinates to Latitude/Longitude string with Degree with
+// transform raw coordinates to Latitude/Longitude string with Degree format
 val xy2DegreeString: CoordPrinter = { (lon, lat) ->
 
     val lonPrefix = if (lon >= 0) "東經 " else "西經 "
@@ -37,7 +35,7 @@ val xy2DegreeString: CoordPrinter = { (lon, lat) ->
     "$lonPrefix $lonString 度" to "$latPrefix $latString 度"
 }
 
-// transform raw coordinates to Latitude/Longitude string with Degree/Minute with
+// transform raw coordinates to Latitude/Longitude string with Degree/Minute format
 typealias dmValue = Pair<Int, Double>
 val degree2DM: (Double) -> dmValue = { degree ->
     val dValue = degree.toInt()
@@ -58,7 +56,7 @@ val xy2DegMinString: CoordPrinter = { (lon, lat) ->
     xString to yString
 }
 
-// transform raw coordinates to Latitude/Longitude string with Degree/Minute/Second with
+// transform raw coordinates to Latitude/Longitude string with Degree/Minute/Second format
 typealias dmsValue = Triple<Int, Int, Double>
 val degree2DMS: (Double) -> dmsValue = { degree ->
     val dValue = degree.toInt()
