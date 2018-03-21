@@ -3,4 +3,7 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    // button in map
+    <color name="map_widget_light">#fff</color>
+    <color name="map_widget_light_pressed">#e5e5e5</color>
 </resources>
