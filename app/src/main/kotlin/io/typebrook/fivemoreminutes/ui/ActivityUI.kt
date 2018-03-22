@@ -161,12 +161,22 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 padding = dip(5)
                 backgroundColor = Color.parseColor("#80FFFFFF")
                 onClick { CoordInputDialog().show(owner.fragmentManager, null) }
+                onLongClick {
+                    val (lat, lon, zoom) = mainStore.state.currentXYZ
+                    val gmmIntentUri = Uri.parse("geo:$lat,$lon?z=$zoom")
+                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                    mapIntent.`package` = "com.google.android.apps.maps"
+                    if (mapIntent.resolveActivity(activity.packageManager) != null) {
+                        activity.startActivity(mapIntent)
+                    }
+                }
             }.lparams(wrapContent) {
                 anchorId = id_sheet
                 anchorGravity = Gravity.CLIP_HORIZONTAL
                 gravity = Gravity.TOP
                 layoutTransition = LayoutTransition()
 
+                // view shadow, but it is useless now...
                 if (android.os.Build.VERSION.SDK_INT >= 21) {
                     elevation = 160f
                     outlineProvider = object : ViewOutlineProvider() {
