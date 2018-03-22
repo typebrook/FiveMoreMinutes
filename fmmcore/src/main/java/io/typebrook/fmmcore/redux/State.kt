@@ -30,6 +30,7 @@ data class State(
     val currentControl get() = currentMap.mapControl
 
     val currentXY get() = currentCamera.run { lon to lat }
+    val currentXYZ get() = currentCamera.run { Triple(lat, lon, zoom) }
 
     fun indexOf(mapControl: MapControl): Int {
         maps.mapIndexed { index, mapInfo -> if (mapInfo.mapControl == mapControl) return index }
