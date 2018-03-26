@@ -2,8 +2,10 @@ package io.typebrook.fivemoreminutes.ui
 
 import android.animation.LayoutTransition
 import android.app.Activity
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Outline
+import android.net.Uri
 import android.support.design.widget.BottomSheetBehavior
 import android.support.design.widget.BottomSheetBehavior.*
 import android.view.Gravity
@@ -36,6 +38,7 @@ import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.coordinatorLayout
 import org.jetbrains.anko.sdk25.coroutines.onClick
+import org.jetbrains.anko.sdk25.coroutines.onLongClick
 import tw.geothings.geomaptool.offline_map.OfflineListDialog
 import tw.geothings.rekotlin.StoreSubscriber
 
@@ -103,9 +106,11 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
             val currentMap = mainStore.state.currentMap
             if (currentMap.locating) {
                 gpsOn.imageResource = R.drawable.ic_gps_fixed_black_24dp
+                gpsOn.setColorFilter(activity.resources.getColor(R.color.googleBlue))
                 gpsOff.visibility = VISIBLE
             } else {
                 gpsOn.imageResource = R.drawable.ic_gps_not_fixed_black_24dp
+                gpsOn.clearColorFilter()
                 gpsOff.visibility = INVISIBLE
             }
         }
@@ -230,15 +235,13 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 anchorGravity = Gravity.TOP
             }
 
-            gpsOn = imageView {
-                imageResource = R.drawable.ic_gps_not_fixed_black_24dp
-                backgroundResource = R.drawable.mapbutton_background
-                padding = 25
+            imageView(R.drawable.ic_layers_black_24dp) {
+                backgroundResource = R.drawable.btn_circle
+                padding = dip(13)
                 onClick {
-                    if (!PermissionsManager.areLocationPermissionsGranted(owner)) {
-                        PermissionsManager(owner).requestLocationPermissions(owner)
-                    } else {
-                        mainStore dispatch EnableLocation()
+                    selector("圖層", tileList.map { it.name }) { _, index ->
+                        val selectedTile = tileList[index]
+                        mainStore.dispatch(AddWebTile(selectedTile))
                     }
                 }
             }.lparams {
@@ -246,10 +249,9 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 rightMargin = dip(9.8f)
                 topMargin = dip(29.8f)
             }
-            gpsOff = imageView {
-                imageResource = R.drawable.ic_gps_off_black_24dp
-                backgroundResource = R.drawable.mapbutton_background
-                padding = 25
+            gpsOff = imageView(R.drawable.ic_gps_off_black_24dp) {
+                backgroundResource = R.drawable.btn_circle
+                padding = dip(13)
                 visibility = INVISIBLE
                 onClick {
                     mainStore dispatch DisableLocation()
@@ -257,22 +259,32 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
             }.lparams {
                 gravity = Gravity.END
                 rightMargin = dip(9.8f)
-                topMargin = dip(73f)
+                topMargin = dip(90f)
+            }
+
+            gpsOn = imageView(R.drawable.ic_gps_not_fixed_black_24dp) {
+                backgroundResource = R.drawable.btn_circle
+                padding = dip(13)
+                onClick {
+                    if (!PermissionsManager.areLocationPermissionsGranted(owner)) {
+                        PermissionsManager(owner).requestLocationPermissions(owner)
+                        return@onClick
+                    }
+                    createLocationRequest {
+                        mainStore dispatch EnableLocation()
+                    }
+                }
+            }.lparams(width = dip(50), height = dip(50)) {
+                anchorId = id_buttonSet
+                anchorGravity = Gravity.CLIP_VERTICAL
+                gravity = Gravity.TOP or Gravity.RIGHT
+                rightMargin = dip(9.8f)
             }
 
             buttonSet = verticalLayout {
+                id = id_buttonSet
                 bottomPadding = dip(9.8f)
-                imageView {
-                    imageResource = R.drawable.ic_layers_black_24dp
-                    backgroundResource = R.drawable.mapbutton_background
-                    padding = 20
-                    onClick {
-                        selector("圖層", tileList.map { it.name }) { _, index ->
-                            val selectedTile = tileList[index]
-                            mainStore.dispatch(AddWebTile(selectedTile))
-                        }
-                    }
-                }
+
                 zoomText = textView {
                     backgroundResource = R.drawable.mapbutton_background
                     gravity = Gravity.CENTER
@@ -365,6 +377,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
     companion object {
         val id_map_container = "id_map_container".hashCode()
         val id_sheet = "id_sheet".hashCode()
+        val id_buttonSet = "id_buttonSet".hashCode()
 
         val displayList = listOf(
                 "Google" to Display.Google,

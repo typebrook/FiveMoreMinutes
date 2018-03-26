@@ -2,6 +2,7 @@ package io.typebrook.fivemoreminutes
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -12,6 +13,7 @@ import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.MapboxMapFragment
 import io.typebrook.fivemoreminutes.ui.ActivityUI
 import io.typebrook.fivemoreminutes.ui.ActivityUI.Companion.id_map_container
+import io.typebrook.fivemoreminutes.utils.REQUEST_CHECK_SETTINGS
 import io.typebrook.fivemoreminutes.utils.intentHandler
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.redux.EnableLocation
@@ -71,7 +73,7 @@ class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
         }
     }
 
-    // region locate myself
+    // region request permission in APP
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (permissions[0] == Manifest.permission.ACCESS_FINE_LOCATION &&
@@ -86,4 +88,14 @@ class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
 
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {}
     // endregion
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        when (requestCode) {
+            REQUEST_CHECK_SETTINGS -> if (resultCode == RESULT_OK) {
+                mainStore dispatch EnableLocation()
+            }
+        }
+    }
 }
