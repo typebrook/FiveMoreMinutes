@@ -57,10 +57,6 @@ import org.jetbrains.anko.design.coordinatorLayout
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import java.io.File
 import java.net.URL
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.*
-
 
 /**
  * Created by pham on 2017/9/19.
