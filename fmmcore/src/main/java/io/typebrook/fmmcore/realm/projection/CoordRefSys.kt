@@ -4,10 +4,10 @@ import io.realm.RealmObject
 import io.realm.annotations.RealmClass
 import org.osgeo.proj4j.*
 
-        /**
-         * Created by pham on 2017/11/13.
-         * func to provide a coordinate converter for different system
-         */
+/**
+ * Created by pham on 2017/11/13.
+ * func to provide a coordinate converter for different system
+ */
 
 typealias XYPair = Pair<Double, Double>
 
@@ -31,7 +31,7 @@ open class rCRS(
         var typeValue: Int = 0,
         var proj4Param: String = ""
 ) : RealmObject() {
-    val entity get()= CoordRefSys(name, ParameterType.values()[typeValue], proj4Param, this)
+    val entity get() = CoordRefSys(name, ParameterType.values()[typeValue], proj4Param, this)
 }
 
 open class CoordRefSys(
@@ -54,6 +54,9 @@ open class CoordRefSys(
             ParameterType.Proj4 -> CRSFactory().createFromParameters(displayName, parameter)
         }
     }
+
+    override fun equals(other: Any?) =
+            other is CoordRefSys && displayName == other.displayName && parameter == other.parameter
 
     companion object {
 
