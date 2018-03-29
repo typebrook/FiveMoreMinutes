@@ -102,7 +102,7 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
         }
 
     // positive action that animate map to the coordinates which user just filled
-    private val actionGoto = action@ { _: DialogInterface ->
+    private val actionGoto = action@{ _: DialogInterface ->
         val xy = try {
             val (rawX, rawY) = xyInput.xyValues
             val convertedXY = (rawX to rawY).convert(crs, WGS84)
@@ -119,7 +119,7 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
 
     // neutral action that delete selected coordinate reference system from realm,
     // and set crs as WGS84
-    private val actionDelete = action@ { _: DialogInterface ->
+    private val actionDelete = action@{ _: DialogInterface ->
         if (crs.associatedEntity == null) return@action
         val realm = Realm.getDefaultInstance()
         realm.executeTransaction {
@@ -193,12 +193,13 @@ class CoordInputDialog : DialogFragment(), StoreSubscriber<CrsState> {
                 leftPadding = 8
                 textView(getString(R.string.spinner_coordsys))
                 spinner {
+                    val list = crsList
                     adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item,
-                            crsList.map { it.displayName } + "+ Add New")
+                            list.map { it.displayName } + "+ Add New")
 
                     onItemSelectedListener = crsSelectedListener
 
-                    val selectedPos = crsList.indexOf(crs)
+                    val selectedPos = list.indexOf(crs)
                     setSelection(selectedPos)
                 }.lparams(height = 120, width = 500)
             }

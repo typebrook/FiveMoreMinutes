@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Outline
+import android.media.Image
 import android.net.Uri
 import android.support.design.widget.BottomSheetBehavior
 import android.support.design.widget.BottomSheetBehavior.*
@@ -51,6 +52,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
     private lateinit var activity: Activity
 
     lateinit var mapContainer: FrameLayout
+    private lateinit var layers: ImageView
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private lateinit var coordinate: TextView
     private lateinit var scaleBar: MapScaleView
@@ -59,7 +61,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
     private lateinit var buttonSet: LinearLayout
     private lateinit var zoomText: TextView
 
-    private val components by lazy { listOf(coordinate, gpsOn, gpsOff, buttonSet) }
+    private val components by lazy { listOf(layers, coordinate, gpsOn, gpsOff, buttonSet) }
 
     override fun newState(state: Boolean) {
         bottomSheetBehavior.run {
@@ -144,6 +146,22 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 id = id_sheet
                 backgroundColor = Color.parseColor("#F5F5F5")
                 frameLayout {
+                    linearLayout {
+                        imageView(R.drawable.ic_place_black_24dp)
+                        onClick {
+                            val list = markerList
+                            val nameList = markerList.map {
+                                it.run { lon to lat }.let(xy2DMSString).run { "$second\n$first" }
+                            }
+                            selector("航點", nameList) { _, index ->
+                                val (lat, lon) = list[index].run { lat to lon }
+                                val target = CameraState(lat, lon, mainStore.state.currentCamera.zoom)
+                                mainStore.state.currentControl.animateCamera(target, 600)
+                            }
+                        }
+                    }.lparams(width = wrapContent) {
+                        gravity = Gravity.CENTER
+                    }
                     onClick {
                         val behavior = BottomSheetBehavior.from(this@verticalLayout)
                         if (behavior.state == STATE_EXPANDED) {
@@ -152,8 +170,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                             behavior.state = STATE_EXPANDED
                         }
                     }
-                }.lparams(height = 150, width = matchParent)
-            }.lparams(width = matchParent, height = 700) {
+                }.lparams(height = 134, width = matchParent)
+            }.lparams(width = matchParent, height = 760) {
                 behavior = BottomSheetBehavior<View>().apply {
                     this.peekHeight = 150
                     this.isHideable = false
@@ -235,13 +253,13 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 anchorGravity = Gravity.TOP
             }
 
-            imageView(R.drawable.ic_layers_black_24dp) {
+            layers = imageView(R.drawable.ic_layers_black_24dp) {
                 backgroundResource = R.drawable.btn_circle
                 padding = dip(13)
                 onClick {
                     selector("圖層", tileList.map { it.name }) { _, index ->
                         val selectedTile = tileList[index]
-                        mainStore.dispatch(AddWebTile(selectedTile))
+                        mainStore dispatch AddWebTile(selectedTile)
                     }
                 }
             }.lparams {
