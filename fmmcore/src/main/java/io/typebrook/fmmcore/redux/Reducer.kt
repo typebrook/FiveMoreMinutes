@@ -31,6 +31,7 @@ fun reducer(action: Action, oldState: State?): State {
         is SetCrsState -> state.copy(crsState = CrsState(action.crs, action.crs.isLonLat, action.expression
                 ?: state.crsState.coordExpr))
         is SetCoordExpr -> state.copy(crsState = state.crsState.copy(coordExpr = action.expression))
+        is SetMode -> state.copy(mode = action.mode)
 
         else -> state
     }

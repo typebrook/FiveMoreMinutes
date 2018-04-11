@@ -21,7 +21,8 @@ class MapMiddleware : SpawningMiddleware<State>() {
                 ZoomBy::class as KClass<Action> to zoomMap,
                 EnableLocation::class as KClass<Action> to enableLocation,
                 DisableLocation::class as KClass<Action> to disableLocation,
-                AddMarker::class as KClass<Action> to addMarker
+                AddMarker::class as KClass<Action> to addMarker,
+                AnimateToCamera::class as KClass<Action> to animateToTarget
         )
     }
 
@@ -36,7 +37,8 @@ class MapMiddleware : SpawningMiddleware<State>() {
     @Suppress("UNCHECKED_CAST")
     override fun spawners(): List<Pair<KClass<Action>, ActionSpawner<State>>> {
         return listOf(
-                TargetBackward::class as KClass<Action> to cameraPositionBackward
+                TargetBackward::class as KClass<Action> to cameraPositionBackward,
+                BackPressed::class as KClass<Action> to backPressed
         )
     }
 
@@ -92,6 +94,12 @@ class MapMiddleware : SpawningMiddleware<State>() {
         mapControl.addMarker(target)
     }
 
+    private val animateToTarget: ActionHandler<State> = handler@{ action, getState ->
+        val mapControl = getState()?.currentControl ?: return@handler
+        val camera = (action as AnimateToCamera).camera
+        mapControl.animateCamera(camera, 600)
+    }
+
     // Transformer
     private val updateCurrentTarget: ActionTransformer<State> = transformer@{ action, getState ->
         action as? UpdateCurrentTarget ?: return@transformer Nothing()
@@ -129,5 +137,13 @@ class MapMiddleware : SpawningMiddleware<State>() {
 
         Handler(Looper.getMainLooper()).postDelayed({ callback(GrantCameraSave()) }, 1000)
         BlockCameraSave()
+    }
+
+    private val backPressed: ActionSpawner<State> = spawner@{ action, getState, callback ->
+        when (getState()?.mode) {
+            Mode.Default -> callback(TargetBackward())
+            Mode.Focus -> callback(SetMode(Mode.Default))
+        }
+        return@spawner action
     }
 }

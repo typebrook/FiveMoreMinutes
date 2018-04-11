@@ -16,6 +16,7 @@ import io.typebrook.fivemoreminutes.ui.ActivityUI.Companion.id_map_container
 import io.typebrook.fivemoreminutes.utils.REQUEST_CHECK_SETTINGS
 import io.typebrook.fivemoreminutes.utils.intentHandler
 import io.typebrook.fmmcore.map.Display
+import io.typebrook.fmmcore.redux.BackPressed
 import io.typebrook.fmmcore.redux.EnableLocation
 import io.typebrook.fmmcore.redux.SetContext
 import io.typebrook.fmmcore.redux.TargetBackward
@@ -25,12 +26,10 @@ import tw.geothings.rekotlin.StoreSubscriber
 
 class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
 
-    private lateinit var ui: ActivityUI
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        ui = ActivityUI().apply { setContentView(this@MainActivity) }
+        ActivityUI().apply { setContentView(this@MainActivity) }
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             window.statusBarColor = Color.parseColor("#50000000")
@@ -43,7 +42,7 @@ class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
     }
 
     override fun onBackPressed() {
-        mainStore dispatch TargetBackward()
+        mainStore dispatch BackPressed()
     }
 
     override fun onDestroy() {

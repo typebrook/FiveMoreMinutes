@@ -15,7 +15,8 @@ import tw.geothings.rekotlin.Action
 
 class Nothing : Action
 
-data class SetContext(val activity: Activity): Action
+data class SetContext(val activity: Activity) : Action
+class BackPressed : Action
 
 // map fragment manipulation
 data class AddMap(val map: MapControl) : Action
@@ -29,6 +30,7 @@ class DidSwitchLocation(val map: MapControl, val isEnabled: Boolean) : Action
 
 // Camera related
 data class UpdateCurrentTarget(val holder: MapControl, val camera: CameraState) : Action
+data class AnimateToCamera(val camera: CameraState) : Action
 data class ZoomBy(val value: Float) : Action
 class TargetBackward : Action
 class TargetForward : Action
@@ -46,8 +48,9 @@ data class AddMarker(val target: XYPair) : Action
 // Coordinate Reference System
 data class SetCrsState(val crs: CoordRefSys, val expression: Expression? = null) : Action
 data class SetCoordExpr(val expression: Expression) : Action
-
 class SwitchMap : Action // Not Valid for now
 
 // UI related
 class SwitchComponentVisibility : Action
+class SetMode(val mode: Mode) : Action
+

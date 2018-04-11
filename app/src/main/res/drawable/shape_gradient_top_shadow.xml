@@ -1,0 +1,7 @@
+<!--ref by: https://stackoverflow.com/questions/37279689/how-can-i-add-a-shadow-to-bottom-sheet-view-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:angle="90"
+        android:endColor="@android:color/transparent"
+        android:startColor="#3f000000"/>
+</shape>

@@ -69,14 +69,8 @@ dependencies {
     implementation 'com.mapbox.mapboxsdk:mapbox-android-plugin-places:0.2.2'
     compile "com.mapzen.android:lost:3.0.4"
 
-    // Boom menu
-    compile "com.nightonke:boommenu:2.1.1"
-
     // Scale bar in mapView
     compile 'com.github.pengrad:mapscaleview:1.3.1'
-
-    // bottom sheet layout
-    implementation 'com.mahc.custombottomsheetbehavior:googlemaps-like:0.9.1'
 
     // File Picker
     compile 'com.github.angads25:filepicker:1.1.1'

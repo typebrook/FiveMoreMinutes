@@ -38,7 +38,6 @@ import com.mapbox.mapboxsdk.utils.MapFragmentUtils
 import com.mapbox.services.android.telemetry.location.LocationEngineListener
 import com.mapbox.services.android.telemetry.location.LocationEnginePriority
 import com.mapbox.services.android.telemetry.location.LostLocationEngine
-import io.realm.Realm
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.localServer.MBTilesServer
@@ -49,7 +48,6 @@ import io.typebrook.fivemoreminutes.utils.checkWriteExternal
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
-import io.typebrook.fmmcore.realm.geometry.rMarker
 import io.typebrook.fmmcore.realm.projection.XYPair
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
@@ -89,6 +87,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
 
     override var cameraQueue = listOf(mainStore.state.currentCamera)
     override var cameraStatePos: Int = 0
+
+    override var focus: XYPair? = null
 
     override val styles = listOf(
             "Taiwan Topo on Web" fromStyle "mapbox://styles/typebrook/cjb2gaiwv59ay2so0ofmzfzji",
@@ -184,13 +184,12 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
                 mainStore dispatch SwitchComponentVisibility()
             }
 
-            addOnMapLongClickListener { latlong ->
-                // need to move to redux action
-                val realm = Realm.getDefaultInstance()
-                realm.executeTransaction {
-                    realm.copyToRealm(rMarker("Yes", latlong.latitude, latlong.longitude))
-                }
-                map.addMarker(MarkerOptions().position(latlong))
+            addOnMapLongClickListener { latLng ->
+                map.addMarker(MarkerOptions().position(latLng))
+                focus = latLng.longitude to latLng.latitude
+                val camera = CameraState(latLng.latitude, latLng.longitude, mainStore.state.currentCamera.zoom)
+                mainStore dispatch AnimateToCamera(camera)
+                mainStore dispatch SetMode(Mode.Focus)
             }
 
             addOnCameraMoveListener {
@@ -218,8 +217,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
         }
 
         testButton2.onClick {
-            
-//            val intent = PlaceAutocomplete.IntentBuilder()
+
+            //            val intent = PlaceAutocomplete.IntentBuilder()
 //                    .accessToken(Mapbox.getAccessToken())
 //                    .placeOptions(PlaceOptions.builder()
 //                            .backgroundColor(Color.parseColor("#EEEEEE"))

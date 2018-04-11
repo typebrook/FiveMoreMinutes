@@ -4,8 +4,6 @@ import android.animation.LayoutTransition
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.Outline
-import android.media.Image
 import android.net.Uri
 import android.support.design.widget.BottomSheetBehavior
 import android.support.design.widget.BottomSheetBehavior.*
@@ -13,7 +11,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
-import android.view.ViewOutlineProvider
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -22,10 +19,6 @@ import com.github.pengrad.mapscaleview.MapScaleView
 import com.mapbox.mapboxsdk.offline.OfflineManager
 import com.mapbox.mapboxsdk.offline.OfflineRegion
 import com.mapbox.services.android.telemetry.permissions.PermissionsManager
-import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum
-import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton
-import com.nightonke.boommenu.ButtonEnum
-import com.nightonke.boommenu.Piece.PiecePlaceEnum
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dialog.CoordInputDialog
@@ -60,6 +53,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
     private lateinit var gpsOff: ImageView
     private lateinit var buttonSet: LinearLayout
     private lateinit var zoomText: TextView
+    private lateinit var header: _FrameLayout
 
     private val components by lazy { listOf(layers, coordinate, gpsOn, gpsOff, buttonSet) }
 
@@ -108,6 +102,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
             val currentMap = mainStore.state.currentMap
             if (currentMap.locating) {
                 gpsOn.imageResource = R.drawable.ic_gps_fixed_black_24dp
+                // TODO use new method when min API = 23
                 gpsOn.setColorFilter(activity.resources.getColor(R.color.googleBlue))
                 gpsOff.visibility = VISIBLE
             } else {
@@ -127,6 +122,16 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
         }
     }
 
+    private val modeSubscriber = object : StoreSubscriber<Mode> {
+        override fun newState(state: Mode) {
+            header.removeAllViews()
+            when (state) {
+                Mode.Default -> header.setDefaultHeader()
+                Mode.Focus -> header.setFocusHeader()
+            }
+        }
+    }
+
     private fun updateCamera(camera: CameraState) {
         cameraSubscriber.newState(camera)
     }
@@ -141,36 +146,26 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 gravity = Gravity.TOP
             }
 
+            imageView(R.drawable.shape_gradient_top_shadow).lparams(width = matchParent, height = dip(12)) {
+                anchorId = id_sheet
+            }
 
-            val bottomSheet = verticalLayout {
+            val bottomSheet = cardView {
                 id = id_sheet
-                backgroundColor = Color.parseColor("#F5F5F5")
-                frameLayout {
-                    linearLayout {
-                        imageView(R.drawable.ic_place_black_24dp)
+                backgroundColor = this@with.resources.getColor(R.color.googleFrame)
+                verticalLayout {
+                    frameLayout {
+                        header = this
                         onClick {
-                            val list = markerList
-                            val nameList = markerList.map {
-                                it.run { lon to lat }.let(xy2DMSString).run { "$second\n$first" }
-                            }
-                            selector("航點", nameList) { _, index ->
-                                val (lat, lon) = list[index].run { lat to lon }
-                                val target = CameraState(lat, lon, mainStore.state.currentCamera.zoom)
-                                mainStore.state.currentControl.animateCamera(target, 600)
+                            val behavior = BottomSheetBehavior.from(this@cardView)
+                            if (behavior.state == STATE_EXPANDED) {
+                                behavior.state = STATE_COLLAPSED
+                            } else {
+                                behavior.state = STATE_EXPANDED
                             }
                         }
-                    }.lparams(width = wrapContent) {
-                        gravity = Gravity.CENTER
-                    }
-                    onClick {
-                        val behavior = BottomSheetBehavior.from(this@verticalLayout)
-                        if (behavior.state == STATE_EXPANDED) {
-                            behavior.state = STATE_COLLAPSED
-                        } else {
-                            behavior.state = STATE_EXPANDED
-                        }
-                    }
-                }.lparams(height = 134, width = matchParent)
+                    }.lparams(height = 150, width = matchParent)
+                }
             }.lparams(width = matchParent, height = 760) {
                 behavior = BottomSheetBehavior<View>().apply {
                     this.peekHeight = 150
@@ -180,17 +175,20 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 }
             }
 
-            coordinate = textView {
-                padding = dip(5)
+            cardView {
                 backgroundColor = Color.parseColor("#80FFFFFF")
-                onClick { CoordInputDialog().show(owner.fragmentManager, null) }
-                onLongClick {
-                    val (lat, lon, zoom) = mainStore.state.currentXYZ
-                    val gmmIntentUri = Uri.parse("geo:$lat,$lon?z=$zoom")
-                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
-                    mapIntent.`package` = "com.google.android.apps.maps"
-                    if (mapIntent.resolveActivity(activity.packageManager) != null) {
-                        activity.startActivity(mapIntent)
+                cardElevation = dip(3).toFloat()
+                coordinate = textView {
+                    padding = dip(5)
+                    onClick { CoordInputDialog().show(owner.fragmentManager, null) }
+                    onLongClick {
+                        val (lat, lon, zoom) = mainStore.state.currentXYZ
+                        val gmmIntentUri = Uri.parse("geo:$lat,$lon?z=$zoom")
+                        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                        mapIntent.`package` = "com.google.android.apps.maps"
+                        if (mapIntent.resolveActivity(owner.packageManager) != null) {
+                            owner.startActivity(mapIntent)
+                        }
                     }
                 }
             }.lparams(wrapContent) {
@@ -198,19 +196,6 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 anchorGravity = Gravity.CLIP_HORIZONTAL
                 gravity = Gravity.TOP
                 layoutTransition = LayoutTransition()
-
-                // view shadow, but it is useless now...
-                if (android.os.Build.VERSION.SDK_INT >= 21) {
-                    elevation = 160f
-                    outlineProvider = object : ViewOutlineProvider() {
-                        override fun getOutline(view: View?, outline: Outline?) {
-                            if (android.os.Build.VERSION.SDK_INT >= 21) {
-                                outline?.setRect(0, 0, width + 20, height + 20)
-                                outline?.alpha = 0.5f
-                            }
-                        }
-                    }
-                }
             }
 
             scaleBar = mapScaleBar {
@@ -218,39 +203,6 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
             }.lparams(wrapContent) {
                 gravity = Gravity.CENTER_HORIZONTAL
                 topMargin = dip(35)
-            }
-
-            boomMenuButton {
-                buttonEnum = ButtonEnum.TextOutsideCircle
-                piecePlaceEnum = PiecePlaceEnum.DOT_2_2
-                buttonPlaceEnum = ButtonPlaceEnum.SC_2_2
-                isDraggable = true
-
-                addBuilder(TextOutsideCircleButton.Builder()
-                        .normalText("選擇排版")
-                        .rotateText(false)
-                        .listener {
-                            selector("選擇MapView", displayList.map { it.first }) { _, index ->
-                                val selectedDisplay = displayList[index].second
-                                mainStore.dispatch(SetDisplay(selectedDisplay))
-                            }
-                        })
-                addBuilder(TextOutsideCircleButton.Builder()
-                        .normalText("選擇地圖")
-                        .rotateText(false)
-                        .listener {
-                            selector("線上地圖", styleList.map { it.name }) { _, index ->
-                                val selectedTile = styleList[index]
-                                mainStore dispatch SetTile(selectedTile)
-                            }
-                        })
-                onClick {
-                    val behavior = BottomSheetBehavior.from(bottomSheet)
-                    behavior.state = BottomSheetBehavior.STATE_COLLAPSED
-                }
-            }.lparams {
-                anchorId = id_sheet
-                anchorGravity = Gravity.TOP
             }
 
             layers = imageView(R.drawable.ic_layers_black_24dp) {
@@ -384,6 +336,9 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
             }
             subscribe(cameraSubscriber) { subscription ->
                 subscription.select { it.currentCamera }.skipRepeats()
+            }
+            subscribe(modeSubscriber) { subscription ->
+                subscription.select { it.mode }.skipRepeats()
             }
         }
 

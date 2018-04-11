@@ -20,6 +20,10 @@ interface MapControl {
         get() = 0
         set(_) {}
 
+    var focus: XYPair?
+        get() = null
+        set(_) {}
+
     val styles: List<Tile> get() = emptyList()
 
     fun moveCamera(target: CameraState) {}

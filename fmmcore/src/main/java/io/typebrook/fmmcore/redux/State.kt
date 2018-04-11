@@ -22,8 +22,9 @@ data class State(
 
         val currentCamera: CameraState = CameraState(),
         val cameraSave: Boolean = true,
-        val crsState: CrsState = CrsState()
+        val crsState: CrsState = CrsState(),
 
+        val mode: Mode = Mode.Default
 ) : StateType {
     val currentMap get() = if (maps.lastIndex >= currentMapNum) maps[currentMapNum] else MapInfo(SimpleMap())
 
@@ -55,3 +56,5 @@ data class CrsState(
         val isLonLat: Boolean = true,
         val coordExpr: Expression = Expression.Degree
 ) : StateType
+
+enum class Mode { Default, Focus }
