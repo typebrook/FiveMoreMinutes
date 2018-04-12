@@ -146,6 +146,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 gravity = Gravity.TOP
             }
 
+            // Shadow above bottom sheet
             imageView(R.drawable.shape_gradient_top_shadow).lparams(width = matchParent, height = dip(12)) {
                 anchorId = id_sheet
             }
@@ -175,6 +176,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 }
             }
 
+            // View shows coordinate
             cardView {
                 backgroundColor = Color.parseColor("#80FFFFFF")
                 cardElevation = dip(3).toFloat()
@@ -291,7 +293,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
                 anchorGravity = Gravity.END
                 gravity = Gravity.TOP
                 rightMargin = dip(9.8f)
-                layoutTransition = LayoutTransition()
+//                layoutTransition = LayoutTransition()
             }
 
 //            cameraScroller = bottomSheet {

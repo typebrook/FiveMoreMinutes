@@ -38,7 +38,8 @@ class MapMiddleware : SpawningMiddleware<State>() {
     override fun spawners(): List<Pair<KClass<Action>, ActionSpawner<State>>> {
         return listOf(
                 TargetBackward::class as KClass<Action> to cameraPositionBackward,
-                BackPressed::class as KClass<Action> to backPressed
+                BackPressed::class as KClass<Action> to backPressed,
+                SetModeToFocus::class as KClass<Action> to setModeToFocus
         )
     }
 
@@ -142,8 +143,23 @@ class MapMiddleware : SpawningMiddleware<State>() {
     private val backPressed: ActionSpawner<State> = spawner@{ action, getState, callback ->
         when (getState()?.mode) {
             Mode.Default -> callback(TargetBackward())
-            Mode.Focus -> callback(SetMode(Mode.Default))
+
+            Mode.Focus -> {
+                callback(SetMode(Mode.Default))
+                getState()?.currentControl?.focus = null
+            }
         }
         return@spawner action
+    }
+
+    private val setModeToFocus: ActionSpawner<State> = spawner@{ action, getState, callback ->
+        action as? SetModeToFocus ?: return@spawner action
+        getState()?.currentControl?.run {
+            focus = action.xy
+            val target = CameraState(action.xy.second, action.xy.first, cameraState.zoom)
+            callback(AnimateToCamera(target))
+        }
+
+        return@spawner SetMode(Mode.Focus)
     }
 }

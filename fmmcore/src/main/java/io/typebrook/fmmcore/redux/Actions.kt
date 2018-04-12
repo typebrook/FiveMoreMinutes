@@ -53,4 +53,5 @@ class SwitchMap : Action // Not Valid for now
 // UI related
 class SwitchComponentVisibility : Action
 class SetMode(val mode: Mode) : Action
+class SetModeToFocus(val xy: XYPair) : Action
 

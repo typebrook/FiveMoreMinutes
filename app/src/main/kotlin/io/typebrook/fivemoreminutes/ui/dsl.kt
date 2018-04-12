@@ -1,6 +1,5 @@
 package io.typebrook.fivemoreminutes.ui
 
-import android.graphics.Color
 import android.support.v7.widget.CardView
 import android.view.Gravity
 import android.view.ViewManager
@@ -11,9 +10,7 @@ import io.typebrook.fivemoreminutes.dialog.SaveMarkerDialog
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.utils.markerList
-import io.typebrook.fmmcore.redux.CameraState
-import io.typebrook.fmmcore.redux.SetDisplay
-import io.typebrook.fmmcore.redux.SetTile
+import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
 import org.jetbrains.anko.sdk25.coroutines.onClick
@@ -28,8 +25,10 @@ inline fun ViewManager.cardView(init: CardView.() -> Unit): CardView =
 inline fun ViewManager.mapScaleBar(init: MapScaleView.() -> Unit): MapScaleView =
         ankoView({ MapScaleView(it, null) }, theme = 0, init = init)
 
+// Bottom Sheet Header for Default Mode
 fun _FrameLayout.setDefaultHeader(): LinearLayout = linearLayout {
 
+    // Select Mapview
     imageView(R.drawable.ic_map_black_24dp) {
         leftPadding = dip(25)
         rightPadding = dip(25)
@@ -40,7 +39,9 @@ fun _FrameLayout.setDefaultHeader(): LinearLayout = linearLayout {
                 mainStore.dispatch(SetDisplay(selectedDisplay))
             }
         }
-    }
+    }.lparams(height = matchParent)
+    
+    // online maps
     imageView(R.drawable.ic_place_black_24dp) {
         leftPadding = dip(25)
         rightPadding = dip(25)
@@ -51,7 +52,9 @@ fun _FrameLayout.setDefaultHeader(): LinearLayout = linearLayout {
                 mainStore dispatch SetTile(selectedTile)
             }
         }
-    }
+    }.lparams(height = matchParent)
+
+    // marker list
     imageView(R.drawable.ic_place_black_24dp) {
         leftPadding = dip(25)
         rightPadding = dip(25)
@@ -62,15 +65,15 @@ fun _FrameLayout.setDefaultHeader(): LinearLayout = linearLayout {
             }
             mainStore.state.activity?.selector("航點", nameList) { _, index ->
                 val (lat, lon) = list[index].run { lat to lon }
-                val target = CameraState(lat, lon, mainStore.state.currentCamera.zoom)
-                mainStore.state.currentControl.animateCamera(target, 600)
+                mainStore dispatch SetModeToFocus(lon to lat)
             }
         }
-    }
-}.lparams(width = wrapContent, height = wrapContent) {
+    }.lparams(height = matchParent)
+}.lparams(width = wrapContent, height = matchParent) {
     gravity = Gravity.CENTER
 }
 
+// Bottom Sheet Header for Focus Mode
 fun _FrameLayout.setFocusHeader(): LinearLayout = linearLayout {
     val activity = mainStore.state.activity ?: return@linearLayout
     backgroundColor = activity.resources.getColor(R.color.googleBlue)

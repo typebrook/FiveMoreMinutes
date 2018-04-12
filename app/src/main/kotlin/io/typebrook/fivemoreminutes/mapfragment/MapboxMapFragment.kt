@@ -18,6 +18,7 @@ import android.widget.ProgressBar
 import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.view.FilePickerDialog
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.annotations.MarkerOptions
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
 import com.mapbox.mapboxsdk.constants.Style
@@ -55,6 +56,7 @@ import org.jetbrains.anko.design.coordinatorLayout
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import java.io.File
 import java.net.URL
+import kotlin.reflect.KProperty
 
 /**
  * Created by pham on 2017/9/19.
@@ -88,7 +90,20 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
     override var cameraQueue = listOf(mainStore.state.currentCamera)
     override var cameraStatePos: Int = 0
 
-    override var focus: XYPair? = null
+    override var focus by FocusDelegate()
+
+    inner class FocusDelegate {
+        var xy: XYPair? = null
+        var marker: Marker? = null
+        operator fun getValue(thisRef: Any?, property: KProperty<*>): XYPair? = xy
+
+        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: XYPair?) {
+            marker?.let(map::removeMarker)
+            xy = value?.apply {
+                marker = map.addMarker(MarkerOptions().position(LatLng(value.second, value.first)))
+            }
+        }
+    }
 
     override val styles = listOf(
             "Taiwan Topo on Web" fromStyle "mapbox://styles/typebrook/cjb2gaiwv59ay2so0ofmzfzji",
@@ -185,11 +200,7 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
             }
 
             addOnMapLongClickListener { latLng ->
-                map.addMarker(MarkerOptions().position(latLng))
-                focus = latLng.longitude to latLng.latitude
-                val camera = CameraState(latLng.latitude, latLng.longitude, mainStore.state.currentCamera.zoom)
-                mainStore dispatch AnimateToCamera(camera)
-                mainStore dispatch SetMode(Mode.Focus)
+                mainStore dispatch SetModeToFocus(latLng.longitude to latLng.latitude)
             }
 
             addOnCameraMoveListener {
