@@ -4,6 +4,7 @@ import android.app.Activity
 import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
+import io.typebrook.fmmcore.realm.geometry.rMarker
 import io.typebrook.fmmcore.realm.projection.CoordRefSys
 import io.typebrook.fmmcore.realm.projection.Expression
 import io.typebrook.fmmcore.realm.projection.XYPair
@@ -53,5 +54,5 @@ class SwitchMap : Action // Not Valid for now
 // UI related
 class SwitchComponentVisibility : Action
 class SetMode(val mode: Mode) : Action
-class SetModeToFocus(val xy: XYPair) : Action
+class SetModeToFocus(val marker: rMarker) : Action
 

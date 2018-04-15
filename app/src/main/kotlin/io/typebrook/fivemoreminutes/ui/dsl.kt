@@ -55,20 +55,27 @@ fun _FrameLayout.setDefaultHeader(): LinearLayout = linearLayout {
     }.lparams(height = matchParent)
 
     // marker list
-    imageView(R.drawable.ic_place_black_24dp) {
-        leftPadding = dip(25)
-        rightPadding = dip(25)
-        onClick {
-            val list = markerList
-            val nameList = markerList.map {
-                it.name ?: it.date.toString().substringBefore(" GMT")
+    verticalLayout {
+
+        imageView(R.drawable.ic_place_black_24dp) {
+            leftPadding = dip(28)
+            rightPadding = dip(28)
+            onClick {
+                val list = markerList
+                val nameList = markerList.map {
+                    it.name ?: it.date.toString().substringBefore(" GMT")
+                }
+                mainStore.state.activity?.selector("航點", nameList) { _, index ->
+                    mainStore dispatch SetModeToFocus(list[index])
+                }
             }
-            mainStore.state.activity?.selector("航點", nameList) { _, index ->
-                val (lat, lon) = list[index].run { lat to lon }
-                mainStore dispatch SetModeToFocus(lon to lat)
-            }
-        }
-    }.lparams(height = matchParent)
+        }.lparams(height = matchParent)
+
+        textView("我的航點"){
+            textSize = 12f
+            gravity = Gravity.CENTER_HORIZONTAL
+        }.lparams(width = matchParent)
+    }
 }.lparams(width = wrapContent, height = matchParent) {
     gravity = Gravity.CENTER
 }
@@ -78,15 +85,35 @@ fun _FrameLayout.setFocusHeader(): LinearLayout = linearLayout {
     val activity = mainStore.state.activity ?: return@linearLayout
     backgroundColor = activity.resources.getColor(R.color.googleBlue)
 
-    imageView(R.drawable.ic_save_white_24dp) {
-        leftPadding = dip(25)
-        rightPadding = dip(25)
-        onClick {
-            SaveMarkerDialog().show(activity.fragmentManager, null)
-        }
-    }.lparams {
-        gravity = Gravity.RIGHT or Gravity.CENTER_VERTICAL
-    }
+    view().lparams(weight = 1f) // Occupy left side to let rest of views align to right
 
+    val focus = mainStore.state.currentControl.focus ?: return@linearLayout
+    if (focus.isManaged) {
+        imageView(R.drawable.ic_more_vert_white_24px) {
+            leftPadding = dip(25)
+            rightPadding = dip(25)
+            onClick {
+                activity.selector(focus.name, listOf("刪除")) { _, index ->
+                    when (index) {
+                        0 -> {
+                            realm.executeTransaction { focus.deleteFromRealm() }
+                            mainStore.state.currentControl.focus = null
+                        }
+                    }
+                }
+            }
+        }.lparams(height = matchParent)
+
+    } else {
+
+        // save button
+        imageView(R.drawable.ic_save_white_24dp) {
+            leftPadding = dip(25)
+            rightPadding = dip(25)
+            onClick {
+                SaveMarkerDialog().show(activity.fragmentManager, null)
+            }
+        }.lparams(height = matchParent)
+    }
 
 }.lparams(width = matchParent, height = matchParent)

@@ -1,5 +1,6 @@
 package io.typebrook.fmmcore.map
 
+import io.typebrook.fmmcore.realm.geometry.rMarker
 import io.typebrook.fmmcore.realm.projection.XYPair
 import io.typebrook.fmmcore.redux.CameraState
 
@@ -20,7 +21,7 @@ interface MapControl {
         get() = 0
         set(_) {}
 
-    var focus: XYPair?
+    var focus: rMarker?
         get() = null
         set(_) {}
 

@@ -49,6 +49,7 @@ import io.typebrook.fivemoreminutes.utils.checkWriteExternal
 import io.typebrook.fmmcore.map.MapControl
 import io.typebrook.fmmcore.map.Tile
 import io.typebrook.fmmcore.map.fromStyle
+import io.typebrook.fmmcore.realm.geometry.rMarker
 import io.typebrook.fmmcore.realm.projection.XYPair
 import io.typebrook.fmmcore.redux.*
 import org.jetbrains.anko.*
@@ -93,15 +94,16 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
     override var focus by FocusDelegate()
 
     inner class FocusDelegate {
-        var xy: XYPair? = null
+        var entity: rMarker? = null
         var marker: Marker? = null
-        operator fun getValue(thisRef: Any?, property: KProperty<*>): XYPair? = xy
+        operator fun getValue(thisRef: Any?, property: KProperty<*>): rMarker? = entity
 
-        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: XYPair?) {
+        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: rMarker?) {
             marker?.let(map::removeMarker)
-            xy = value?.apply {
-                marker = map.addMarker(MarkerOptions().position(LatLng(value.second, value.first)))
+            entity = value?.apply {
+                marker = map.addMarker(MarkerOptions().position(LatLng(value.lat, value.lon)))
             }
+            if (value == null) mainStore dispatch SetMode(Mode.Default)
         }
     }
 
@@ -200,7 +202,8 @@ class MapboxMapFragment : Fragment(), OnMapReadyCallback, MapControl, LocationEn
             }
 
             addOnMapLongClickListener { latLng ->
-                mainStore dispatch SetModeToFocus(latLng.longitude to latLng.latitude)
+                val newMarker = rMarker(null, latLng.latitude, latLng.longitude)
+                mainStore dispatch SetModeToFocus(newMarker)
             }
 
             addOnCameraMoveListener {

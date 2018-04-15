@@ -19,10 +19,11 @@ val mainStore = Store(
         state = State(),
         middleware = listOf(MapMiddleware()::handle)
 )
+val realm: Realm get() = Realm.getDefaultInstance()
 
 infix fun Store<State>.dispatch(action: Action) = dispatchFunction(action)
 
-class FMMApplication : Application(){
+class FMMApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()

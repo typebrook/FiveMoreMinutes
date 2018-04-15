@@ -7,7 +7,7 @@ import android.widget.EditText
 import io.realm.Realm
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
-import io.typebrook.fmmcore.realm.geometry.rMarker
+import io.typebrook.fivemoreminutes.realm
 import io.typebrook.fmmcore.redux.Mode
 import io.typebrook.fmmcore.redux.SetMode
 import org.jetbrains.anko.*
@@ -35,9 +35,8 @@ class SaveMarkerDialog : DialogFragment() {
                     if (text.isNotBlank()) text.toString() else null
                 }
                 // need to move to redux action
-                val realm = Realm.getDefaultInstance()
                 realm.executeTransaction {
-                    it.copyToRealm(rMarker(name, focus.second, focus.first, currentTime))
+                    it.copyToRealm(focus.apply { this.name = name })
                 }
                 mainStore dispatch SetMode(Mode.Default)
             }

@@ -3,6 +3,7 @@ package io.typebrook.fmmcore.redux
 import android.os.Handler
 import android.os.Looper
 import io.typebrook.fmmcore.map.Tile
+import io.typebrook.fmmcore.realm.geometry.rMarker
 import io.typebrook.fmmcore.realm.projection.Expression
 import tw.geothings.rekotlin.Action
 import kotlin.reflect.KClass
@@ -155,8 +156,9 @@ class MapMiddleware : SpawningMiddleware<State>() {
     private val setModeToFocus: ActionSpawner<State> = spawner@{ action, getState, callback ->
         action as? SetModeToFocus ?: return@spawner action
         getState()?.currentControl?.run {
-            focus = action.xy
-            val target = CameraState(action.xy.second, action.xy.first, cameraState.zoom)
+            val focusedMarker = action.marker
+            focus = focusedMarker
+            val target = CameraState(focusedMarker.lat, focusedMarker.lon, cameraState.zoom)
             callback(AnimateToCamera(target))
         }
 
