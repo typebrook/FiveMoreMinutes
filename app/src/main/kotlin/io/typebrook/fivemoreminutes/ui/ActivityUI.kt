@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.support.design.widget.BottomSheetBehavior
 import android.support.design.widget.BottomSheetBehavior.*
+import android.support.v7.widget.CardView
 import android.view.Gravity
 import android.view.View
 import android.view.View.INVISIBLE
@@ -47,7 +48,8 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
     lateinit var mapContainer: FrameLayout
     private lateinit var layers: ImageView
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
-    private lateinit var coordinate: TextView
+    private lateinit var coordView: CardView
+    private lateinit var coordText: TextView
     private lateinit var scaleBar: MapScaleView
     private lateinit var gpsOn: ImageView
     private lateinit var gpsOff: ImageView
@@ -55,7 +57,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
     private lateinit var zoomText: TextView
     private lateinit var header: _FrameLayout
 
-    private val components by lazy { listOf(layers, coordinate, gpsOn, gpsOff, buttonSet) }
+    private val components by lazy { listOf(layers, coordView, gpsOn, gpsOff, buttonSet) }
 
     override fun newState(state: Boolean) {
         bottomSheetBehavior.run {
@@ -116,7 +118,7 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
     private val cameraSubscriber = object : StoreSubscriber<CameraState> {
         override fun newState(state: CameraState) {
             val (lat, lon, zoom) = state
-            coordinate.text = coordPrinter(lon to lat)
+            coordText.text = coordPrinter(lon to lat)
             zoomText.text = zoom.with("%.1f")
             scaleBar.update(state.zoom, state.lat)
         }
@@ -177,10 +179,10 @@ class ActivityUI : AnkoComponent<MainActivity>, StoreSubscriber<Boolean> {
             }
 
             // View shows coordinate
-            cardView {
+            coordView = cardView {
                 backgroundColor = Color.parseColor("#80FFFFFF")
                 cardElevation = dip(3).toFloat()
-                coordinate = textView {
+                coordText = textView {
                     padding = dip(5)
                     onClick { CoordInputDialog().show(owner.fragmentManager, null) }
                     onLongClick {

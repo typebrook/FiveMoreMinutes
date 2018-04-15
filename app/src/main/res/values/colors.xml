@@ -6,6 +6,7 @@
     // button in map
     <color name="map_widget_light">#fff</color>
     <color name="map_widget_light_pressed">#e5e5e5</color>
+    <color name="iconDefault">#616161</color>
     <color name="googleBlue">#4286f5</color>
     <color name="googleFrame">#f5f5f5</color>
 </resources>
