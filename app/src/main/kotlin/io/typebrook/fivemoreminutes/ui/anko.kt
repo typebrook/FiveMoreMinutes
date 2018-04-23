@@ -1,19 +1,17 @@
 package io.typebrook.fivemoreminutes.ui
 
-import android.graphics.ColorFilter
 import android.support.v7.widget.CardView
 import android.view.Gravity
 import android.view.ViewManager
 import android.widget.LinearLayout
 import com.github.pengrad.mapscaleview.MapScaleView
 import io.typebrook.fivemoreminutes.R
+import io.typebrook.fivemoreminutes.dialog.MarkerDialog
 import io.typebrook.fivemoreminutes.dialog.SaveMarkerDialog
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.realm
-import io.typebrook.fivemoreminutes.utils.markerList
 import io.typebrook.fmmcore.redux.SetDisplay
-import io.typebrook.fmmcore.redux.SetModeToFocus
 import io.typebrook.fmmcore.redux.SetTile
 import org.jetbrains.anko.*
 import org.jetbrains.anko.custom.ankoView
@@ -33,20 +31,20 @@ inline fun ViewManager.mapScaleBar(init: MapScaleView.() -> Unit): MapScaleView 
 fun _FrameLayout.setDefaultHeader(): LinearLayout = linearLayout {
     topPadding = dip(6)
 
-    // Select Mapview
+    // Select MapView
     verticalLayout {
+        onClick {
+            val activity = mainStore.state.activity ?: return@onClick
+            activity.selector("選擇MapView", ActivityUI.displayList.map { it.first }) { _, index ->
+                val selectedDisplay = ActivityUI.displayList[index].second
+                mainStore.dispatch(SetDisplay(selectedDisplay))
+            }
+        }
 
         imageView(R.drawable.ic_map_black_24dp) {
             leftPadding = dip(28)
             rightPadding = dip(28)
             setColorFilter(resources.getColor(R.color.iconDefault))
-            onClick {
-                val activity = mainStore.state.activity ?: return@onClick
-                activity.selector("選擇MapView", ActivityUI.displayList.map { it.first }) { _, index ->
-                    val selectedDisplay = ActivityUI.displayList[index].second
-                    mainStore.dispatch(SetDisplay(selectedDisplay))
-                }
-            }
         }.lparams(height = matchParent)
 
         textView("提供者"){
@@ -57,18 +55,18 @@ fun _FrameLayout.setDefaultHeader(): LinearLayout = linearLayout {
 
     // online maps
     verticalLayout {
+        onClick {
+            val activity = mainStore.state.activity ?: return@onClick
+            activity.selector("線上地圖", ActivityUI.styleList.map { it.name }) { _, index ->
+                val selectedTile = ActivityUI.styleList[index]
+                mainStore dispatch SetTile(selectedTile)
+            }
+        }
 
         imageView(R.drawable.ic_place_black_24dp) {
             leftPadding = dip(28)
             rightPadding = dip(28)
             setColorFilter(resources.getColor(R.color.iconDefault))
-            onClick {
-                val activity = mainStore.state.activity ?: return@onClick
-                activity.selector("線上地圖", ActivityUI.styleList.map { it.name }) { _, index ->
-                    val selectedTile = ActivityUI.styleList[index]
-                    mainStore dispatch SetTile(selectedTile)
-                }
-            }
         }.lparams(height = matchParent)
 
         textView("底圖"){
@@ -79,20 +77,15 @@ fun _FrameLayout.setDefaultHeader(): LinearLayout = linearLayout {
 
     // marker list
     verticalLayout {
+        onClick {
+            val activity = mainStore.state.activity ?: return@onClick
+            MarkerDialog().show(activity.fragmentManager, null)
+        }
 
         imageView(R.drawable.ic_place_black_24dp) {
             leftPadding = dip(28)
             rightPadding = dip(28)
             setColorFilter(resources.getColor(R.color.iconDefault))
-            onClick {
-                val list = markerList
-                val nameList = markerList.map {
-                    it.name ?: it.date.toString().substringBefore(" GMT")
-                }
-                mainStore.state.activity?.selector("航點", nameList) { _, index ->
-                    mainStore dispatch SetModeToFocus(list[index])
-                }
-            }
         }.lparams(height = matchParent)
 
         textView("我的航點"){

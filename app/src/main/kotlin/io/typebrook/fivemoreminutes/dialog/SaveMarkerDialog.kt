@@ -4,7 +4,6 @@ import android.app.Dialog
 import android.app.DialogFragment
 import android.os.Bundle
 import android.widget.EditText
-import io.realm.Realm
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.mainStore
 import io.typebrook.fivemoreminutes.realm
@@ -40,7 +39,7 @@ class SaveMarkerDialog : DialogFragment() {
                 }
                 mainStore dispatch SetMode(Mode.Default)
             }
-            cancelButton { }
+            cancelButton {}
         }.build() as Dialog
     }
 }

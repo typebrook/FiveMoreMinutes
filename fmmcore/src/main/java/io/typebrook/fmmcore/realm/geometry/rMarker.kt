@@ -14,4 +14,6 @@ open class rMarker(
         var lat: Double = 0.0,
         var lon: Double = 0.0,
         var date: Date = Date()
-) : RealmObject()
+) : RealmObject(){
+    val displayName get() = name ?: date.toString().substringBefore(" GMT")
+}
