@@ -1,6 +1,8 @@
 package tw.geothings.geomaptool.offline_map
 
-import android.app.*
+import android.app.AlertDialog
+import android.app.Dialog
+import android.app.DialogFragment
 import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
@@ -55,22 +57,21 @@ class OfflineListDialog : DialogFragment() {
                     } else {
                         setTitle("No Offline Maps")
                     }
-                }
-                .setNegativeButton("Download Here") { _, _ ->
-                    activity.alert {
-                        val activity = activity
-                        val defaultName = "Map${items.size + 1}"
-                        val regionNameInput = UI {}.editText { hint = defaultName }
-                        title = "Please Input Map Name"
-                        customView = regionNameInput
-                        isCancelable = false
-                        positiveButton("Download") {
-                            val regionName = regionNameInput.text.run { if (isBlank()) defaultName else toString() }
-                            DownloadDialog.newInstance(regionName).show(activity.fragmentManager, null)
-                        }
-                    }.show()
-                }
-                .create() // here we create Dialog
+                    setNegativeButton("Download Here") { _, _ ->
+                        activity.alert {
+                            val activity = activity
+                            val defaultName = "Map${items.size + 1}"
+                            val regionNameInput = UI {}.editText { hint = defaultName }
+                            title = "Please Input Map Name"
+                            customView = regionNameInput
+                            isCancelable = false
+                            positiveButton("Download") {
+                                val regionName = regionNameInput.text.run { if (isBlank()) defaultName else toString() }
+                                DownloadDialog.newInstance(regionName).show(activity.fragmentManager, null)
+                            }
+                        }.show()
+                    }
+                }.create() // here we create Dialog
                 .apply {
                     // here we set the delete and download actions,
                     // so it won't jump out from this Dialog

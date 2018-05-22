@@ -7,7 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import com.mapbox.services.android.telemetry.permissions.PermissionsListener
+import com.mapbox.android.core.permissions.PermissionsListener
 import io.typebrook.fivemoreminutes.mapfragment.DualMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.GoogleMapFragment
 import io.typebrook.fivemoreminutes.mapfragment.MapboxMapFragment
@@ -19,7 +19,6 @@ import io.typebrook.fmmcore.map.Display
 import io.typebrook.fmmcore.redux.BackPressed
 import io.typebrook.fmmcore.redux.EnableLocation
 import io.typebrook.fmmcore.redux.SetContext
-import io.typebrook.fmmcore.redux.TargetBackward
 import org.jetbrains.anko.setContentView
 import org.jetbrains.anko.toast
 import tw.geothings.rekotlin.StoreSubscriber
@@ -84,8 +83,8 @@ class MainActivity : Activity(), StoreSubscriber<Display>, PermissionsListener {
     }
 
     override fun onPermissionResult(granted: Boolean) {}
-
     override fun onExplanationNeeded(permissionsToExplain: MutableList<String>?) {}
+
     // endregion
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
