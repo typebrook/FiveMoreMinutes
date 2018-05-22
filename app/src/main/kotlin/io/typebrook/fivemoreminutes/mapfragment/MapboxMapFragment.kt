@@ -17,6 +17,8 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import com.github.angads25.filepicker.model.DialogConfigs
 import com.github.angads25.filepicker.view.FilePickerDialog
+import com.mapbox.android.core.location.LocationEngineListener
+import com.mapbox.android.core.location.LocationEnginePriority
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.annotations.MarkerOptions
@@ -29,16 +31,11 @@ import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.MapView.*
 import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
-import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerMode
-import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin
 import com.mapbox.mapboxsdk.style.layers.RasterLayer
 import com.mapbox.mapboxsdk.style.sources.ImageSource
 import com.mapbox.mapboxsdk.style.sources.RasterSource
 import com.mapbox.mapboxsdk.style.sources.TileSet
 import com.mapbox.mapboxsdk.utils.MapFragmentUtils
-import com.mapbox.services.android.telemetry.location.LocationEngineListener
-import com.mapbox.services.android.telemetry.location.LocationEnginePriority
-import com.mapbox.services.android.telemetry.location.LostLocationEngine
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dispatch
 import io.typebrook.fivemoreminutes.localServer.MBTilesServer

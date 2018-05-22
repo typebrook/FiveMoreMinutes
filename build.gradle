@@ -2,17 +2,17 @@
 
 buildscript {
     ext.android_support = "27.0.2"
-    ext.kotlin_version = '1.2.31'
+    ext.kotlin_version = '1.2.41'
     ext.anko_version = '0.10.1'
     ext.realm_version = '4.3.4'
-//    ext.mapboxMapSdk = '6.0.0-beta.4'
-    ext.mapboxMapSdk = '5.5.0'
+    ext.mapboxMapSdk = '6.0.1'
+//    ext.mapboxMapSdk = '5.5.0'
     repositories {
         jcenter()
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.1'
+        classpath 'com.android.tools.build:gradle:3.1.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-android-extensions:$kotlin_version"
         classpath "io.realm:realm-gradle-plugin:$realm_version"
