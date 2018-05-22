@@ -17,9 +17,9 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.pengrad.mapscaleview.MapScaleView
+import com.mapbox.android.core.permissions.PermissionsManager
 import com.mapbox.mapboxsdk.offline.OfflineManager
 import com.mapbox.mapboxsdk.offline.OfflineRegion
-import com.mapbox.services.android.telemetry.permissions.PermissionsManager
 import io.typebrook.fivemoreminutes.MainActivity
 import io.typebrook.fivemoreminutes.R
 import io.typebrook.fivemoreminutes.dialog.CoordInputDialog
